@@ -1,5 +1,6 @@
 import { Client, type IMessage, StompHeaders } from '@stomp/stompjs'
 import { defineStore } from 'pinia'
+import { ElNotification } from 'element-plus'
 import { useAuthStore } from './auth'
 
 interface WebSocketState {

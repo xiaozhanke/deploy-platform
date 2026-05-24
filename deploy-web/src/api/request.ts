@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { ElLoading, ElNotification } from 'element-plus'
 import NProgress from '@/utils/nprogress'
 import { useAuthStore } from '@/stores/auth'
 import { ApiError } from '@/types/error'

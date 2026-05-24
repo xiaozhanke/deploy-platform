@@ -2,13 +2,15 @@ import AxiosMockAdapter from 'axios-mock-adapter'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 
-// 真实的 request.ts 通过 unplugin-auto-import 在编译期注入 ElNotification / ElLoading，
-// vitest 跑的是源码不会经过那一层，所以这里把它们注册到 globalThis 上，让模块加载阶段不抛 ReferenceError
+// request.ts 现在显式 import { ElLoading, ElNotification } from 'element-plus'，
+// 用 vi.mock 替换模块导出即可拦截全部用法，比 stubGlobal 稳健
 const elLoadingClose = vi.fn()
 const elLoadingService = vi.fn(() => ({ close: elLoadingClose }))
 const elNotificationError = vi.fn()
-vi.stubGlobal('ElLoading', { service: elLoadingService })
-vi.stubGlobal('ElNotification', { error: elNotificationError })
+vi.mock('element-plus', () => ({
+  ElLoading: { service: elLoadingService },
+  ElNotification: { error: elNotificationError },
+}))
 
 const handleSessionExpired = vi.fn().mockResolvedValue(undefined)
 vi.mock('@/stores/auth', () => ({
@@ -33,7 +35,7 @@ describe('request interceptor 401 处理', () => {
     handleSessionExpired.mockClear()
     elLoadingClose.mockClear()
     elLoadingService.mockClear()
-    // dynamic import 让 vi.mock 与 stubGlobal 在请求模块解析前生效
+    // dynamic import 让 vi.mock 在模块解析前生效
     const mod = await import('@/api/request')
     instance = mod.default
     mockAdapter = new AxiosMockAdapter(instance)
