@@ -1,0 +1,18 @@
+.common-layout {
+  --system-header-height: 60px;
+  --layout-common-padding: 16px;
+  --layout-common-margin: 16px;
+  --layout-common-border-radius: 10px;
+  --layout-common-gap: 16px;
+  --layout-right-sidebar-width: 260px;
+}
+
+// 一个通用主要页面容器样式, 占满 main-container 不出现滚动条
+.common-page-container {
+  height: calc(
+    100vh - var(--system-header-height) - 2 * var(--layout-common-padding) - var(--el-font-size-medium) - 1px
+  );
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

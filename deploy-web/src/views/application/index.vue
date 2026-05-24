@@ -1,0 +1,374 @@
+<script setup lang="ts">
+defineOptions({
+  name: 'ApplicationIndex',
+})
+
+import {
+  deploymentRecordDelete,
+  deploymentRecordQueryPage,
+  deploymentRecordRestart,
+  deploymentRecordStart,
+  deploymentRecordStop,
+} from '@/api/api'
+import TablePagination from '@/components/table-pagination/index.vue'
+import { ApplicationTypeEnum, DeploymentStatusEnum } from '@/enums/platform'
+import type { PageParams } from '@/types/api'
+import type { DeploymentParams, DeploymentRecord } from '@/types/deployment'
+import type { FormInstance } from 'element-plus'
+import { Refresh, Search, View, Edit, Delete, SwitchButton, Loading, Document, Switch } from '@element-plus/icons-vue'
+import ApplicationDetails from './ApplicationDetails.vue'
+import ApplicationUpdate from './ApplicationUpdate.vue'
+import ServerSelect from '@/views/server/components/ServerSelect.vue'
+import FileSelect from '@/views/file/FileSelect.vue'
+import type { FileRecord } from '@/types/file'
+import type { ServerRecord } from '@/types/server'
+import LogView from '@/views/log/components/LogView.vue'
+import ApplicationUpdatePackage from './ApplicationUpdatePackage.vue'
+import ApplicationUpdateConfig from './ApplicationUpdateConfig.vue'
+
+const formRef = ref<FormInstance>()
+const tablePaginationRef = ref()
+const tableSelection = ref<DeploymentRecord[]>([])
+
+const form = reactive<Partial<DeploymentParams>>({})
+
+// table-pagination 组件的查询方法
+const queryMethod = async (queryParams: Record<string, unknown>, pageParams: PageParams) => {
+  return deploymentRecordQueryPage(queryParams as Partial<DeploymentRecord>, pageParams)
+}
+
+// 查询
+const handleQuery = async () => {
+  if (!formRef.value) return
+  await formRef.value.validate((valid) => {
+    if (valid) {
+      tablePaginationRef.value.queryPage(form)
+    }
+  })
+}
+
+// 重置查询条件
+const handleReset = () => {
+  formRef.value?.resetFields()
+  handleServerSelectClear()
+  handleFileSelectClear()
+}
+
+// 表格选择
+const handleSelectionChange = (selection: DeploymentRecord[]) => {
+  tableSelection.value = selection
+}
+
+// 应用启动
+const handleApplicationStart = async () => {
+  if (tableSelection.value.length === 0) {
+    ElMessage.info('请选择要操作的记录')
+    return
+  }
+  for (const record of tableSelection.value) {
+    try {
+      await deploymentRecordStart(record.id)
+      ElNotification.success(`应用 [${record.fileRecord.fileName}] 启动成功`)
+    } catch {
+      ElMessage.error(`应用 [${record.fileRecord.fileName}] 启动失败`)
+    }
+  }
+  await handleQuery()
+}
+
+// 应用停止
+const handleApplicationStop = async () => {
+  if (tableSelection.value.length === 0) {
+    ElMessage.info('请选择要操作的记录')
+    return
+  }
+  for (const record of tableSelection.value) {
+    try {
+      await deploymentRecordStop(record.id)
+      ElNotification.success(`应用 [${record.fileRecord.fileName}] 停止成功`)
+    } catch {
+      ElMessage.error(`应用 [${record.fileRecord.fileName}] 停止失败`)
+    }
+  }
+  await handleQuery()
+}
+
+// 应用重启
+const handleApplicationRestart = async () => {
+  if (tableSelection.value.length === 0) {
+    ElMessage.info('请选择要操作的记录')
+    return
+  }
+  for (const record of tableSelection.value) {
+    try {
+      await deploymentRecordRestart(record.id)
+      ElNotification.success(`应用 [${record.fileRecord.fileName}] 重启成功`)
+    } catch {
+      ElMessage.error(`应用 [${record.fileRecord.fileName}] 重启失败`)
+    }
+  }
+  await handleQuery()
+}
+
+const updatePackageVisible = ref(false)
+// 应用更新应用包
+const handleApplicationUpdate = () => {
+  if (tableSelection.value.length === 0) {
+    ElMessage.info('请选择要操作的记录')
+    return
+  }
+  updatePackageVisible.value = true
+}
+
+const currentRecord = ref<DeploymentRecord>({} as DeploymentRecord)
+const detailVisible = ref(false)
+const updateVisible = ref(false)
+
+// 查看部署记录详情
+const handleView = (row: DeploymentRecord) => {
+  currentRecord.value = row
+  detailVisible.value = true
+}
+
+// 编辑部署记录
+const handleEdit = (row: DeploymentRecord) => {
+  currentRecord.value = row
+  updateVisible.value = true
+}
+
+// 删除部署记录
+const handleDelete = (row: DeploymentRecord) => {
+  ElMessageBox.confirm(`确定要删除该记录吗？`, '提示', {
+    type: 'error',
+    showCancelButton: true,
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+  })
+    .then(async () => {
+      try {
+        await deploymentRecordDelete(row.id)
+        ElNotification.success('记录删除成功')
+        await handleQuery()
+      } catch (error) {
+        ElNotification.error('记录删除失败: ' + String(error))
+      }
+    })
+    .catch(() => {
+      ElMessage.info('已取消删除')
+    })
+}
+
+const logVisible = ref(false)
+const logPath = ref('')
+const logServerId = ref('')
+
+const handleLogView = (row: DeploymentRecord) => {
+  const { deploymentPath, serverRecord } = row
+  logServerId.value = serverRecord.id
+  logPath.value = `${deploymentPath}/nohup.out`
+  logVisible.value = true
+}
+
+const serverSelectVisible = ref(false)
+const selectedServerName = ref('')
+// 选择服务器
+const handleServerSelect = () => {
+  serverSelectVisible.value = true
+}
+const handleServerSelectComplete = async (server: ServerRecord) => {
+  const { id, name } = server
+  form.serverRecordId = id
+  selectedServerName.value = name
+  await handleQuery()
+}
+// 清空选择服务器
+const handleServerSelectClear = () => {
+  form.serverRecordId = ''
+  selectedServerName.value = ''
+}
+
+const fileSelectVisible = ref(false)
+const selectedFileName = ref('')
+// 选择文件
+const handleFileSelect = () => {
+  fileSelectVisible.value = true
+}
+const handleFileSelectComplete = async (file: FileRecord) => {
+  const { id, fileName } = file
+  form.fileRecordId = id
+  selectedFileName.value = fileName
+  await handleQuery()
+}
+// 清空选择文件
+const handleFileSelectClear = () => {
+  form.fileRecordId = ''
+  selectedFileName.value = ''
+}
+
+onActivated(async () => {
+  await handleQuery()
+})
+</script>
+
+<template>
+  <section class="application-index-section common-page-container">
+    <div class="search-panel">
+      <el-form ref="formRef" :model="form" class="search-panel-form" label-width="68px" inline>
+        <el-row :gutter="16">
+          <el-col :sm="12" :md="8" :lg="6" :xl="4">
+            <el-form-item label="服务器">
+              <el-input
+                v-model="selectedServerName"
+                placeholder="选择服务器"
+                :suffix-icon="Search"
+                clearable
+                @clear="handleServerSelectClear"
+                @click="handleServerSelect"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :sm="12" :md="8" :lg="6" :xl="4">
+            <el-form-item label="应用文件">
+              <el-input
+                v-model="selectedFileName"
+                placeholder="选择应用文件"
+                :suffix-icon="Search"
+                clearable
+                @clear="handleFileSelectClear"
+                @click="handleFileSelect"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :sm="12" :md="8" :lg="6" :xl="4">
+            <el-form-item label="应用类型" prop="applicationType">
+              <el-select v-model="form.applicationType" placeholder="应用类型" clearable>
+                <el-option
+                  v-for="item in ApplicationTypeEnum.options"
+                  :key="item.value"
+                  :value="item.value"
+                  :label="item.label"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :sm="12" :md="8" :lg="6" :xl="4">
+            <el-form-item label="部署状态" prop="status">
+              <el-select v-model="form.status" placeholder="部署状态" clearable>
+                <el-option
+                  v-for="item in DeploymentStatusEnum.options"
+                  :key="item.value"
+                  :value="item.value"
+                  :label="item.label"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :sm="12" :md="8" :lg="6" :xl="4">
+            <el-form-item label="部署端口" prop="port">
+              <el-input v-model="form.port" type="number" placeholder="部署端口" clearable />
+            </el-form-item>
+          </el-col>
+          <el-col :sm="12" :md="8" :lg="6" :xl="4">
+            <el-form-item label="配置文件" prop="activeProfiles">
+              <el-input v-model="form.activeProfiles" placeholder="激活配置文件" clearable />
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+      <div class="search-panel-action">
+        <el-button type="primary" :icon="SwitchButton" @click="handleApplicationStart">启动应用</el-button>
+        <el-button type="danger" :icon="SwitchButton" @click="handleApplicationStop">停止应用</el-button>
+        <el-button type="success" :icon="Loading" @click="handleApplicationRestart">重启应用</el-button>
+        <el-button type="warning" :icon="Switch" @click="handleApplicationUpdate">更新应用</el-button>
+        <el-button type="primary" :icon="Search" plain @click="handleQuery">查询</el-button>
+        <el-tooltip content="重置查询条件" placement="top">
+          <el-button type="info" :icon="Refresh" @click="handleReset">重置</el-button>
+        </el-tooltip>
+      </div>
+    </div>
+    <table-pagination
+      ref="tablePaginationRef"
+      stripe
+      highlight-current-row
+      show-overflow-tooltip
+      :query-method="queryMethod"
+      @selection-change="handleSelectionChange"
+    >
+      <el-table-column type="selection" width="42" fixed="left"></el-table-column>
+      <el-table-column type="expand" fixed="left">
+        <template #default="{ row }">
+          <application-update-config v-if="row.applicationType === ApplicationTypeEnum.BACKEND.value" :record="row" />
+          <el-alert v-else title="只有后端应用才支持在线配置文件管理" type="info" :closable="false" show-icon />
+        </template>
+      </el-table-column>
+      <el-table-column type="index" label="序号" width="54" fixed="left"></el-table-column>
+      <el-table-column prop="serverRecord.name" label="服务器" min-width="100"></el-table-column>
+      <el-table-column prop="fileRecord.fileName" label="应用包名称" min-width="100"></el-table-column>
+      <el-table-column prop="fileRecord.version" label="应用版本" width="80"></el-table-column>
+      <el-table-column prop="deploymentPath" label="部署路径" min-width="130"></el-table-column>
+      <el-table-column prop="applicationType" label="应用类型" width="82">
+        <template #default="{ row }">
+          {{ ApplicationTypeEnum.getLabel(row.applicationType) }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="status" label="部署状态" width="82">
+        <template #default="{ row }">
+          {{ DeploymentStatusEnum.getLabel(row.status) }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="running" label="是否运行中" width="94">
+        <template #default="{ row }">
+          <el-switch
+            v-if="row.applicationType === ApplicationTypeEnum.BACKEND.value"
+            :model-value="row.running"
+            style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+          />
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="278px" fixed="right">
+        <template #default="{ row }">
+          <el-button type="primary" link :icon="View" @click="handleView(row)">详情</el-button>
+          <el-button type="warning" link :icon="Edit" @click="handleEdit(row)">修改</el-button>
+          <el-button type="danger" link :icon="Delete" @click="handleDelete(row)">删除</el-button>
+          <el-button
+            link
+            :icon="Document"
+            :disabled="row.applicationType !== ApplicationTypeEnum.BACKEND.value"
+            @click="handleLogView(row)"
+            >日志</el-button
+          >
+        </template>
+      </el-table-column>
+    </table-pagination>
+    <application-details v-if="detailVisible" v-model="detailVisible" :record="currentRecord" />
+    <application-update v-if="updateVisible" v-model="updateVisible" :record="currentRecord" @complete="handleQuery" />
+    <server-select v-if="serverSelectVisible" v-model="serverSelectVisible" @select="handleServerSelectComplete" />
+    <file-select v-if="fileSelectVisible" v-model="fileSelectVisible" @select="handleFileSelectComplete" />
+    <log-view v-if="logVisible" v-model="logVisible" :server-id="logServerId" :log-path="logPath" />
+    <application-update-package
+      v-if="updatePackageVisible"
+      v-model="updatePackageVisible"
+      :record-selection="tableSelection"
+      @complete="handleQuery"
+    />
+  </section>
+</template>
+
+<style lang="scss" scoped>
+.application-index-section {
+  .search-panel {
+    .search-panel-form {
+      .el-form-item {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: var(--layout-common-padding);
+      }
+    }
+    .search-panel-action {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: var(--layout-common-padding);
+    }
+  }
+}
+</style>
