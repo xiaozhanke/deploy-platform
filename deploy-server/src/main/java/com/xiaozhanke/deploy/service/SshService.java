@@ -212,14 +212,17 @@ public class SshService {
         log.info("请求为会话 [{}] 创建 Shell 通道", sessionId);
         Session session = getSession(sessionId);
 
+        // 这两个变量在 catch 里也要用，提前声明以便走一致的清理路径
+        String channelId = null;
+        ChannelShell channel = null;
         try {
-            ChannelShell channel = (ChannelShell) session.openChannel(SshConstants.ChannelType.SHELL);
+            channel = (ChannelShell) session.openChannel(SshConstants.ChannelType.SHELL);
             // 请求伪终端, 对交互式Shell很重要
             channel.setPty(true);
             // 设置终端尺寸, 避免命令过长自动添加换行符
             channel.setPtySize(400, 80, 960, 720);
 
-            String channelId = String.valueOf(channel.getId());
+            channelId = String.valueOf(channel.getId());
             ChannelKey key = new ChannelKey(sessionId, channelId);
 
             log.debug("会话 [{}] Shell 通道已创建, 准备存储和连接通道 [{}]", sessionId, channelId);
@@ -240,15 +243,21 @@ public class SshService {
             startOutputReader(sessionId, channelId, channel);
             return channelId;
         } catch (JSchException e) {
-            // 尝试清理可能部分创建的资源
-            // 如果 openChannel 成功但 connect 失败, channels Map 中可能已有条目
-            channels.entrySet().removeIf(entry -> entry.getKey().sessionId.equals(sessionId) && !entry.getValue().isConnected());
-            // 清理关联的队列和缓冲区, 即使通道 Id 可能不准确
-            cleanupChannelResources(sessionId, String.valueOf(channels.size() + 1));
+            // 之前用 String.valueOf(channels.size() + 1) 估算 channelId，并发场景或 JSch 内部分配偏移都会算错。
+            // 现在用本次实际拿到的 channelId 做精确清理；若 openChannel 还没拿到 id，则跳过 channel 级清理。
+            if (channelId != null) {
+                disconnectAndCleanupChannel(sessionId, channelId);
+            } else if (channel != null && channel.isConnected()) {
+                channel.disconnect();
+            }
             String errorMessage = String.format("为会话 [%s] 创建或连接 Shell 通道失败: %s", sessionId, e.getMessage());
             throw new BusinessException(errorMessage, e);
         } catch (Exception e) {
-            // 捕获其他潜在异常
+            if (channelId != null) {
+                disconnectAndCleanupChannel(sessionId, channelId);
+            } else if (channel != null && channel.isConnected()) {
+                channel.disconnect();
+            }
             String errorMessage = String.format("为会话 [%s] 创建或连接 Shell 通道失败: %s", sessionId, e.getMessage());
             throw new BusinessException(errorMessage, e);
         }
@@ -654,6 +663,9 @@ public class SshService {
     /**
      * 处理指定通道命令执行队列中的下一个待执行命令
      *
+     * <p>之前递归式跳过 completed 任务、失败重试，单次错误会触发 N 层递归 + N 次重入 synchronized；
+     * 现在改成 while 循环，自然控制流不依赖栈深度，同 synchronized 块持有期间多次 poll/送命令。
+     *
      * @param sessionId 会话ID
      * @param channelId 通道ID
      * @param channel   对应的 ChannelShell 实例
@@ -662,77 +674,66 @@ public class SshService {
         ChannelKey key = new ChannelKey(sessionId, channelId);
         Queue<ShellCommandTask> queue = commandQueues.get(key);
 
-        if (queue == null || queue.isEmpty()) {
+        if (queue == null) {
             log.debug("尝试处理命令执行队列, 但会话 [{}] 通道 [{}] 命令执行队列已不存在: ", sessionId, channelId);
             return;
         }
         // 对队列的访问和修改加锁, 防止并发问题
         synchronized (queue) {
-            ShellCommandTask currentTask = queue.peek();
+            while (true) {
+                ShellCommandTask currentTask = queue.peek();
 
-            if (currentTask == null) {
-                log.debug("会话 [{}] 通道 [{}] 命令执行队列为空, 无需处理", sessionId, channelId);
-                return;
-            }
-
-            log.debug("会话 [{}] 通道 [{}] 检查队首任务 [{}] 状态: commandSent={}, completed={}", sessionId, channelId, currentTask.getTaskId(), currentTask.isCommandSent(), currentTask.isCompleted());
-
-            // 如果任务已完成或已发送, 则不处理（等待结果或下一个任务）
-            // 注意：这里有一个潜在问题, 如果一个任务发送失败, 它可能既不是 completed 也不是 commandSent=true
-            // 我们需要在发送失败时显式地处理任务（移除或标记失败）
-            if (currentTask.isCompleted()) {
-                log.debug("会话 [{}] 通道 [{}] 队首任务 [{}] 已完成, 但仍在队列中, 将移除", sessionId, channelId, currentTask.getTaskId());
-                // 移除已完成的任务
-                queue.poll();
-                // 检查下一个
-                processNextCommand(sessionId, channelId, channel);
-                return;
-            }
-
-            if (currentTask.isCommandSent()) {
-                log.debug("通道 [{}] 队首任务 [{}] 已发送, 等待结果", channelId, currentTask.getTaskId());
-                return;
-            }
-
-            // 再次检查通道连接状态, 因为获取锁可能耗时
-            if (!channel.isConnected() || channel.isClosed()) {
-                log.debug("通道 [{}] 在处理任务 [{}] 时已断开或关闭, 将清空剩余队列并标记失败", channelId, currentTask.getTaskId());
-                String errorMessage = String.format("会话 [%s] 的通道 [%s] 已断开或关闭", sessionId, channelId);
-                failAllPendingCommands(sessionId, channelId, queue, errorMessage);
-                // 队列已清空
-                return;
-            }
-
-            // 发送命令
-            try {
-                String commandToSend = currentTask.getFinalCommand();
-                log.info("准备向会话 [{}] 通道 [{}] 发送命令: '{}'", sessionId, channelId, commandToSend);
-
-                OutputStream outputStream = channel.getOutputStream();
-                if (outputStream == null) {
-                    log.error("会话 [{}] 通道 [{}] 的输出流为 null, 无法发送命令: '{}'", sessionId, channelId, commandToSend);
-                    failAndRemoveTask(sessionId, channelId, queue, currentTask, "无法获取通道输出流");
-                    // 尝试下一个
-                    processNextCommand(sessionId, channelId, channel);
+                if (currentTask == null) {
+                    log.debug("会话 [{}] 通道 [{}] 命令执行队列为空, 无需处理", sessionId, channelId);
                     return;
                 }
-                outputStream.write(commandToSend.getBytes(StandardCharsets.UTF_8));
-                // flush 非常重要, 确保数据被发送
-                outputStream.flush();
 
-                // 标记命令已发送
-                currentTask.setCommandSent(true);
-                log.info("已成功向 会话 [{}] 通道 [{}] 发送命令: '{}'", sessionId, channelId, commandToSend);
-            } catch (IOException e) {
-                log.error("向会话 [{}] 通道 [{}] 发送命令 '{}' 时发生 IO 异常: {}", sessionId, channelId, currentTask.getFinalCommand(), e.getMessage(), e);
-                failAndRemoveTask(sessionId, channelId, queue, currentTask, "发送命令失败: " + e.getMessage());
-                // 尝试处理队列中的下一个命令
-                processNextCommand(sessionId, channelId, channel);
-            } catch (Exception e) {
-                log.error("向会话 [{}] 通道 [{}] 发送命令 '{}' 时发生意外异常: {}", sessionId, channelId, currentTask.getFinalCommand(), e.getMessage(), e);
-                failAndRemoveTask(sessionId, channelId, queue, currentTask, "发送命令时发生意外错误: " + e.getMessage());
-                // 尝试处理队列中的下一个命令
-                processNextCommand(sessionId, channelId, channel);
+                log.debug("会话 [{}] 通道 [{}] 检查队首任务 [{}] 状态: commandSent={}, completed={}", sessionId, channelId, currentTask.getTaskId(), currentTask.isCommandSent(), currentTask.isCompleted());
+
+                if (currentTask.isCompleted()) {
+                    log.debug("会话 [{}] 通道 [{}] 队首任务 [{}] 已完成, 但仍在队列中, 将移除", sessionId, channelId, currentTask.getTaskId());
+                    queue.poll();
+                    continue;
+                }
+
+                if (currentTask.isCommandSent()) {
+                    log.debug("通道 [{}] 队首任务 [{}] 已发送, 等待结果", channelId, currentTask.getTaskId());
+                    return;
+                }
+
+                // 再次检查通道连接状态, 因为获取锁可能耗时
+                if (!channel.isConnected() || channel.isClosed()) {
+                    log.debug("通道 [{}] 在处理任务 [{}] 时已断开或关闭, 将清空剩余队列并标记失败", channelId, currentTask.getTaskId());
+                    String errorMessage = String.format("会话 [%s] 的通道 [%s] 已断开或关闭", sessionId, channelId);
+                    failAllPendingCommands(sessionId, channelId, queue, errorMessage);
+                    return;
+                }
+
+                try {
+                    String commandToSend = currentTask.getFinalCommand();
+                    log.info("准备向会话 [{}] 通道 [{}] 发送命令: '{}'", sessionId, channelId, commandToSend);
+
+                    OutputStream outputStream = channel.getOutputStream();
+                    if (outputStream == null) {
+                        log.error("会话 [{}] 通道 [{}] 的输出流为 null, 无法发送命令: '{}'", sessionId, channelId, commandToSend);
+                        failAndRemoveTask(sessionId, channelId, queue, currentTask, "无法获取通道输出流");
+                        continue;
+                    }
+                    outputStream.write(commandToSend.getBytes(StandardCharsets.UTF_8));
+                    outputStream.flush();
+
+                    currentTask.setCommandSent(true);
+                    log.info("已成功向 会话 [{}] 通道 [{}] 发送命令: '{}'", sessionId, channelId, commandToSend);
+                    return;
+                } catch (IOException e) {
+                    log.error("向会话 [{}] 通道 [{}] 发送命令 '{}' 时发生 IO 异常: {}", sessionId, channelId, currentTask.getFinalCommand(), e.getMessage(), e);
+                    failAndRemoveTask(sessionId, channelId, queue, currentTask, "发送命令失败: " + e.getMessage());
+                    // 继续尝试下一个命令
+                } catch (Exception e) {
+                    log.error("向会话 [{}] 通道 [{}] 发送命令 '{}' 时发生意外异常: {}", sessionId, channelId, currentTask.getFinalCommand(), e.getMessage(), e);
+                    failAndRemoveTask(sessionId, channelId, queue, currentTask, "发送命令时发生意外错误: " + e.getMessage());
+                    // 继续尝试下一个命令
+                }
             }
         }
     }
