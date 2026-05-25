@@ -58,10 +58,9 @@ export const useAuthStore = defineStore('auth', {
       if (user && !user.expired) {
         await this.fetchUserProfile()
         const websocketStore = useWebSocketStore()
-        // 仅在 WebSocket 未连接时才进行连接
-        if (!websocketStore.client?.active) {
-          await websocketStore.connect(getWebSocketUrl())
-        }
+        // 每次 userLoaded（含初次登录与静默续签）都重连：connect 内部先 disconnect 再用新 token 重新握手，
+        // 避免续签后服务器收到带过期 Authorization 的 STOMP 帧
+        await websocketStore.connect(getWebSocketUrl())
       }
     },
 
