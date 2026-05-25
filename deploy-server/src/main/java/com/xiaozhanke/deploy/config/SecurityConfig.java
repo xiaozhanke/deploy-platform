@@ -31,7 +31,6 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter;
-import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -169,10 +168,6 @@ public class SecurityConfig {
                 .securityContext(context -> context
                         .securityContextRepository(new HttpSessionSecurityContextRepository())
                 )
-                .sessionManagement(session -> session
-                        // 限制最大并发会话数为 1
-                        .maximumSessions(1)
-                )
                 // 异常处理
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(authenticationEntryPoint)
@@ -253,7 +248,7 @@ public class SecurityConfig {
     /**
      * 配置 CORS 规则。
      *
-     * <p>允许的 Origin 列表完全由 {@code app.security.cors.allowed-origins} 驱动，
+     * <p>允许的 Origin 列表完全由 {@code app.security.cors.allowed-origins} 驱动,
      * 不再绑死开发 profile —— 任意环境（dev/staging/pro）都通过同一配置 key 决定放行哪些前端域名。
      * pro 默认空集合，即生产侧若同域部署可保持默认；如需放行外部前端，请在对应 profile 显式列出。
      */
@@ -275,17 +270,6 @@ public class SecurityConfig {
         // 对所有路径应用此配置
         source.registerCorsConfiguration("/**", configuration);
         return source;
-    }
-
-    /**
-     * 使 Spring Security 能够感知到 HttpSession 的创建和销毁事件。
-     * 这是实现并发会话控制所必需的。
-     *
-     * @return HttpSessionEventPublisher 实例
-     */
-    @Bean
-    public HttpSessionEventPublisher httpSessionEventPublisher() {
-        return new HttpSessionEventPublisher();
     }
 
 }
