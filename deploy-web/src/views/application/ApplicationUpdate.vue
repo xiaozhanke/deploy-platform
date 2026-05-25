@@ -40,7 +40,7 @@ const handleSubmit = async () => {
         handleClose()
         emit('complete')
       } catch (error) {
-        ElNotification.error('部署参数修改失败: ' + String(error))
+        ElNotification.error('部署参数修改失败: ' + extractErrorMessage(error))
       }
     }
   })

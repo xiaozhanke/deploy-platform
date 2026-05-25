@@ -83,7 +83,7 @@ const handleUploadJarStep = async () => {
         ElMessage.success('应用部署上传成功')
       } catch (error) {
         steps.value[0].status = 'error'
-        ElMessage.error('应用部署上传失败: ' + String(error))
+        ElMessage.error('应用部署上传失败: ' + extractErrorMessage(error))
       }
     }
   })
@@ -171,7 +171,7 @@ const handleUploadConfigStep = async () => {
     await fetchFileList()
   } catch (error) {
     steps.value[1].status = 'error'
-    ElMessage.error('配置文件上传失败: ' + String(error))
+    ElMessage.error('配置文件上传失败: ' + extractErrorMessage(error))
   }
 }
 
@@ -209,7 +209,7 @@ const fetchFileList = async () => {
       // 过滤掉 .default 结尾的文件
       .filter((file) => !file.name.endsWith('.default'))
   } catch (error) {
-    ElNotification.error('获取文件列表失败:' + String(error))
+    ElNotification.error('获取文件列表失败:' + extractErrorMessage(error))
   } finally {
     fileLoading.value = false
   }
@@ -239,7 +239,7 @@ const handleFileDelete = (filePath: string) => {
         ElNotification.success('文件删除成功')
         await fetchFileList()
       } catch (error) {
-        ElNotification.error('文件删除失败:' + String(error))
+        ElNotification.error('文件删除失败:' + extractErrorMessage(error))
       }
     })
     .catch(() => {
@@ -261,7 +261,7 @@ const handleFileRename = (fileName: string) => {
         ElNotification.success('文件重命名成功')
         await fetchFileList()
       } catch (error) {
-        ElNotification.error('文件重命名失败:' + String(error))
+        ElNotification.error('文件重命名失败:' + extractErrorMessage(error))
       }
     })
     .catch(() => {
@@ -295,7 +295,7 @@ const handleRunStep = async () => {
         steps.value[2].status = 'success'
         ElMessage.success('应用启动成功')
       } catch (error) {
-        ElMessage.error('应用启动失败: ' + String(error))
+        ElMessage.error('应用启动失败: ' + extractErrorMessage(error))
       }
     }
   })
@@ -346,7 +346,7 @@ const handleNextStep = async () => {
       activeStep.value++
     } catch (error) {
       currentStep.status = 'error'
-      ElMessage.error('步骤执行失败: ' + String(error))
+      ElMessage.error('步骤执行失败: ' + extractErrorMessage(error))
     } finally {
       stepLoading.value = false
     }

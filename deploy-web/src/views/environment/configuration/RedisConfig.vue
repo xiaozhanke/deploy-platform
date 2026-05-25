@@ -80,7 +80,7 @@ const fetchFileList = async () => {
       // 过滤掉 .default 结尾的文件
       .filter((file) => !file.name.endsWith('.default'))
   } catch (error) {
-    ElNotification.error('获取文件列表失败:' + String(error))
+    ElNotification.error('获取文件列表失败:' + extractErrorMessage(error))
   }
 }
 
@@ -116,7 +116,7 @@ const handleFileEditSimpleSubmit = async ({ port, password }: RedisConfigParams)
     }
     fileContent = result
   } catch (error) {
-    return ElNotification.error('获取文件内容失败:' + String(error))
+    return ElNotification.error('获取文件内容失败:' + extractErrorMessage(error))
   }
   // 替换配置内容
   const saveContent = replaceRedisConfigContent(fileContent, port, password)
@@ -126,7 +126,7 @@ const handleFileEditSimpleSubmit = async ({ port, password }: RedisConfigParams)
     ElNotification.success('配置文件修改成功')
     await handleRefresh()
   } catch (error) {
-    ElNotification.error('配置文件修改失败:' + String(error))
+    ElNotification.error('配置文件修改失败:' + extractErrorMessage(error))
   }
 }
 
@@ -170,7 +170,7 @@ const handleFileDelete = (filePath: string) => {
         ElNotification.success('文件删除成功')
         await handleRefresh()
       } catch (error) {
-        ElNotification.error('文件删除失败:' + String(error))
+        ElNotification.error('文件删除失败:' + extractErrorMessage(error))
       }
     })
     .catch(() => {
@@ -192,7 +192,7 @@ const handleFileRename = (filePath: string) => {
         ElNotification.success('文件重命名成功')
         await handleRefresh()
       } catch (error) {
-        ElNotification.error('文件重命名失败:' + String(error))
+        ElNotification.error('文件重命名失败:' + extractErrorMessage(error))
       }
     })
     .catch(() => {
@@ -241,7 +241,7 @@ const parseRedisConfig = async (filePath: string): Promise<RedisConfigParams> =>
     }
     return params
   } catch (error) {
-    ElNotification.error('解析 Redis 配置文件失败:' + String(error))
+    ElNotification.error('解析 Redis 配置文件失败:' + extractErrorMessage(error))
     throw error
   }
 }
@@ -273,7 +273,7 @@ const handleRedisConfigAddSubmit = async (params: RedisConfigParams) => {
     ElNotification.success('新建 Redis 配置文件成功')
     await handleRefresh()
   } catch (error) {
-    return ElNotification.error('新建 Redis 配置文件失败:' + String(error))
+    return ElNotification.error('新建 Redis 配置文件失败:' + extractErrorMessage(error))
   }
 }
 
@@ -295,7 +295,7 @@ const handleRedisStart = async () => {
     }
     ElNotification.success('启动 Redis 服务成功')
   } catch (error) {
-    ElNotification.error('启动 Redis 服务失败:' + String(error))
+    ElNotification.error('启动 Redis 服务失败:' + extractErrorMessage(error))
   }
 }
 
@@ -318,7 +318,7 @@ const handleRedisStop = async () => {
     }
     ElNotification.success('停止 Redis 服务成功')
   } catch (error) {
-    ElNotification.error('停止 Redis 服务失败:' + String(error))
+    ElNotification.error('停止 Redis 服务失败:' + extractErrorMessage(error))
   }
 }
 
@@ -341,7 +341,7 @@ const handleRedisReload = async () => {
     }
     ElNotification.success('重启 Redis 服务成功')
   } catch (error) {
-    ElNotification.error('重启 Redis 服务失败:' + String(error))
+    ElNotification.error('重启 Redis 服务失败:' + extractErrorMessage(error))
   }
 }
 

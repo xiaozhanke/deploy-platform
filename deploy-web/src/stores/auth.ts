@@ -106,7 +106,7 @@ export const useAuthStore = defineStore('auth', {
         const user = await authUserCurrent()
         this.userProfile = user
       } catch (error) {
-        ElNotification.error('获取用户信息失败:' + String(error))
+        ElNotification.error('获取用户信息失败:' + extractErrorMessage(error))
         this.userProfile = null
       }
     },

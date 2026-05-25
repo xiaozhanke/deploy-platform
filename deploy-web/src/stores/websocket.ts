@@ -114,7 +114,7 @@ export const useWebSocketStore = defineStore('websocket', {
         try {
           callback(message.body)
         } catch (error) {
-          ElNotification.error('消息解析错误: ' + String(error))
+          ElNotification.error('消息解析错误: ' + extractErrorMessage(error))
         }
       })
 

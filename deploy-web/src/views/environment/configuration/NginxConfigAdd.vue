@@ -51,7 +51,7 @@ const handleSubmit = async () => {
         emit('submit', `${form.configName}.conf`, data, false)
         handleClose()
       } catch (error) {
-        ElNotification.error('添加 Nginx 配置文件失败:' + String(error))
+        ElNotification.error('添加 Nginx 配置文件失败:' + extractErrorMessage(error))
       }
     }
   })

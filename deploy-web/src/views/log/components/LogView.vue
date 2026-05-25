@@ -37,7 +37,7 @@ const handleShellConnect = async () => {
       websocketStore.send(`/app/ssh/sessions/${sessionId.value}/shell/${channelId.value}`, { taskId, command })
     }, 500)
   } catch (error) {
-    ElNotification.error(`读取日志文件错误: ${String(error)}`)
+    ElNotification.error(`读取日志文件错误: ${extractErrorMessage(error)}`)
   }
 }
 

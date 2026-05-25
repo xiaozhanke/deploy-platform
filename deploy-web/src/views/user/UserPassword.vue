@@ -61,7 +61,7 @@ const handleSubmit = async () => {
             await router.push('/login')
           })
       } catch (error) {
-        ElNotification.error('密码修改失败: ' + String(error))
+        ElNotification.error('密码修改失败: ' + extractErrorMessage(error))
       } finally {
         loading.value = false
       }

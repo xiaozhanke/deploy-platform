@@ -91,7 +91,7 @@ const handleUploadStep = async () => {
         ElMessage.success('应用包上传成功')
       } catch (error) {
         steps.value[0].status = 'error'
-        ElMessage.error('应用包上传失败: ' + String(error))
+        ElMessage.error('应用包上传失败: ' + extractErrorMessage(error))
       }
     } else {
       throw new Error('请选择新的应用包')
@@ -125,7 +125,7 @@ const handleUpdateDeploymentRecord = async () => {
     ElMessage.success('部署记录更新成功')
   } catch (error) {
     steps.value[1].status = 'error'
-    ElMessage.error('部署记录更新失败: ' + String(error))
+    ElMessage.error('部署记录更新失败: ' + extractErrorMessage(error))
   }
 }
 
@@ -192,7 +192,7 @@ const handleNextStep = async () => {
       activeStep.value++
     } catch (error) {
       currentStep.status = 'error'
-      ElMessage.error('步骤执行失败: ' + String(error))
+      ElMessage.error('步骤执行失败: ' + extractErrorMessage(error))
     } finally {
       stepLoading.value = false
     }

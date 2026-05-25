@@ -35,7 +35,7 @@ export const downloadFile = async (id: string, filename?: string) => {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
   } catch (error) {
-    ElNotification.error('下载文件失败: ' + String(error))
+    ElNotification.error('下载文件失败: ' + extractErrorMessage(error))
     throw error
   }
 }

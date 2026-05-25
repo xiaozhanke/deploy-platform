@@ -59,7 +59,7 @@ const handleQuery = () => {
   try {
     tablePaginationRef.value?.queryPage(form)
   } catch (error) {
-    ElNotification.error('获取文件列表失败: ' + String(error))
+    ElNotification.error('获取文件列表失败: ' + extractErrorMessage(error))
   }
 }
 
@@ -143,7 +143,7 @@ const handleDelete = (file: FileRecord) => {
         ElNotification.success('文件删除成功')
         handleQuery()
       } catch (error) {
-        ElNotification.error('文件删除失败: ' + String(error))
+        ElNotification.error('文件删除失败: ' + extractErrorMessage(error))
       }
     })
     .catch(() => {

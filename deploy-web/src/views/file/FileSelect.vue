@@ -44,7 +44,7 @@ const handleQuery = () => {
   try {
     tablePaginationRef.value.queryPage(form)
   } catch (error) {
-    ElNotification.error('获取文件列表失败: ' + String(error))
+    ElNotification.error('获取文件列表失败: ' + extractErrorMessage(error))
   }
 }
 

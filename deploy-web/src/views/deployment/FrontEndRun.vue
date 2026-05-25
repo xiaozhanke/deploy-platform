@@ -72,7 +72,7 @@ const handleSubmit = async () => {
         ElNotification.success('应用部署成功，请到【应用管理】或【环境管理】-【环境配置】-【Nginx 配置】里配置前端应用')
         handleClose()
       } catch (error) {
-        ElNotification.error('应用部署失败: ' + String(error))
+        ElNotification.error('应用部署失败: ' + extractErrorMessage(error))
       } finally {
         loading.close()
       }

@@ -89,7 +89,7 @@ const handleShellConnect = async () => {
     const currentTab = tabs.find((tab) => tab.name === activeTabName.value)
     currentTab?.stepExecutorRef.value?.resetSteps()
   } catch (error) {
-    ElNotification.error(`Shell 通道连接错误: ${String(error)}`)
+    ElNotification.error(`Shell 通道连接错误: ${extractErrorMessage(error)}`)
   }
 }
 
@@ -153,7 +153,7 @@ const getFilePath = async (artifactId: string, scope: keyof typeof FileScopeEnum
     const data = await fileQueryPath(params)
     filePaths.value[artifactId] = data
   } catch (error) {
-    ElNotification.error(`获取 ${artifactId} 文件路径失败: ${String(error)}`)
+    ElNotification.error(`获取 ${artifactId} 文件路径失败: ${extractErrorMessage(error)}`)
   }
 }
 

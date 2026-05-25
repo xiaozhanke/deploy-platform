@@ -40,7 +40,7 @@ const initialize = async () => {
     // 获取文件列表
     await fetchFileList()
   } catch (error) {
-    errorMessage.value = `SSH 连接或初始化失败: ${String(error)}`
+    errorMessage.value = `SSH 连接或初始化失败: ${extractErrorMessage(error)}`
     ElNotification.error(errorMessage.value)
   } finally {
     isLoading.value = false
@@ -98,7 +98,7 @@ const fetchFileList = async () => {
         return { ...file, name }
       })
   } catch (error) {
-    ElNotification.error('获取文件列表失败:' + String(error))
+    ElNotification.error('获取文件列表失败:' + extractErrorMessage(error))
   } finally {
     isLoading.value = false
   }

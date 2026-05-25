@@ -55,7 +55,7 @@ const handleSubmit = async () => {
     emit('complete')
     handleClose()
   } catch (error) {
-    ElNotification.error('文件记录保存失败' + String(error))
+    ElNotification.error('文件记录保存失败' + extractErrorMessage(error))
   }
 }
 

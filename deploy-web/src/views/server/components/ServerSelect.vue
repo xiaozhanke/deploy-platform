@@ -15,7 +15,7 @@ const loadServerList = async () => {
     const list = await serverQueryList()
     serverList.value = list
   } catch (error) {
-    ElNotification.error('服务器列表加载失败: ' + String(error))
+    ElNotification.error('服务器列表加载失败: ' + extractErrorMessage(error))
   }
 }
 

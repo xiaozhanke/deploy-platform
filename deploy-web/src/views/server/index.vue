@@ -26,7 +26,7 @@ const loadServerList = async () => {
     const list = await serverQueryList()
     serverList.value = list
   } catch (error) {
-    ElNotification.error('服务器列表加载失败: ' + String(error))
+    ElNotification.error('服务器列表加载失败: ' + extractErrorMessage(error))
   }
 }
 
@@ -64,7 +64,7 @@ const handleDelete = (server: ServerRecord) => {
         ElNotification.success('服务器删除成功')
         await loadServerList()
       } catch (error) {
-        ElNotification.error('服务器删除失败: ' + String(error))
+        ElNotification.error('服务器删除失败: ' + extractErrorMessage(error))
       }
     })
     .catch(() => {})
@@ -80,7 +80,7 @@ const handleTestConnection = async (server: ServerParams) => {
       ElMessage.error('服务器连通性测试失败')
     }
   } catch (error) {
-    ElNotification.error('服务器测试连接失败: ' + String(error))
+    ElNotification.error('服务器测试连接失败: ' + extractErrorMessage(error))
   }
 }
 
@@ -97,7 +97,7 @@ const handleSubmit = async (server: ServerParams) => {
     dialogVisible.value = false
     await loadServerList()
   } catch (error) {
-    ElNotification.error('服务器保存失败: ' + String(error))
+    ElNotification.error('服务器保存失败: ' + extractErrorMessage(error))
   }
 }
 

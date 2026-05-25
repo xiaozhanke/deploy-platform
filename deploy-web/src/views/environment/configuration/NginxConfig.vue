@@ -72,7 +72,7 @@ const fetchFileList = async () => {
       // 过滤掉 .default 结尾的文件
       .filter((file) => !file.name.endsWith('.default'))
   } catch (error) {
-    ElNotification.error('获取文件列表失败:' + String(error))
+    ElNotification.error('获取文件列表失败:' + extractErrorMessage(error))
   }
 }
 
@@ -89,7 +89,7 @@ const handleNginxConfigSubmit = async (fileName: string, fileContent: string, ed
     ElNotification.success(`${edit ? '编辑' : '新建'} Nginx 配置文件成功`)
     await handleRefresh()
   } catch (error) {
-    ElNotification.error(`${edit ? '编辑' : '新建'} Nginx 配置文件失败: ${String(error)}`)
+    ElNotification.error(`${edit ? '编辑' : '新建'} Nginx 配置文件失败: ${extractErrorMessage(error)}`)
   }
 }
 
@@ -123,7 +123,7 @@ const handleFileDelete = (filePath: string) => {
         ElNotification.success('文件删除成功')
         await handleRefresh()
       } catch (error) {
-        ElNotification.error('文件删除失败:' + String(error))
+        ElNotification.error('文件删除失败:' + extractErrorMessage(error))
       }
     })
     .catch(() => {
@@ -145,7 +145,7 @@ const handleFileRename = (fileName: string) => {
         ElNotification.success('文件重命名成功')
         await handleRefresh()
       } catch (error) {
-        ElNotification.error('文件重命名失败:' + String(error))
+        ElNotification.error('文件重命名失败:' + extractErrorMessage(error))
       }
     })
     .catch(() => {
@@ -217,7 +217,7 @@ const parseNginxConfig = async (filePath: string): Promise<NginxConfigParams> =>
     }
     return params
   } catch (error) {
-    ElNotification.error('解析 Nginx 配置文件失败:' + String(error))
+    ElNotification.error('解析 Nginx 配置文件失败:' + extractErrorMessage(error))
     throw error
   }
 }
@@ -235,7 +235,7 @@ const handleNginxTest = async () => {
     }
     ElNotification.success('测试配置成功')
   } catch (error) {
-    ElNotification.error('测试配置失败:' + String(error))
+    ElNotification.error('测试配置失败:' + extractErrorMessage(error))
   }
 }
 
@@ -253,7 +253,7 @@ const handleNginxReload = async () => {
     }
     ElNotification.success('重载配置成功')
   } catch (error) {
-    ElNotification.error('重载配置失败:' + String(error))
+    ElNotification.error('重载配置失败:' + extractErrorMessage(error))
   }
 }
 
@@ -271,7 +271,7 @@ const handleNginxStart = async () => {
     }
     ElNotification.success('启动服务成功')
   } catch (error) {
-    ElNotification.error('启动服务失败:' + String(error))
+    ElNotification.error('启动服务失败:' + extractErrorMessage(error))
   }
 }
 
@@ -289,7 +289,7 @@ const handleNginxStop = async () => {
     }
     ElNotification.success('停止服务成功')
   } catch (error) {
-    ElNotification.error('停止服务失败:' + String(error))
+    ElNotification.error('停止服务失败:' + extractErrorMessage(error))
   }
 }
 

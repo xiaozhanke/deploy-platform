@@ -75,7 +75,7 @@ const handleQuery = async () => {
     const list = await fileQueryList(form, sort)
     fileList.value = list
   } catch (error) {
-    ElNotification.error('获取文件列表失败' + String(error))
+    ElNotification.error('获取文件列表失败' + extractErrorMessage(error))
   } finally {
     fileLoading.value = false
   }

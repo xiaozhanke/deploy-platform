@@ -17,7 +17,15 @@ export default defineConfig(({ mode }) => {
       vue(),
       vueDevTools(),
       AutoImport({
-        imports: ['vue'],
+        imports: [
+          'vue',
+          {
+            // 错误文案统一来源：响应拦截器把 axios 错误包成 ApiError(message=中文友好文案)，
+            // 业务侧用 extractErrorMessage(error) 取 .message 即可，避免再写 `String(error)` 把
+            // 类名前缀（"ApiError: xxx"）也带进弹窗。
+            '@/utils/errorMessage': ['extractErrorMessage'],
+          },
+        ],
         resolvers: [
           ElementPlusResolver({
             importStyle: 'sass',

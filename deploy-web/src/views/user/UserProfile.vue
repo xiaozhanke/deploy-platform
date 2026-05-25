@@ -69,7 +69,7 @@ const handleSubmit = async () => {
         await userProfileUpdate(form)
         ElNotification.success('用户信息保存成功')
       } catch (error) {
-        ElNotification.error('用户信息保存失败: ' + String(error))
+        ElNotification.error('用户信息保存失败: ' + extractErrorMessage(error))
       } finally {
         loading.value = false
       }

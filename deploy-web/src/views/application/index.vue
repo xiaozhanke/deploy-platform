@@ -150,7 +150,7 @@ const handleDelete = (row: DeploymentRecord) => {
         ElNotification.success('记录删除成功')
         await handleQuery()
       } catch (error) {
-        ElNotification.error('记录删除失败: ' + String(error))
+        ElNotification.error('记录删除失败: ' + extractErrorMessage(error))
       }
     })
     .catch(() => {

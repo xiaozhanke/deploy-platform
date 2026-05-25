@@ -65,7 +65,7 @@ const handleConnection = async () => {
       await fetchEnvironmentStatus(environment)
     }
   } catch (error) {
-    ElNotification.error(`SSH 会话连接错误: ${String(error)}`)
+    ElNotification.error(`SSH 会话连接错误: ${extractErrorMessage(error)}`)
   }
 }
 
@@ -118,7 +118,7 @@ const fetchEnvironmentStatus = async (environment: string) => {
       exitCode: data.exitCode,
     }
   } catch (error) {
-    ElMessage.error(`查询 ${environment} 状态失败: ${String(error)}`)
+    ElMessage.error(`查询 ${environment} 状态失败: ${extractErrorMessage(error)}`)
   }
 }
 

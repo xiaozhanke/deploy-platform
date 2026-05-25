@@ -41,7 +41,7 @@ const handleUpload = async (request: UploadRequestOptions) => {
     handleClose()
     emit('complete')
   } catch (error) {
-    ElNotification.error('文件更新上传失败: ' + String(error))
+    ElNotification.error('文件更新上传失败: ' + extractErrorMessage(error))
     throw new Error('文件更新上传失败')
   }
 }

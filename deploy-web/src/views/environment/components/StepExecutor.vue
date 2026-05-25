@@ -107,7 +107,7 @@ const handleExecuteCurrentStep = async () => {
   try {
     await executeCurrentStep(steps.value[activeStep.value])
   } catch (error) {
-    ElNotification.error(`配置过程中出错: ${String(error)}`)
+    ElNotification.error(`配置过程中出错: ${extractErrorMessage(error)}`)
   } finally {
     stepLoading.value = false
   }
