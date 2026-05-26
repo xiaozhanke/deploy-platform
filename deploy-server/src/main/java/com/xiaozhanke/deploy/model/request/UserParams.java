@@ -3,11 +3,13 @@ package com.xiaozhanke.deploy.model.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
-import java.util.List;
 import lombok.Data;
+
+import java.util.List;
 
 /**
  * 用户参数
+ *
  * @author xiaozhanke
  */
 @Data

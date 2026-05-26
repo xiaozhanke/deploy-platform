@@ -61,7 +61,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<RestErrorResponse> handleDuplicateResource(DuplicateResourceException e) {
         log.warn("资源冲突: {}", e.getMessage());
-        RestErrorResponse response = RestErrorResponse.of(HttpStatus.CONFLICT.value(), "RESOURCE_CONFLICT", e.getMessage());
+        RestErrorResponse response = RestErrorResponse.of(HttpStatus.CONFLICT.value(), "RESOURCE_CONFLICT",
+                e.getMessage());
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
@@ -74,7 +75,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidOperationException.class)
     public ResponseEntity<RestErrorResponse> handleInvalidOperation(InvalidOperationException e) {
         log.warn("无效操作: {}", e.getMessage());
-        RestErrorResponse response = RestErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "INVALID_OPERATION", e.getMessage());
+        RestErrorResponse response = RestErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "INVALID_OPERATION",
+                e.getMessage());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
@@ -103,7 +105,8 @@ public class GlobalExceptionHandler {
                 .map(error -> new FieldViolation(error.getField(), error.getDefaultMessage()))
                 .collect(Collectors.toList());
         log.warn("参数验证异常: {}", details);
-        RestErrorResponse response = RestErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "INVALID_ARGUMENT", "请求参数无效", details);
+        RestErrorResponse response = RestErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "INVALID_ARGUMENT",
+                "请求参数无效", details);
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
@@ -119,7 +122,8 @@ public class GlobalExceptionHandler {
                 .map(error -> new FieldViolation(error.getField(), error.getDefaultMessage()))
                 .collect(Collectors.toList());
         log.warn("参数绑定异常: {}", details);
-        RestErrorResponse response = RestErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "INVALID_ARGUMENT", "参数绑定失败", details);
+        RestErrorResponse response = RestErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "INVALID_ARGUMENT",
+                "参数绑定失败", details);
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
@@ -132,7 +136,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<RestErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
         log.warn("无法读取 HTTP 请求体: {}", e.getMessage());
-        RestErrorResponse response = RestErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "BAD_REQUEST_BODY", "请求体不能为空或格式错误");
+        RestErrorResponse response = RestErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "BAD_REQUEST_BODY",
+                "请求体不能为空或格式错误");
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
@@ -155,7 +160,8 @@ public class GlobalExceptionHandler {
             default -> "AUTHENTICATION_FAILED";
         };
         log.warn("认证失败 [{}]: {}", backendStatus, e.getMessage());
-        RestErrorResponse response = RestErrorResponse.of(HttpStatus.UNAUTHORIZED.value(), backendStatus, e.getMessage());
+        RestErrorResponse response = RestErrorResponse.of(HttpStatus.UNAUTHORIZED.value(), backendStatus,
+                e.getMessage());
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 
@@ -168,7 +174,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<RestErrorResponse> handleException(Exception e) {
         log.error("服务器内部错误", e);
-        RestErrorResponse response = RestErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "INTERNAL_SERVER_ERROR", e.getMessage());
+        RestErrorResponse response = RestErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "INTERNAL_SERVER_ERROR", e.getMessage());
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -189,10 +196,12 @@ public class GlobalExceptionHandler {
                     .map(error -> new FieldViolation(error.getField(), error.getDefaultMessage()))
                     .collect(Collectors.toList());
             log.warn("WebSocket 参数验证异常, 用户 [{}], 错误详情: {}", username, details);
-            response = RestErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "INVALID_ARGUMENT", "WebSocket 消息参数校验失败", details);
+            response = RestErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "INVALID_ARGUMENT", "WebSocket 消息参数校验失败",
+                    details);
         } else {
             log.error("WebSocket 参数验证异常, 用户 [{}], 但无法获取 BindingResult", username, e);
-            response = RestErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "INVALID_ARGUMENT", "WebSocket 消息参数校验失败，但无法获取详细信息");
+            response = RestErrorResponse.of(HttpStatus.BAD_REQUEST.value(), "INVALID_ARGUMENT", "WebSocket " +
+                    "消息参数校验失败，但无法获取详细信息");
         }
         messagingTemplate.convertAndSendToUser(username, "/queue/errors", response);
     }
@@ -207,7 +216,8 @@ public class GlobalExceptionHandler {
     public void handleWebSocketException(Exception e, SimpMessageHeaderAccessor headerAccessor) {
         String username = (headerAccessor.getUser() != null) ? headerAccessor.getUser().getName() : "unknown";
         log.error("WebSocket 内部异常, 用户 [{}]: {}", username, e.getMessage(), e);
-        RestErrorResponse response = RestErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "INTERNAL_SERVER_ERROR", "WebSocket 通信发生内部错误");
+        RestErrorResponse response = RestErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "INTERNAL_SERVER_ERROR", "WebSocket 通信发生内部错误");
         messagingTemplate.convertAndSendToUser(username, "/queue/errors", response);
     }
 

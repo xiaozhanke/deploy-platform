@@ -202,7 +202,8 @@ public class DeploymentService {
             }
 
             if (StringUtils.hasText(params.getDeploymentPath())) {
-                predicates.add(criteriaBuilder.like(root.get("deploymentPath"), "%" + params.getDeploymentPath() + "%"));
+                predicates.add(criteriaBuilder.like(root.get("deploymentPath"), "%" + params.getDeploymentPath() +
+                        "%"));
             }
 
             if (params.getPort() != null) {
@@ -210,7 +211,8 @@ public class DeploymentService {
             }
 
             if (StringUtils.hasText(params.getActiveProfiles())) {
-                predicates.add(criteriaBuilder.like(root.get("activeProfiles"), "%" + params.getActiveProfiles() + "%"));
+                predicates.add(criteriaBuilder.like(root.get("activeProfiles"), "%" + params.getActiveProfiles() +
+                        "%"));
             }
 
             if (params.getStatus() != null) {
@@ -304,7 +306,7 @@ public class DeploymentService {
     }
 
     /**
-    /**
+     * /**
      * 在调用方事务内执行启动逻辑（不再做应用类型与运行状态校验，由调用方保证前置条件）。
      */
     private void doStart(DeploymentRecord deployment) {
@@ -423,10 +425,12 @@ public class DeploymentService {
         FileRecord newFileRecord = fileStorageService.getFileRecord(fileRecordId);
 
         // 检查文件类型是否匹配
-        if (deployment.getApplicationType() == ApplicationTypeEnum.BACKEND && !newFileRecord.getFileName().endsWith(".jar")) {
+        if (deployment.getApplicationType() == ApplicationTypeEnum.BACKEND && !newFileRecord.getFileName().endsWith(
+                ".jar")) {
             throw new InvalidOperationException("更新失败: 后端应用只能更新 jar 包");
         }
-        if (deployment.getApplicationType() == ApplicationTypeEnum.FRONTEND && !newFileRecord.getFileName().endsWith(".zip")) {
+        if (deployment.getApplicationType() == ApplicationTypeEnum.FRONTEND && !newFileRecord.getFileName().endsWith(
+                ".zip")) {
             throw new InvalidOperationException("更新失败: 前端应用只能更新 zip 包");
         }
 

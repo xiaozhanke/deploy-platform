@@ -1,12 +1,13 @@
 package com.xiaozhanke.deploy.model.vo;
 
-import com.xiaozhanke.deploy.model.base.BaseVo;
 import com.xiaozhanke.deploy.enums.UserStatusEnum;
+import com.xiaozhanke.deploy.model.base.BaseVo;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+
+import java.util.Set;
 
 /**
  * 用户信息 VO 类

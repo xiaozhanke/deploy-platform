@@ -54,7 +54,9 @@ public class PlatformUserController {
     @PostMapping
     public ResponseEntity<PlatformUserVo> addUser(@Validated @RequestBody UserParams params) {
         PlatformUserVo createdRecord = platformUserService.createUser(params);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(createdRecord.getId()).toUri();
+        URI location =
+                ServletUriComponentsBuilder.fromCurrentRequest()
+                        .path("/{id}").buildAndExpand(createdRecord.getId()).toUri();
         return ResponseEntity.created(location).body(createdRecord);
     }
 
@@ -68,8 +70,14 @@ public class PlatformUserController {
     @Operation(summary = "分页查询用户列表", description = "分页查询用户列表")
     @GetMapping
     public PageResult<PlatformUserVo> queryPage(@Validated PlatformUserVo params,
-                                                @Parameter(description = "分页参数", example = "{\"page\": 0, \"size\": 20, \"sort\": \"updateTime,desc\"}")
-                                                @PageableDefault(size = 20, sort = "updateTime", direction = Sort.Direction.DESC) Pageable pageable) {
+                                                @Parameter(
+                                                        description = "分页参数",
+                                                        example = "{\"page\": 0, \"size\": 20, \"sort\": " +
+                                                                "\"updateTime,desc\"}")
+                                                @PageableDefault(
+                                                        size = 20,
+                                                        sort = "updateTime",
+                                                        direction = Sort.Direction.DESC) Pageable pageable) {
         return platformUserService.queryPage(params, pageable);
     }
 

@@ -49,7 +49,8 @@ public class ServerController {
     @PostMapping
     public ResponseEntity<ServerRecordVo> addServer(@Validated @RequestBody ServerParams params) {
         ServerRecordVo createdRecord = serverService.addServer(params);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(createdRecord.getId()).toUri();
+        URI location =
+                ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(createdRecord.getId()).toUri();
         return ResponseEntity.created(location).body(createdRecord);
     }
 
@@ -62,7 +63,8 @@ public class ServerController {
      */
     @Operation(summary = "更新服务器", description = "更新服务器信息")
     @PutMapping("/{id}")
-    public ServerRecordVo updateServer(@Parameter(description = "服务器 Id", required = true) @PathVariable String id, @Validated @RequestBody ServerParams params) {
+    public ServerRecordVo updateServer(@Parameter(description = "服务器 Id", required = true) @PathVariable String id,
+                                       @Validated @RequestBody ServerParams params) {
         return serverService.updateServer(id, params);
     }
 

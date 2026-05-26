@@ -30,7 +30,8 @@ public class ServerService {
     private final ServerPoVoMapper serverPoVoMapper;
     private final ServerPoDtoMapper serverPoDtoMapper;
 
-    public ServerService(ServerRepository serverRepository, SshService sshService, ServerPoVoMapper serverPoVoMapper, ServerPoDtoMapper serverPoDtoMapper) {
+    public ServerService(ServerRepository serverRepository, SshService sshService, ServerPoVoMapper serverPoVoMapper,
+                         ServerPoDtoMapper serverPoDtoMapper) {
         this.serverRepository = serverRepository;
         this.sshService = sshService;
         this.serverPoVoMapper = serverPoVoMapper;

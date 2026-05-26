@@ -52,7 +52,8 @@ public class PlatformRoleController {
     @PostMapping
     public ResponseEntity<PlatformRoleVo> addRole(@Validated @RequestBody RoleParams params) {
         PlatformRoleVo createdRecord = platformRoleService.createRole(params);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(createdRecord.getId()).toUri();
+        URI location =
+                ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(createdRecord.getId()).toUri();
         return ResponseEntity.created(location).body(createdRecord);
     }
 
@@ -66,8 +67,10 @@ public class PlatformRoleController {
     @Operation(summary = "查询角色列表", description = "分页查询角色列表")
     @GetMapping
     public PageResult<PlatformRoleVo> queryPage(@Validated PlatformRoleVo params,
-                                                @Parameter(description = "分页参数", example = "{\"page\": 0, \"size\": 20, \"sort\": \"updateTime,desc\"}")
-                                                @PageableDefault(size = 20, sort = "updateTime", direction = Sort.Direction.DESC) Pageable pageable) {
+                                                @Parameter(description = "分页参数", example = "{\"page\": 0, \"size\": " +
+                                                        "20, \"sort\": \"updateTime,desc\"}")
+                                                @PageableDefault(size = 20, sort = "updateTime", direction =
+                                                        Sort.Direction.DESC) Pageable pageable) {
         return platformRoleService.queryPage(params, pageable);
     }
 

@@ -39,7 +39,8 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
     private final SecurityContextLogoutHandler securityContextLogoutHandler = new SecurityContextLogoutHandler();
-    private final SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder.getContextHolderStrategy();
+    private final SecurityContextHolderStrategy securityContextHolderStrategy =
+            SecurityContextHolder.getContextHolderStrategy();
 
     public AuthController(PlatformUserService platformUserService, AuthenticationHelper authenticationHelper,
                           AuthenticationManager authenticationManager) {
@@ -55,7 +56,8 @@ public class AuthController {
      */
     @Operation(summary = "用户登录", description = "通过用户名和密码进行认证，成功后建立会话")
     @PostMapping("/login")
-    public void login(@Validated @RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
+    public void login(@Validated @RequestBody LoginRequest loginRequest, HttpServletRequest request,
+                      HttpServletResponse response) {
         // 使用提供的凭据创建未经身份认证的 UsernamePasswordAuthenticationToken
         UsernamePasswordAuthenticationToken authenticationToken = UsernamePasswordAuthenticationToken.unauthenticated(
                 loginRequest.getUsername(), loginRequest.getPassword());

@@ -4,9 +4,6 @@ import com.xiaozhanke.deploy.enums.UserStatusEnum;
 import com.xiaozhanke.deploy.model.entity.PlatformUser;
 import com.xiaozhanke.deploy.repository.PlatformUserRepository;
 import jakarta.annotation.PostConstruct;
-import java.time.LocalDateTime;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,6 +14,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 /**
  * 认证用户服务类
  *
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class SecurityUserService implements UserDetailsService {
 
+    private final PlatformUserRepository platformUserRepository;
     /**
      * 密码有效期（天数）。
      *
@@ -34,7 +36,6 @@ public class SecurityUserService implements UserDetailsService {
      */
     @Value("${app.security.password-validity-days:365}")
     private int passwordValidityDays;
-
     /**
      * 允许连续登录失败的最大次数。
      *
@@ -43,8 +44,6 @@ public class SecurityUserService implements UserDetailsService {
      */
     @Value("${app.security.max-failed-logins:5}")
     private int maxFailedLogins;
-
-    private final PlatformUserRepository platformUserRepository;
 
     public SecurityUserService(PlatformUserRepository platformUserRepository) {
         this.platformUserRepository = platformUserRepository;
@@ -75,7 +74,8 @@ public class SecurityUserService implements UserDetailsService {
         PlatformUser user = platformUserRepository.findWithRolesByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(String.format("用户 [%s] 未找到", username)));
 
-        Set<GrantedAuthority> authorities = user.getRoles().stream().map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName())).collect(Collectors.toSet());
+        Set<GrantedAuthority> authorities =
+                user.getRoles().stream().map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName())).collect(Collectors.toSet());
 
         // 用户启用状态
         boolean enabled = user.getStatus() == UserStatusEnum.ACTIVE || user.getStatus() == UserStatusEnum.INITIALIZED;
@@ -89,14 +89,15 @@ public class SecurityUserService implements UserDetailsService {
         // 密码未过期状态：passwordValidityDays <= 0 视为永不过期
         boolean credentialsNonExpired = isCredentialsNonExpired(user.getPasswordLastChangedTime());
 
-        return new SecurityUser(user.getUsername(), user.getDisplayName(), user.getPassword(), user.getPhone(), user.getEmail(), authorities, enabled, accountNonExpired, accountNonLocked, credentialsNonExpired);
+        return new SecurityUser(user.getUsername(), user.getDisplayName(), user.getPassword(), user.getPhone(),
+                user.getEmail(), authorities, enabled, accountNonExpired, accountNonLocked, credentialsNonExpired);
     }
 
     /**
      * 判断账户是否未被失败锁定。
      *
-     * @param status            账户状态
-     * @param failedLoginCount  当前连续失败次数
+     * @param status           账户状态
+     * @param failedLoginCount 当前连续失败次数
      * @return true 表示账户未被锁定
      */
     boolean isAccountNonLocked(UserStatusEnum status, int failedLoginCount) {

@@ -58,7 +58,8 @@ public class SshController {
     public ResponseEntity<String> connect(@Parameter(description = "服务器 Id", required = true) @RequestParam String serverId) {
         ServerRecordDto server = serverService.getServerDto(serverId);
         String sessionId = sshService.connect(server);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{sessionId}").buildAndExpand(sessionId).toUri();
+        URI location =
+                ServletUriComponentsBuilder.fromCurrentRequest().path("/{sessionId}").buildAndExpand(sessionId).toUri();
         return ResponseEntity.created(location).body(sessionId);
     }
 
@@ -84,7 +85,8 @@ public class SshController {
     @PostMapping("/sessions/{sessionId}/shell")
     public ResponseEntity<String> shellConnect(@Parameter(description = "会话 Id", required = true) @PathVariable String sessionId) {
         String channelId = sshService.addShellChannel(sessionId);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{channelId}").buildAndExpand(channelId).toUri();
+        URI location =
+                ServletUriComponentsBuilder.fromCurrentRequest().path("/{channelId}").buildAndExpand(channelId).toUri();
         return ResponseEntity.created(location).body(channelId);
     }
 

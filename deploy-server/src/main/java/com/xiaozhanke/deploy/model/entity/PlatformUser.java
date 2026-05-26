@@ -1,7 +1,7 @@
 package com.xiaozhanke.deploy.model.entity;
 
-import com.xiaozhanke.deploy.model.base.BasePo;
 import com.xiaozhanke.deploy.enums.UserStatusEnum;
+import com.xiaozhanke.deploy.model.base.BasePo;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,14 +16,15 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.Comment;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 用户

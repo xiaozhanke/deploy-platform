@@ -1,8 +1,9 @@
 package com.xiaozhanke.deploy.config;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
 import java.util.List;
 import java.util.Locale;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * 文件上传白名单配置。
@@ -25,10 +26,10 @@ public record FileStorageProperties(List<String> allowedExtensions) {
         allowedExtensions = allowedExtensions == null
                 ? List.of()
                 : allowedExtensions.stream()
-                        .filter(ext -> ext != null && !ext.isBlank())
-                        .map(ext -> ext.trim().toLowerCase(Locale.ROOT))
-                        .map(ext -> ext.startsWith(".") ? ext : "." + ext)
-                        .toList();
+                .filter(ext -> ext != null && !ext.isBlank())
+                .map(ext -> ext.trim().toLowerCase(Locale.ROOT))
+                .map(ext -> ext.startsWith(".") ? ext : "." + ext)
+                .toList();
     }
 
     /**

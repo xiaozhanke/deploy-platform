@@ -72,6 +72,34 @@ public class FileStorageService {
     }
 
     /**
+     * 校验并提取干净的上传文件名。
+     *
+     * <p>浏览器在不同 OS / 实现下可能把整条本地路径塞进 {@code originalFilename}（典型如老版 IE）。
+     * 先 {@link StringUtils#cleanPath} 规范化 {@code ..}，再 {@link StringUtils#getFilename}
+     * 剥离任何残留的目录前缀，最后兜底拒绝仍含 {@code ..}、{@code /}、{@code \\} 或控制字符的输入。
+     *
+     * @param originalFilename 浏览器提交的原始文件名
+     * @return 仅包含纯文件名部分的安全名称
+     */
+    static String sanitizeUploadedFileName(String originalFilename) {
+        if (!StringUtils.hasText(originalFilename)) {
+            throw new InvalidOperationException("文件名不能为空");
+        }
+        String cleaned = StringUtils.cleanPath(originalFilename);
+        String fileName = StringUtils.getFilename(cleaned);
+        if (!StringUtils.hasText(fileName)
+                || fileName.contains("..")
+                || fileName.indexOf('/') >= 0
+                || fileName.indexOf('\\') >= 0
+                || fileName.indexOf('\0') >= 0
+                || fileName.indexOf('\n') >= 0
+                || fileName.indexOf('\r') >= 0) {
+            throw new InvalidOperationException(String.format("非法文件名: %s", originalFilename));
+        }
+        return fileName;
+    }
+
+    /**
      * 保存文件并保存记录
      *
      * @param file       文件
@@ -185,7 +213,8 @@ public class FileStorageService {
             // 内容类型
             String contentType = fileRecord.getContentType();
             // 文件名
-            ContentDisposition contentDisposition = ContentDisposition.attachment().filename(fileRecord.getFileName(), StandardCharsets.UTF_8).build();
+            ContentDisposition contentDisposition = ContentDisposition.attachment().filename(fileRecord.getFileName()
+                    , StandardCharsets.UTF_8).build();
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
                     .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString()).body(resource);
@@ -321,34 +350,6 @@ public class FileStorageService {
             pathBuilder.append(version).append("/");
         }
         return pathBuilder.toString();
-    }
-
-    /**
-     * 校验并提取干净的上传文件名。
-     *
-     * <p>浏览器在不同 OS / 实现下可能把整条本地路径塞进 {@code originalFilename}（典型如老版 IE）。
-     * 先 {@link StringUtils#cleanPath} 规范化 {@code ..}，再 {@link StringUtils#getFilename}
-     * 剥离任何残留的目录前缀，最后兜底拒绝仍含 {@code ..}、{@code /}、{@code \\} 或控制字符的输入。
-     *
-     * @param originalFilename 浏览器提交的原始文件名
-     * @return 仅包含纯文件名部分的安全名称
-     */
-    static String sanitizeUploadedFileName(String originalFilename) {
-        if (!StringUtils.hasText(originalFilename)) {
-            throw new InvalidOperationException("文件名不能为空");
-        }
-        String cleaned = StringUtils.cleanPath(originalFilename);
-        String fileName = StringUtils.getFilename(cleaned);
-        if (!StringUtils.hasText(fileName)
-                || fileName.contains("..")
-                || fileName.indexOf('/') >= 0
-                || fileName.indexOf('\\') >= 0
-                || fileName.indexOf('\0') >= 0
-                || fileName.indexOf('\n') >= 0
-                || fileName.indexOf('\r') >= 0) {
-            throw new InvalidOperationException(String.format("非法文件名: %s", originalFilename));
-        }
-        return fileName;
     }
 
     /**

@@ -1,7 +1,7 @@
 package com.xiaozhanke.deploy.security.exception;
 
-import com.xiaozhanke.deploy.model.response.RestErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xiaozhanke.deploy.model.response.RestErrorResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,11 +30,13 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
     }
 
     @Override
-    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
+    public void handle(HttpServletRequest request, HttpServletResponse response,
+                       AccessDeniedException accessDeniedException) throws IOException, ServletException {
         response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        RestErrorResponse errorResponse = RestErrorResponse.of(HttpStatus.FORBIDDEN.value(), "PERMISSION_DENIED", "您没有权限访问此资源");
+        RestErrorResponse errorResponse = RestErrorResponse.of(HttpStatus.FORBIDDEN.value(), "PERMISSION_DENIED",
+                "您没有权限访问此资源");
         PrintWriter writer = response.getWriter();
         writer.write(objectMapper.writeValueAsString(errorResponse));
         writer.flush();

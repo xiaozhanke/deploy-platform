@@ -34,7 +34,8 @@ public class WebSocketSshController {
      * @param message   WebSocket 消息体，包含要执行的命令 command
      */
     @MessageMapping("/ssh/sessions/{sessionId}/shell/{channelId}")
-    public void handleShellCommand(@DestinationVariable String sessionId, @DestinationVariable String channelId, @Validated SshShellMessage message) {
+    public void handleShellCommand(@DestinationVariable String sessionId, @DestinationVariable String channelId,
+                                   @Validated SshShellMessage message) {
         String command = message.getCommand();
         String taskId = message.getTaskId();
         sshService.executeShellCommand(sessionId, channelId, taskId, command, new CommandResultCallback() {
@@ -48,7 +49,8 @@ public class WebSocketSshController {
             @Override
             public void onFailure(String sessionId, String channelId, String error, int exitCode) {
                 // TODO: 持久化执行结果
-                log.info("命令执行失败: 会话 [{}] 通道 [{}] 命令 '{}', 退出码[{}], 执行输出:\n{}", sessionId, channelId, command, exitCode, error);
+                log.info("命令执行失败: 会话 [{}] 通道 [{}] 命令 '{}', 退出码[{}], 执行输出:\n{}", sessionId, channelId, command,
+                        exitCode, error);
             }
         });
     }

@@ -1,7 +1,7 @@
 package com.xiaozhanke.deploy.model.entity;
 
-import com.xiaozhanke.deploy.model.base.BasePo;
 import com.xiaozhanke.deploy.enums.SshAuthTypeEnum;
+import com.xiaozhanke.deploy.model.base.BasePo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

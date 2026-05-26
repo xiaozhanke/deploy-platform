@@ -123,7 +123,8 @@ public class PlatformRoleService {
      * @return 角色 PO
      */
     private PlatformRole getRole(String id) {
-        return roleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(String.format("角色 [%s] 不存在", id)));
+        return roleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(String.format("角色 [%s] " +
+                "不存在", id)));
     }
 
     /**

@@ -1,7 +1,7 @@
 package com.xiaozhanke.deploy.security.exception;
 
-import com.xiaozhanke.deploy.model.response.RestErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xiaozhanke.deploy.model.response.RestErrorResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,11 +30,13 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
     }
 
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+    public void commence(HttpServletRequest request, HttpServletResponse response,
+                         AuthenticationException authException) throws IOException, ServletException {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        RestErrorResponse errorResponse = RestErrorResponse.of(HttpStatus.UNAUTHORIZED.value(), "UNAUTHENTICATED", "认证失败或凭据已过期，请重新登录");
+        RestErrorResponse errorResponse = RestErrorResponse.of(HttpStatus.UNAUTHORIZED.value(), "UNAUTHENTICATED",
+                "认证失败或凭据已过期，请重新登录");
         PrintWriter writer = response.getWriter();
         writer.write(objectMapper.writeValueAsString(errorResponse));
         writer.flush();

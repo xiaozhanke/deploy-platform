@@ -1,8 +1,8 @@
 package com.xiaozhanke.deploy.model.vo;
 
-import com.xiaozhanke.deploy.model.base.BaseVo;
 import com.xiaozhanke.deploy.enums.ArchitectureEnum;
 import com.xiaozhanke.deploy.enums.FileScopeEnum;
+import com.xiaozhanke.deploy.model.base.BaseVo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

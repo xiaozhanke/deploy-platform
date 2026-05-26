@@ -27,7 +27,8 @@ import org.springframework.http.MediaType;
  */
 @Configuration
 @OpenAPIDefinition(
-        info = @Info(title = "${spring.application.name}", description = "管理端部署工具后端 API", version = "${spring.application.version}"),
+        info = @Info(title = "${spring.application.name}", description = "管理端部署工具后端 API", version = "${spring" +
+                ".application.version}"),
         security = @SecurityRequirement(name = "Bearer Authentication"))
 @SecurityScheme(
         name = "Bearer Authentication",
@@ -45,7 +46,8 @@ public class OpenApiConfig {
         return openApi -> {
             // 统一定义错误响应结构，避免每个 API 需要手动编写 @ApiResponse
             // 主动解析 RestErrorResponse
-            ResolvedSchema resolvedSchema = ModelConverters.getInstance().resolveAsResolvedSchema(new AnnotatedType(RestErrorResponse.class));
+            ResolvedSchema resolvedSchema =
+                    ModelConverters.getInstance().resolveAsResolvedSchema(new AnnotatedType(RestErrorResponse.class));
             // 手动注册到 OpenAPI 的 components/schemas
             if (resolvedSchema.schema != null) {
                 openApi.getComponents().addSchemas(resolvedSchema.schema.getName(), resolvedSchema.schema);
@@ -63,7 +65,8 @@ public class OpenApiConfig {
             // 定义 404 错误响应的标准格式
             ApiResponse notFoundResponse = createErrorResponse(HttpStatus.NOT_FOUND, "NOT_FOUND", "请求的资源不存在");
             // 定义 500 错误响应的标准格式
-            ApiResponse internalErrorResponse = createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "服务器内部错误");
+            ApiResponse internalErrorResponse = createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "INTERNAL_SERVER_ERROR", "服务器内部错误");
             // 遍历所有路径，自动添加响应示例
             openApi.getPaths().values().forEach(pathItem -> pathItem.readOperations().forEach(operation -> {
                 ApiResponses responses = operation.getResponses();
@@ -71,7 +74,8 @@ public class OpenApiConfig {
                 responses.addApiResponse(String.valueOf(HttpStatus.UNAUTHORIZED.value()), unauthorizedResponse);
                 responses.addApiResponse(String.valueOf(HttpStatus.FORBIDDEN.value()), forbiddenResponse);
                 responses.addApiResponse(String.valueOf(HttpStatus.NOT_FOUND.value()), notFoundResponse);
-                responses.addApiResponse(String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()), internalErrorResponse);
+                responses.addApiResponse(String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()),
+                        internalErrorResponse);
             }));
         };
     }

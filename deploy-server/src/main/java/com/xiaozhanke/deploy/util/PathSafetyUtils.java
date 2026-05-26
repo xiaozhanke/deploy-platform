@@ -16,7 +16,8 @@ import org.springframework.util.StringUtils;
  *       或控制字符，避免 {@code "remoteDir/" + name} 跳出目标目录</li>
  *   <li>{@link #safeJoin(String, String)} —— 把已校验的 baseDir 和 fileName 拼成 POSIX 路径，
  *       兜底校验拼接结果仍在 baseDir 之内，防止 baseDir 自身被植入 {@code ..} 段</li>
- *   <li>{@link #assertNoTraversalSegments(String)} —— prepareRemoteDirectory 这种逐段 mkdir 的场景必须先确认整条路径没有 {@code ..} 段</li>
+ *   <li>{@link #assertNoTraversalSegments(String)} —— prepareRemoteDirectory 这种逐段 mkdir 的场景必须先确认整条路径没有 {@code ..}
+ *   段</li>
  * </ul>
  *
  * @author xiaozhanke

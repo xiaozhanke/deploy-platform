@@ -1,7 +1,7 @@
 package com.xiaozhanke.deploy.core.websocket;
 
-import com.xiaozhanke.deploy.enums.FileOperationEnum;
 import com.jcraft.jsch.SftpProgressMonitor;
+import com.xiaozhanke.deploy.enums.FileOperationEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
@@ -21,7 +21,8 @@ public class WebSocketSftpProgressMonitor implements SftpProgressMonitor {
 
     private long transferred;
 
-    public WebSocketSftpProgressMonitor(String sessionId, long fileSize, SimpMessagingTemplate messagingTemplate, FileOperationEnum operationType) {
+    public WebSocketSftpProgressMonitor(String sessionId, long fileSize, SimpMessagingTemplate messagingTemplate,
+                                        FileOperationEnum operationType) {
         this.sessionId = sessionId;
         this.fileSize = fileSize;
         this.messagingTemplate = messagingTemplate;
@@ -31,14 +32,16 @@ public class WebSocketSftpProgressMonitor implements SftpProgressMonitor {
     @Override
     public void init(int op, String src, String dest, long max) {
         this.transferred = 0;
-        log.info("会话 [{}] SFTP 开始文件{}传输: {} -> {}, 总大小: {} 字节", sessionId, operationType.getDescription(), src, dest, fileSize);
+        log.info("会话 [{}] SFTP 开始文件{}传输: {} -> {}, 总大小: {} 字节", sessionId, operationType.getDescription(), src, dest,
+                fileSize);
     }
 
     @Override
     public boolean count(long count) {
         transferred += count;
         int progress = (int) ((transferred * 100) / fileSize);
-        messagingTemplate.convertAndSend(String.format("/topic/ssh/sessions/%s/sftp/%s", this.sessionId, operationType.name().toLowerCase()), progress);
+        messagingTemplate.convertAndSend(String.format("/topic/ssh/sessions/%s/sftp/%s", this.sessionId,
+                operationType.name().toLowerCase()), progress);
         return true;
     }
 

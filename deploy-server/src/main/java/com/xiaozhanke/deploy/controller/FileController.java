@@ -56,7 +56,8 @@ public class FileController {
      */
     @Operation(summary = "查询文件记录列表", description = "查询所有文件记录列表")
     @GetMapping("/list")
-    public List<FileRecordVo> queryList(FileParams params, @Parameter(description = "排序参数", example = "{\"sort\": \"updateTime,desc\"}") Sort sort) {
+    public List<FileRecordVo> queryList(FileParams params, @Parameter(description = "排序参数", example = "{\"sort\": " +
+            "\"updateTime,desc\"}") Sort sort) {
         return fileStorageService.queryList(params, sort);
     }
 
@@ -70,8 +71,10 @@ public class FileController {
     @Operation(summary = "分页查询文件记录列表", description = "分页查询文件记录列表")
     @GetMapping("/page")
     public PageResult<FileRecordVo> queryPage(FileParams params,
-                                              @Parameter(description = "分页参数", example = "{\"page\": 0, \"size\": 20, \"sort\": \"updateTime,desc\"}")
-                                              @PageableDefault(size = 20, sort = "updateTime", direction = Sort.Direction.DESC) Pageable pageable) {
+                                              @Parameter(description = "分页参数", example = "{\"page\": 0, \"size\": 20," +
+                                                      " \"sort\": \"updateTime,desc\"}")
+                                              @PageableDefault(size = 20, sort = "updateTime", direction =
+                                                      Sort.Direction.DESC) Pageable pageable) {
         return fileStorageService.queryPage(params, pageable);
     }
 
@@ -123,7 +126,8 @@ public class FileController {
     public ResponseEntity<FileRecordVo> uploadFile(@Parameter(description = "文件", required = true) @RequestParam MultipartFile file,
                                                    @ParameterObject @ModelAttribute FileParams params) {
         FileRecordVo storedFile = fileStorageService.storeFile(file, params);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(storedFile.getId()).toUri();
+        URI location =
+                ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(storedFile.getId()).toUri();
         return ResponseEntity.created(location).body(storedFile);
     }
 

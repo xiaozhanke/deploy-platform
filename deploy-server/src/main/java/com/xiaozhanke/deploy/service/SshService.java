@@ -1,5 +1,14 @@
 package com.xiaozhanke.deploy.service;
 
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.ChannelShell;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpATTRS;
+import com.jcraft.jsch.SftpException;
 import com.xiaozhanke.deploy.constant.SshConstants;
 import com.xiaozhanke.deploy.core.ssh.CommandResultCallback;
 import com.xiaozhanke.deploy.core.ssh.ShellCommandTask;
@@ -11,15 +20,6 @@ import com.xiaozhanke.deploy.model.dto.ServerRecordDto;
 import com.xiaozhanke.deploy.model.dto.SshExecResult;
 import com.xiaozhanke.deploy.model.request.ServerParams;
 import com.xiaozhanke.deploy.util.PathSafetyUtils;
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.ChannelShell;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SftpATTRS;
-import com.jcraft.jsch.SftpException;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -93,14 +93,16 @@ public class SshService {
         try {
             log.info("开始 SSH 连接到服务器 {}@{} -p {}", server.getUsername(), server.getHost(), server.getPort());
             Session session = createSession(server);
-            int connectTimeout = server.getConnectionTimeout() != null ? server.getConnectionTimeout() : SshConstants.DEFAULT_CONNECT_TIMEOUT;
+            int connectTimeout = server.getConnectionTimeout() != null ? server.getConnectionTimeout() :
+                    SshConstants.DEFAULT_CONNECT_TIMEOUT;
             session.connect(connectTimeout);
             String sessionId = UUID.randomUUID().toString();
             sessions.put(sessionId, session);
             log.info("SSH 连接成功, 连接会话 Id: {}", sessionId);
             return sessionId;
         } catch (JSchException e) {
-            String errorMessage = String.format("SSH 连接到服务器 %s@%s -p%s 失败: %s", server.getUsername(), server.getHost(), server.getPort(), e.getMessage());
+            String errorMessage = String.format("SSH 连接到服务器 %s@%s -p%s 失败: %s", server.getUsername(),
+                    server.getHost(), server.getPort(), e.getMessage());
             throw new BusinessException(errorMessage, e);
         } finally {
             sessionLock.unlock();
@@ -121,7 +123,8 @@ public class SshService {
             ServerRecordDto serverRecordDto = new ServerRecordDto();
             BeanUtils.copyProperties(params, serverRecordDto);
             testSession = createSession(serverRecordDto);
-            int connectTimeout = params.getConnectionTimeout() != null ? params.getConnectionTimeout() : SshConstants.DEFAULT_CONNECT_TIMEOUT;
+            int connectTimeout = params.getConnectionTimeout() != null ? params.getConnectionTimeout() :
+                    SshConstants.DEFAULT_CONNECT_TIMEOUT;
             testSession.connect(connectTimeout);
             log.info("测试 SSH 连接成功, 连接到服务器 {}@{} -p {}", params.getUsername(), params.getHost(), params.getPort());
             return true;
@@ -315,10 +318,12 @@ public class SshService {
             exitStatus = channel.getExitStatus();
             log.info("会话 [{}] Exec 通道 [{}] 命令 '{}' 执行完成, 退出状态码: {}", sessionId, channel.getId(), command, exitStatus);
         } catch (JSchException e) {
-            String errorMessage = String.format("会话 [%s] 创建或连接 '%s' 命令的 Exec 通道时发生异常: %s", sessionId, command, e.getMessage());
+            String errorMessage = String.format("会话 [%s] 创建或连接 '%s' 命令的 Exec 通道时发生异常: %s", sessionId, command,
+                    e.getMessage());
             throw new BusinessException(errorMessage, e);
         } catch (IOException e) {
-            String errorMessage = String.format("会话 [%s] Exec 通道读取命令 '%s' 输出时发生异常: %s", sessionId, command, e.getMessage());
+            String errorMessage = String.format("会话 [%s] Exec 通道读取命令 '%s' 输出时发生异常: %s", sessionId, command,
+                    e.getMessage());
             throw new BusinessException(errorMessage, e);
         } finally {
             if (channel != null) {
@@ -327,7 +332,8 @@ public class SshService {
             }
         }
         // 返回命令执行结果，包括标准输出和错误输出
-        return new SshExecResult(exitStatus, outputBuffer.append(System.lineSeparator()).append(errorBuffer).toString());
+        return new SshExecResult(exitStatus,
+                outputBuffer.append(System.lineSeparator()).append(errorBuffer).toString());
     }
 
     /**
@@ -341,7 +347,8 @@ public class SshService {
      * @param callback  处理命令成功或失败的回调
      * @throws BusinessException 如果会话或通道无效
      */
-    public void executeShellCommand(String sessionId, String channelId, String taskId, String command, CommandResultCallback callback) {
+    public void executeShellCommand(String sessionId, String channelId, String taskId, String command,
+                                    CommandResultCallback callback) {
         log.info("请求在会话[{}] 通道 [{}] 上执行命令: '{}'", sessionId, channelId, command);
         // 检查会话存在且连接
         getSession(sessionId);
@@ -364,12 +371,14 @@ public class SshService {
         log.debug("为会话 [{}] 通道 [{}] 创建命令任务 [{}]", sessionId, channelId, task.getTaskId());
         boolean added = queue.offer(task);
         if (!added) {
-            String errorMessage = String.format("无法将命令任务 [%s] 添加到会话 [%s] 通道[%s] 的命令执行队列中 (队列可能已满或异常)", task.getTaskId(), sessionId, channelId);
+            String errorMessage = String.format("无法将命令任务 [%s] 添加到会话 [%s] 通道[%s] 的命令执行队列中 (队列可能已满或异常)",
+                    task.getTaskId(), sessionId, channelId);
             callback.onFailure(sessionId, channelId, errorMessage, -1);
             throw new BusinessException(errorMessage);
         }
 
-        log.info("命令任务 [{}] 已添加到 会话 [{}] 通道[{}] 的命令执行队列中, 当前队列大小: {}", task.getTaskId(), sessionId, channelId, queue.size());
+        log.info("命令任务 [{}] 已添加到 会话 [{}] 通道[{}] 的命令执行队列中, 当前队列大小: {}", task.getTaskId(), sessionId, channelId,
+                queue.size());
 
         // 尝试处理队列中的下一个命令
         processNextCommand(sessionId, channelId, channel);
@@ -389,14 +398,16 @@ public class SshService {
         PathSafetyUtils.assertSafeFileName(originalFilename);
         PathSafetyUtils.assertNoTraversalSegments(remoteDir);
 
-        String operationDesc = String.format("上传文件 '%s' -> '%s'", localPath, PathSafetyUtils.safeJoin(remoteDir, originalFilename));
+        String operationDesc = String.format("上传文件 '%s' -> '%s'", localPath, PathSafetyUtils.safeJoin(remoteDir,
+                originalFilename));
         executeSftpOperation(sessionId, operationDesc, channel -> {
             String targetDir = prepareRemoteDirectory(channel, remoteDir);
             String remoteFilePath = PathSafetyUtils.safeJoin(targetDir, originalFilename);
 
             try (InputStream in = new FileInputStream(localFile)) {
                 channel.put(in, remoteFilePath,
-                        new WebSocketSftpProgressMonitor(sessionId, localFile.length(), messagingTemplate, FileOperationEnum.UPLOAD),
+                        new WebSocketSftpProgressMonitor(sessionId, localFile.length(), messagingTemplate,
+                                FileOperationEnum.UPLOAD),
                         ChannelSftp.OVERWRITE);
             }
         });
@@ -417,13 +428,15 @@ public class SshService {
         PathSafetyUtils.assertSafeFileName(originalFilename);
         PathSafetyUtils.assertNoTraversalSegments(remoteDir);
 
-        String operationDesc = String.format("上传文件 '%s' -> '%s'", originalFilename, PathSafetyUtils.safeJoin(remoteDir, originalFilename));
+        String operationDesc = String.format("上传文件 '%s' -> '%s'", originalFilename,
+                PathSafetyUtils.safeJoin(remoteDir, originalFilename));
         executeSftpOperation(sessionId, operationDesc, channel -> {
             String targetDir = prepareRemoteDirectory(channel, remoteDir);
             String remoteFilePath = PathSafetyUtils.safeJoin(targetDir, originalFilename);
 
             try (InputStream in = file.getInputStream()) {
-                channel.put(in, remoteFilePath, new WebSocketSftpProgressMonitor(sessionId, file.getSize(), messagingTemplate, FileOperationEnum.UPLOAD), ChannelSftp.OVERWRITE);
+                channel.put(in, remoteFilePath, new WebSocketSftpProgressMonitor(sessionId, file.getSize(),
+                        messagingTemplate, FileOperationEnum.UPLOAD), ChannelSftp.OVERWRITE);
             }
         });
     }
@@ -462,7 +475,8 @@ public class SshService {
             String fullPath = PathSafetyUtils.safeJoin(targetDir, fileName);
             try (InputStream in = new ByteArrayInputStream(bytes)) {
                 channel.put(in, fullPath,
-                        new WebSocketSftpProgressMonitor(sessionId, bytes.length, messagingTemplate, FileOperationEnum.UPLOAD),
+                        new WebSocketSftpProgressMonitor(sessionId, bytes.length, messagingTemplate,
+                                FileOperationEnum.UPLOAD),
                         ChannelSftp.OVERWRITE);
             }
         });
@@ -491,7 +505,8 @@ public class SshService {
             }
         });
 
-        ContentDisposition contentDisposition = ContentDisposition.attachment().filename(remoteFileName, StandardCharsets.UTF_8).build();
+        ContentDisposition contentDisposition = ContentDisposition.attachment().filename(remoteFileName,
+                StandardCharsets.UTF_8).build();
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
@@ -517,7 +532,8 @@ public class SshService {
             long fileSize = getRemoteFileSize(channel, remotePath);
 
             try (OutputStream out = new FileOutputStream(localFile)) {
-                channel.get(remotePath, out, new WebSocketSftpProgressMonitor(sessionId, fileSize, messagingTemplate, FileOperationEnum.DOWNLOAD));
+                channel.get(remotePath, out, new WebSocketSftpProgressMonitor(sessionId, fileSize, messagingTemplate,
+                        FileOperationEnum.DOWNLOAD));
             }
         });
     }
@@ -689,7 +705,8 @@ public class SshService {
             throw new BusinessException(errorMessage);
         }
         if (!(channel instanceof ChannelShell)) {
-            String errorMessage = String.format("通道 [%s] 为 %s 通道, 需要 Shell 通道", channelId, channel.getClass().getName());
+            String errorMessage = String.format("通道 [%s] 为 %s 通道, 需要 Shell 通道", channelId,
+                    channel.getClass().getName());
             throw new BusinessException(errorMessage);
         }
         if (!channel.isConnected() || channel.isClosed()) {
@@ -729,10 +746,12 @@ public class SshService {
                     return;
                 }
 
-                log.debug("会话 [{}] 通道 [{}] 检查队首任务 [{}] 状态: commandSent={}, completed={}", sessionId, channelId, currentTask.getTaskId(), currentTask.isCommandSent(), currentTask.isCompleted());
+                log.debug("会话 [{}] 通道 [{}] 检查队首任务 [{}] 状态: commandSent={}, completed={}", sessionId, channelId,
+                        currentTask.getTaskId(), currentTask.isCommandSent(), currentTask.isCompleted());
 
                 if (currentTask.isCompleted()) {
-                    log.debug("会话 [{}] 通道 [{}] 队首任务 [{}] 已完成, 但仍在队列中, 将移除", sessionId, channelId, currentTask.getTaskId());
+                    log.debug("会话 [{}] 通道 [{}] 队首任务 [{}] 已完成, 但仍在队列中, 将移除", sessionId, channelId,
+                            currentTask.getTaskId());
                     queue.poll();
                     continue;
                 }
@@ -767,11 +786,13 @@ public class SshService {
                     log.info("已成功向 会话 [{}] 通道 [{}] 发送命令: '{}'", sessionId, channelId, commandToSend);
                     return;
                 } catch (IOException e) {
-                    log.error("向会话 [{}] 通道 [{}] 发送命令 '{}' 时发生 IO 异常: {}", sessionId, channelId, currentTask.getFinalCommand(), e.getMessage(), e);
+                    log.error("向会话 [{}] 通道 [{}] 发送命令 '{}' 时发生 IO 异常: {}", sessionId, channelId,
+                            currentTask.getFinalCommand(), e.getMessage(), e);
                     failAndRemoveTask(sessionId, channelId, queue, currentTask, "发送命令失败: " + e.getMessage());
                     // 继续尝试下一个命令
                 } catch (Exception e) {
-                    log.error("向会话 [{}] 通道 [{}] 发送命令 '{}' 时发生意外异常: {}", sessionId, channelId, currentTask.getFinalCommand(), e.getMessage(), e);
+                    log.error("向会话 [{}] 通道 [{}] 发送命令 '{}' 时发生意外异常: {}", sessionId, channelId,
+                            currentTask.getFinalCommand(), e.getMessage(), e);
                     failAndRemoveTask(sessionId, channelId, queue, currentTask, "发送命令时发生意外错误: " + e.getMessage());
                     // 继续尝试下一个命令
                 }
@@ -782,7 +803,8 @@ public class SshService {
     /**
      * 辅助方法：标记任务失败并从队列移除
      */
-    private void failAndRemoveTask(String sessionId, String channelId, Queue<ShellCommandTask> queue, ShellCommandTask task, String errorMessage) {
+    private void failAndRemoveTask(String sessionId, String channelId, Queue<ShellCommandTask> queue,
+                                   ShellCommandTask task, String errorMessage) {
         // 移除任务
         queue.poll();
         try {
@@ -795,7 +817,8 @@ public class SshService {
     /**
      * 辅助方法：标记队列中所有待处理任务为失败
      */
-    private void failAllPendingCommands(String sessionId, String channelId, Queue<ShellCommandTask> queue, String errorMessage) {
+    private void failAllPendingCommands(String sessionId, String channelId, Queue<ShellCommandTask> queue,
+                                        String errorMessage) {
         ShellCommandTask taskToFail;
         while ((taskToFail = queue.poll()) != null) {
             log.debug("标记任务 [{}] 为失败 ({})", taskToFail.getTaskId(), errorMessage);
@@ -838,7 +861,8 @@ public class SshService {
                     // 通过 WebSocket 推送输出内容
                     String cleanedChunk = chunk.replaceAll(SshConstants.EXIT_CODE_AND_COMMAND_REGEX, "");
                     log.info("会话 [{}] 通道 [{}] 往 WebSocket 订阅频道推送终端输出内容: {}", sessionId, channelId, cleanedChunk);
-                    messagingTemplate.convertAndSend(String.format("/topic/ssh/sessions/%s/shell/%s", sessionId, channelId), cleanedChunk);
+                    messagingTemplate.convertAndSend(String.format("/topic/ssh/sessions/%s/shell/%s", sessionId,
+                            channelId), cleanedChunk);
 
                     // 检测到命令结束标志时处理结果
                     Matcher matcher = Pattern.compile(SshConstants.EXIT_CODE_RESULT_REGEX).matcher(output);
@@ -898,7 +922,8 @@ public class SshService {
                 return;
             }
             if (completedTask.isCompleted()) {
-                log.debug("处理命令结果, 但队首任务 TaskId: {} 已标记为完成！可能重复检测到标记 会话 [{}] 通道 [{}] 忽略此次处理 ", taskId, sessionId, channelId);
+                log.debug("处理命令结果, 但队首任务 TaskId: {} 已标记为完成！可能重复检测到标记 会话 [{}] 通道 [{}] 忽略此次处理 ", taskId, sessionId,
+                        channelId);
                 return;
             }
 
@@ -907,7 +932,8 @@ public class SshService {
             // 解析退出码
             int exitCode = parseExitCode(output);
 
-            log.info("会话 [{}] 通道 [{}] 命令 '{}' 执行完成, 退出码: {}", sessionId, channelId, completedTask.getFinalCommand(), exitCode);
+            log.info("会话 [{}] 通道 [{}] 命令 '{}' 执行完成, 退出码: {}", sessionId, channelId, completedTask.getFinalCommand(),
+                    exitCode);
             log.debug("原始输出(带标记): {}", output);
             log.debug("清理后输出: {}", cleanedOutput);
 
@@ -924,10 +950,12 @@ public class SshService {
                     completedTask.getCallback().onFailure(sessionId, channelId, cleanedOutput, exitCode);
                 }
                 log.info("会话 [{}] 通道 [{}] 任务 [{}] 往 WebSocket 订阅频道推送运行结果: {}", sessionId, channelId, taskId, exitCode);
-                messagingTemplate.convertAndSend(String.format("/topic/ssh/sessions/%s/shell/%s/task/%s", sessionId, channelId, taskId), exitCode);
+                messagingTemplate.convertAndSend(String.format("/topic/ssh/sessions/%s/shell/%s/task/%s", sessionId,
+                        channelId, taskId), exitCode);
                 log.info("已调用 会话 [{}] 通道 [{}] 命令 '{}' 的回调函数", sessionId, channelId, completedTask.getFinalCommand());
             } catch (Exception e) {
-                log.error("调用 会话 [{}] 通道 [{}] 命令 '{}' 回调函数时出错: {}", sessionId, channelId, completedTask.getFinalCommand(), e.getMessage(), e);
+                log.error("调用 会话 [{}] 通道 [{}] 命令 '{}' 回调函数时出错: {}", sessionId, channelId,
+                        completedTask.getFinalCommand(), e.getMessage(), e);
             }
             // 触发队列中的下一个命令的处理
             processNextCommand(sessionId, channelId, channel);
@@ -1014,15 +1042,18 @@ public class SshService {
             String errorMessage = String.format("会话 [%s] 打开或连接 SFTP 通道失败: %s", sessionId, e.getMessage());
             throw new BusinessException(errorMessage, e);
         } catch (SftpException e) {
-            String errorMessage = String.format("会话 [%s] SFTP 操作 '%s' 失败: %s", sessionId, operationDesc, e.getMessage());
+            String errorMessage = String.format("会话 [%s] SFTP 操作 '%s' 失败: %s", sessionId, operationDesc,
+                    e.getMessage());
             throw new BusinessException(errorMessage, e);
         } catch (IOException e) {
             // 主要来自文件流操作
-            String errorMessage = String.format("会话 [%s] SFTP 操作 '%s' 期间发生 IO 错误: %s", sessionId, operationDesc, e.getMessage());
+            String errorMessage = String.format("会话 [%s] SFTP 操作 '%s' 期间发生 IO 错误: %s", sessionId, operationDesc,
+                    e.getMessage());
             throw new BusinessException(errorMessage, e);
         } catch (Exception e) {
             // 捕获 SftpOperation.execute(channel) 中可能抛出的其他异常
-            String errorMessage = String.format("会话 [%s] SFTP 操作 '%s' 期间发生意外错误: %s", sessionId, operationDesc, e.getMessage());
+            String errorMessage = String.format("会话 [%s] SFTP 操作 '%s' 期间发生意外错误: %s", sessionId, operationDesc,
+                    e.getMessage());
             throw new BusinessException(errorMessage, e);
         } finally {
             if (channel != null) {
@@ -1031,34 +1062,6 @@ public class SshService {
                 }
                 log.debug("会话 [{}] SFTP 通道 [{}] 已断开", sessionId, channel.getId());
             }
-        }
-    }
-
-    /**
-     * SFTP操作函数式接口
-     */
-    @FunctionalInterface
-    private interface SftpOperation {
-        /**
-         * 在提供的 SFTP 通道上执行操作
-         *
-         * @param channel 已连接的 ChannelSftp 实例
-         * @throws Exception 如果操作失败
-         */
-        void execute(ChannelSftp channel) throws Exception;
-    }
-
-    /**
-     * 通道键对象, 用于标识唯一的通道
-     */
-    @EqualsAndHashCode
-    private static class ChannelKey {
-        private final String sessionId;
-        private final String channelId;
-
-        private ChannelKey(String sessionId, String channelId) {
-            this.sessionId = sessionId;
-            this.channelId = channelId;
         }
     }
 
@@ -1190,6 +1193,34 @@ public class SshService {
         } finally {
             // 确保断开连接
             disconnect(sessionId);
+        }
+    }
+
+    /**
+     * SFTP操作函数式接口
+     */
+    @FunctionalInterface
+    private interface SftpOperation {
+        /**
+         * 在提供的 SFTP 通道上执行操作
+         *
+         * @param channel 已连接的 ChannelSftp 实例
+         * @throws Exception 如果操作失败
+         */
+        void execute(ChannelSftp channel) throws Exception;
+    }
+
+    /**
+     * 通道键对象, 用于标识唯一的通道
+     */
+    @EqualsAndHashCode
+    private static class ChannelKey {
+        private final String sessionId;
+        private final String channelId;
+
+        private ChannelKey(String sessionId, String channelId) {
+            this.sessionId = sessionId;
+            this.channelId = channelId;
         }
     }
 

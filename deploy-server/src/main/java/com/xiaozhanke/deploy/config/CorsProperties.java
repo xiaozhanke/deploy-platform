@@ -1,7 +1,8 @@
 package com.xiaozhanke.deploy.config;
 
-import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import java.util.List;
 
 /**
  * CORS 与 WebSocket 跨域允许列表配置。

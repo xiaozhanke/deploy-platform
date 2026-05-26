@@ -1,8 +1,8 @@
 package com.xiaozhanke.deploy.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.xiaozhanke.deploy.model.base.BaseDto;
 import com.xiaozhanke.deploy.enums.SshAuthTypeEnum;
+import com.xiaozhanke.deploy.model.base.BaseDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

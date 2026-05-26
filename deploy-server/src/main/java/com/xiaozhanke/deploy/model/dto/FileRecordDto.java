@@ -1,8 +1,8 @@
 package com.xiaozhanke.deploy.model.dto;
 
-import com.xiaozhanke.deploy.model.base.BaseDto;
 import com.xiaozhanke.deploy.enums.ArchitectureEnum;
 import com.xiaozhanke.deploy.enums.FileScopeEnum;
+import com.xiaozhanke.deploy.model.base.BaseDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

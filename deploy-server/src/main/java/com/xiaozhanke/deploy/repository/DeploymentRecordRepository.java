@@ -11,5 +11,6 @@ import org.springframework.stereotype.Repository;
  * @author xiaozhanke
  */
 @Repository
-public interface DeploymentRecordRepository extends JpaRepository<DeploymentRecord, String>, JpaSpecificationExecutor<DeploymentRecord> {
+public interface DeploymentRecordRepository extends JpaRepository<DeploymentRecord, String>,
+        JpaSpecificationExecutor<DeploymentRecord> {
 }

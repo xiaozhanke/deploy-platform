@@ -54,7 +54,8 @@ public class DeploymentController {
     @PostMapping
     public ResponseEntity<DeploymentRecordVo> addDeployment(@Validated @RequestBody DeploymentParams params) {
         DeploymentRecordVo createdRecord = deploymentService.createDeployment(params);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(createdRecord.getId()).toUri();
+        URI location =
+                ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(createdRecord.getId()).toUri();
         return ResponseEntity.created(location).body(createdRecord);
     }
 
@@ -68,7 +69,8 @@ public class DeploymentController {
     @Operation(summary = "查询部署记录列表", description = "查询所有部署记录列表")
     @GetMapping("/list")
     public List<DeploymentRecordVo> queryList(DeploymentParams params,
-                                              @Parameter(description = "排序参数", example = "{\"sort\": \"updateTime,desc\"}") Sort sort) {
+                                              @Parameter(description = "排序参数", example = "{\"sort\": \"updateTime," +
+                                                      "desc\"}") Sort sort) {
         return deploymentService.queryList(params, sort);
     }
 
@@ -82,8 +84,10 @@ public class DeploymentController {
     @Operation(summary = "分页查询部署记录列表", description = "分页查询部署记录列表")
     @GetMapping("/page")
     public PageResult<DeploymentRecordVo> queryPage(DeploymentParams params,
-                                                    @Parameter(description = "分页参数", example = "{\"page\": 0, \"size\": 20, \"sort\": \"updateTime,desc\"}")
-                                                    @PageableDefault(size = 20, sort = "updateTime", direction = Sort.Direction.DESC) Pageable pageable) {
+                                                    @Parameter(description = "分页参数", example = "{\"page\": 0, " +
+                                                            "\"size\": 20, \"sort\": \"updateTime,desc\"}")
+                                                    @PageableDefault(size = 20, sort = "updateTime", direction =
+                                                            Sort.Direction.DESC) Pageable pageable) {
         return deploymentService.queryPage(params, pageable);
     }
 

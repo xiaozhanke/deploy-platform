@@ -1,6 +1,5 @@
 package com.xiaozhanke.deploy.config;
 
-import java.io.IOException;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -10,6 +9,8 @@ import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
+
+import java.io.IOException;
 
 /**
  * WebMVC 配置
@@ -38,7 +39,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         Resource requestedResource = location.createRelative(resourcePath);
                         // 处理 Vue Router history 模式与 Spring Boot 的静态资源处理机制未正确匹配问题
                         // 如果资源不存在，则返回 index.html，让 Vue 前端路由接管
-                        return requestedResource.exists() && requestedResource.isReadable() ? requestedResource : new ClassPathResource("/static/index.html");
+                        return requestedResource.exists() && requestedResource.isReadable() ? requestedResource :
+                                new ClassPathResource("/static/index.html");
                     }
                 });
     }
