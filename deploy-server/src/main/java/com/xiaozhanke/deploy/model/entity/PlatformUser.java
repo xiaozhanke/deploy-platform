@@ -13,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -85,7 +86,8 @@ public class PlatformUser extends BasePo {
      * 头像
      */
     @Comment("头像")
-    @Column(columnDefinition = "CLOB")
+    @Lob
+    @Column
     private String avatar;
 
     /**
