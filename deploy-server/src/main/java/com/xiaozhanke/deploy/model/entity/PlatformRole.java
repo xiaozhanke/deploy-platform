@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -27,7 +28,8 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @Entity
-@Table(name = "platform_role")
+@Table(name = "platform_role",
+        uniqueConstraints = @UniqueConstraint(name = "uk_platform_role_name", columnNames = "name"))
 @Comment("角色表")
 public class PlatformRole extends BasePo {
 
@@ -43,7 +45,7 @@ public class PlatformRole extends BasePo {
      * 角色名
      */
     @Comment("角色名")
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String name;
 
     /**

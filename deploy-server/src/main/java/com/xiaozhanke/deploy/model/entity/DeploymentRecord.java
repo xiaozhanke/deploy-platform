@@ -7,6 +7,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -47,7 +48,8 @@ public class DeploymentRecord extends BasePo {
      */
     @Comment("服务器记录")
     @ManyToOne
-    @JoinColumn(name = "server_record_id", nullable = false)
+    @JoinColumn(name = "server_record_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_deployment_record_server_record"))
     private ServerRecord serverRecord;
 
     /**
@@ -55,7 +57,8 @@ public class DeploymentRecord extends BasePo {
      */
     @Comment("文件记录")
     @ManyToOne
-    @JoinColumn(name = "file_record_id", nullable = false)
+    @JoinColumn(name = "file_record_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_deployment_record_file_record"))
     private FileRecord fileRecord;
 
     /**

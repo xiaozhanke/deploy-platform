@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -16,6 +17,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -36,7 +38,8 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @Entity
-@Table(name = "platform_user")
+@Table(name = "platform_user",
+        uniqueConstraints = @UniqueConstraint(name = "uk_platform_user_username", columnNames = "username"))
 @Comment("用户表")
 public class PlatformUser extends BasePo {
 
@@ -52,7 +55,7 @@ public class PlatformUser extends BasePo {
      * 用户名
      */
     @Comment("用户名")
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String username;
 
     /**
@@ -130,8 +133,10 @@ public class PlatformUser extends BasePo {
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "platform_user_role",
-            joinColumns = @JoinColumn(name = "platform_user_id"),
-            inverseJoinColumns = @JoinColumn(name = "platform_role_id")
+            joinColumns = @JoinColumn(name = "platform_user_id",
+                    foreignKey = @ForeignKey(name = "fk_platform_user_role_user")),
+            inverseJoinColumns = @JoinColumn(name = "platform_role_id",
+                    foreignKey = @ForeignKey(name = "fk_platform_user_role_role"))
     )
     @Comment("用户角色关联表")
     private List<PlatformRole> roles = new ArrayList<>();
