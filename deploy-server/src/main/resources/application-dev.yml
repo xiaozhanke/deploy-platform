@@ -58,3 +58,17 @@ spring:
                 - "profile"
             require-authorization-consent: false
             require-proof-key: true
+rocketmq:
+  name-server: 127.0.0.1:9876
+  producer:
+    group: deploy-job-producer
+    send-message-timeout: 3000
+    retry-times-when-send-failed: 2
+    retry-times-when-send-async-failed: 2
+deploy-tool:
+  mq:
+    # 部署作业事务消息 Topic / Consumer Group(场景 1 + 场景 2)
+    deploy-job-topic: deploy-job
+    deploy-job-consumer-group: deploy-job-consumer
+    # 顺序键按 deploymentRecordId 分队列(详见 ADR-0001),队列数与 broker.conf 的 defaultTopicQueueNums 对齐
+    deploy-job-queue-count: 8

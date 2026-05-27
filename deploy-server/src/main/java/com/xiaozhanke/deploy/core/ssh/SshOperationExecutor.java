@@ -1,0 +1,67 @@
+package com.xiaozhanke.deploy.core.ssh;
+
+import com.xiaozhanke.deploy.model.dto.ServerRecordDto;
+import com.xiaozhanke.deploy.model.entity.DeploymentRecord;
+import com.xiaozhanke.deploy.service.ServerService;
+import com.xiaozhanke.deploy.service.SshService;
+import com.xiaozhanke.deploy.util.ShellArgEscaper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+/**
+ * SSH 部署操作执行器
+ *
+ * <p>把"在远程主机执行 start/stop 命令"这件事从 {@code DeploymentService} 里抽出来,供
+ * {@code DeploymentService}(旧同步接口)与 {@code DeploymentConsumer}(MQ 消费路径)共用。
+ *
+ * <p>本类**只**负责命令构造与 SSH 调用,**不**负责数据库状态更新——状态机推进由调用方决定
+ * (老 service 在同一事务里 save,consumer 在作业完成后 save)。
+ *
+ * @author xiaozhanke
+ */
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class SshOperationExecutor {
+
+    private final SshService sshService;
+    private final ServerService serverService;
+
+    /**
+     * 在远程主机启动应用,返回新进程的 PID(字符串)。
+     */
+    public String executeStart(DeploymentRecord deployment) {
+        ServerRecordDto server = serverService.getServerDto(deployment.getServerRecord().getId());
+
+        // 所有取自用户输入的字段都套上单引号字面值,避免 ; && ` $() 这类元字符触发命令注入
+        String command = String.format(
+                "cd %s; " +
+                        "nohup java -jar %s --server.port=%d %s --spring.profiles.active=%s > nohup.out 2>&1 & " +
+                        "PID=$!; " +
+                        "echo $PID; " +
+                        "disown $PID; " +
+                        "exit 0",
+                ShellArgEscaper.singleQuote(deployment.getDeploymentPath()),
+                ShellArgEscaper.singleQuote(deployment.getFileRecord().getFileName()),
+                deployment.getPort(),
+                ShellArgEscaper.singleQuote(deployment.getProgramArgs()),
+                ShellArgEscaper.singleQuote(deployment.getActiveProfiles())
+        );
+
+        String result = sshService.executeCommand(server, command);
+        return result.trim();
+    }
+
+    /**
+     * 在远程主机停止应用进程(kill -15)。
+     */
+    public void executeStop(DeploymentRecord deployment) {
+        ServerRecordDto server = serverService.getServerDto(deployment.getServerRecord().getId());
+
+        // processId 必须是纯数字,否则 shell 会按 jobspec 解析或被注入额外语义
+        String command = String.format("kill -15 %s",
+                ShellArgEscaper.requireNumericProcessId(deployment.getProcessId()));
+        sshService.executeCommand(server, command);
+    }
+}

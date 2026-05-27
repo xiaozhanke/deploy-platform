@@ -1,5 +1,6 @@
 package com.xiaozhanke.deploy.service;
 
+import com.xiaozhanke.deploy.core.ssh.SshOperationExecutor;
 import com.xiaozhanke.deploy.enums.ApplicationTypeEnum;
 import com.xiaozhanke.deploy.enums.DeploymentStatusEnum;
 import com.xiaozhanke.deploy.exception.BusinessException;
@@ -43,17 +44,20 @@ public class DeploymentService {
     private final SshService sshService;
     private final ServerService serverService;
     private final FileStorageService fileStorageService;
+    private final SshOperationExecutor sshOperationExecutor;
 
     public DeploymentService(DeploymentRecordRepository deploymentRecordRepository,
                              DeploymentRecordPoVoMapper deploymentRecordPoVoMapper,
                              SshService sshService,
                              ServerService serverService,
-                             FileStorageService fileStorageService) {
+                             FileStorageService fileStorageService,
+                             SshOperationExecutor sshOperationExecutor) {
         this.deploymentRecordRepository = deploymentRecordRepository;
         this.deploymentRecordPoVoMapper = deploymentRecordPoVoMapper;
         this.sshService = sshService;
         this.serverService = serverService;
         this.fileStorageService = fileStorageService;
+        this.sshOperationExecutor = sshOperationExecutor;
     }
 
     /**
@@ -311,25 +315,7 @@ public class DeploymentService {
      */
     private void doStart(DeploymentRecord deployment) {
         try {
-            ServerRecordDto server = serverService.getServerDto(deployment.getServerRecord().getId());
-
-            // 所有取自用户输入的字段都套上单引号字面值，避免 ; && ` $() 这类元字符触发命令注入
-            String command = String.format(
-                    "cd %s; " +
-                            "nohup java -jar %s --server.port=%d %s --spring.profiles.active=%s > nohup.out 2>&1 & " +
-                            "PID=$!; " +
-                            "echo $PID; " +
-                            "disown $PID; " +
-                            "exit 0",
-                    ShellArgEscaper.singleQuote(deployment.getDeploymentPath()),
-                    ShellArgEscaper.singleQuote(deployment.getFileRecord().getFileName()),
-                    deployment.getPort(),
-                    ShellArgEscaper.singleQuote(deployment.getProgramArgs()),
-                    ShellArgEscaper.singleQuote(deployment.getActiveProfiles())
-            );
-
-            String result = sshService.executeCommand(server, command);
-            String processId = result.trim();
+            String processId = sshOperationExecutor.executeStart(deployment);
 
             deployment.setStatus(DeploymentStatusEnum.SUCCESS)
                     .setRunning(true)
@@ -349,12 +335,7 @@ public class DeploymentService {
      */
     private void doStop(DeploymentRecord deployment) {
         try {
-            ServerRecordDto server = serverService.getServerDto(deployment.getServerRecord().getId());
-
-            // processId 必须是纯数字，否则 shell 会按 jobspec 解析或被注入额外语义
-            String command = String.format("kill -15 %s",
-                    ShellArgEscaper.requireNumericProcessId(deployment.getProcessId()));
-            sshService.executeCommand(server, command);
+            sshOperationExecutor.executeStop(deployment);
 
             deployment.setRunning(false)
                     .setLastStopTime(LocalDateTime.now())

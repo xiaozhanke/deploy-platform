@@ -134,8 +134,10 @@ public class DeploymentController {
      *
      * @param id 部署记录 Id
      * @return 更新后的部署记录信息
+     * @deprecated 改用 {@code POST /deployments/{id}/jobs} 异步接口(jobType=START),Phase 2 移除
      */
-    @Operation(summary = "启动应用", description = "启动后端应用")
+    @Deprecated(forRemoval = true)
+    @Operation(summary = "启动应用 (deprecated)", description = "同步执行 SSH,建议改用 POST /deployments/{id}/jobs")
     @PostMapping("/{id}/actions/start")
     public DeploymentRecordVo startApplication(@Parameter(description = "部署记录 Id", required = true) @PathVariable String id) {
         return deploymentService.startApplication(id);
@@ -146,8 +148,10 @@ public class DeploymentController {
      *
      * @param id 部署记录 Id
      * @return 更新后的部署记录信息
+     * @deprecated 改用 {@code POST /deployments/{id}/jobs} 异步接口(jobType=STOP),Phase 2 移除
      */
-    @Operation(summary = "停止应用", description = "停止后端应用")
+    @Deprecated(forRemoval = true)
+    @Operation(summary = "停止应用 (deprecated)", description = "同步执行 SSH,建议改用 POST /deployments/{id}/jobs")
     @PostMapping("/{id}/actions/stop")
     public DeploymentRecordVo stopApplication(@Parameter(description = "部署记录 Id", required = true) @PathVariable String id) {
         return deploymentService.stopApplication(id);
@@ -158,8 +162,10 @@ public class DeploymentController {
      *
      * @param id 部署记录 Id
      * @return 更新后的部署记录信息
+     * @deprecated 改用 {@code POST /deployments/{id}/jobs} 异步接口(jobType=RESTART),Phase 2 移除
      */
-    @Operation(summary = "重启应用", description = "重启后端应用")
+    @Deprecated(forRemoval = true)
+    @Operation(summary = "重启应用 (deprecated)", description = "同步执行 SSH,建议改用 POST /deployments/{id}/jobs")
     @PostMapping("/{id}/actions/restart")
     public DeploymentRecordVo restartApplication(@Parameter(description = "部署记录 Id", required = true) @PathVariable String id) {
         return deploymentService.restartApplication(id);
@@ -183,8 +189,10 @@ public class DeploymentController {
      * @param id           部署记录 Id
      * @param fileRecordId 文件记录 Id
      * @return 更新后的部署记录信息
+     * @deprecated 改用 {@code POST /deployments/{id}/jobs} 异步接口(jobType=UPDATE),Phase 2 移除
      */
-    @Operation(summary = "更新应用", description = "更新应用包")
+    @Deprecated(forRemoval = true)
+    @Operation(summary = "更新应用 (deprecated)", description = "同步执行 SSH,建议改用 POST /deployments/{id}/jobs")
     @PutMapping("/{id}/package")
     public DeploymentRecordVo updateApplication(@Parameter(description = "部署记录 Id", required = true) @PathVariable String id,
                                                 @Parameter(description = "文件记录 Id", required = true) @RequestParam String fileRecordId) {
