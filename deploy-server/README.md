@@ -1,213 +1,131 @@
-# 管理端部署工具后端
+# deploy-server
 
-一个基于 Spring Boot 的服务器部署管理工具后端，提供 SSH 连接、文件传输、命令执行等功能。
+deploy-tool 的 Spring Boot 后端：通过 REST + WebSocket 暴露服务器管理、部署作业、文件传输、SSH 终端、配置生成等能力。Spring Authorization Server 与 Resource Server **同进程内**部署，API 自己签发 OIDC token。
 
-## 功能特性
-
-- 🚀 **服务器管理**
-  - 支持多服务器配置管理
-  - 支持密码和密钥两种认证方式
-  - 支持自定义 SSH 连接参数（算法、超时等）
-
-- 🔐 **SSH 操作**
-  - 支持创建和管理 SSH 会话
-  - 支持交互式 Shell 操作
-  - 支持执行远程命令
-  - 支持文件传输
-
-- 📝 **配置管理**
-  - 使用 FreeMarker 模板引擎生成配置文件
-  - 支持动态生成 Nginx 配置文件
-  - 支持自定义模板配置
-
-- 🛠 **技术特性**
-  - 基于 Spring Boot 3.x
-  - 使用 JPA 进行数据持久化
-  - 集成 Swagger/OpenAPI 3.0 文档
-  - 支持 WebSocket 实时通信
-  - 使用 MapStruct 进行对象映射
-  - 使用 FreeMarker 进行模板渲染
-
-## 开发工具推荐
-
-### IDE 推荐
-
-强烈推荐使用 [IntelliJ IDEA](https://www.jetbrains.com/idea/) 作为开发 IDE，它提供了以下优势：
-
-- 🚀 **智能代码补全**
-  - 强大的代码分析和智能提示
-  - 支持 Spring Boot 框架的智能感知
-  - 自动补全 Lombok 注解
-
-- 🔍 **调试功能**
-  - 内置 Spring Boot 运行配置
-  - 支持热重载（Hot Reload）
-  - 可视化的断点调试
-
-- 📦 **依赖管理**
-  - 内置 Maven 支持
-  - 依赖冲突检测
-  - 自动更新依赖版本
-
-- 🛠 **其他特性**
-  - 内置 Git 支持
-  - 代码格式化工具
-  - 代码检查工具
-  - 数据库工具
-  - REST 客户端
-
-### 插件推荐
-
-建议安装以下 IDEA 插件以提升开发效率：
-
-- **Lombok**: 支持 Lombok 注解的智能提示
-- **MapStruct Support**: MapStruct 代码生成支持
-- **POJO to JSON**: 快速转换 POJO 类生成 JSON 字符串
+> 项目背景、双子工程关系与开发约定见仓库根 [README.md](../README.md) 与 [CLAUDE.md](../CLAUDE.md)；领域术语见 [CONTEXT.md](../CONTEXT.md)。
 
 ## 技术栈
 
-- **后端框架**
-  - Spring Boot 3.x
-  - Spring Data JPA
-  - Spring WebSocket
-  - Spring Validation
-  - Apache FreeMarker
+- **Spring Boot 3.5.14 / Java 21 / Maven**
+- **Spring Data JPA + Hibernate** + **MySQL 8**（构建期开启 Hibernate 字节码增强：lazy init / dirty tracking / association management）
+- **Spring Authorization Server + Resource Server**（OAuth2 / OIDC，PKCE，公开客户端）
+- **Spring WebSocket** + `spring-security-messaging`（浏览器 SSH 终端走 STOMP）
+- **JSch**：`com.github.mwiede:jsch` 0.2.26（**不是**原始 jcraft fork），SSH/SFTP 实现
+- **MapStruct** 1.6.3 + **Lombok**：entity ↔ DTO/VO 映射
+- **Apache FreeMarker**：Nginx 配置文件模板渲染
+- **SpringDoc OpenAPI** 2.8.13：Swagger UI / OpenAPI 3
+- **RocketMQ Spring Boot Starter** 2.3.4：部署作业事务消息 + 顺序消息
 
-- **数据库**
-  - H2 Database
+## 包结构（`com.xiaozhanke.deploy`）
 
-- **工具库**
-  - Lombok
-  - MapStruct
-  - JSch (SSH 实现)
-  - SpringDoc OpenAPI
+```text
+deploy-server/src/main/java/com/xiaozhanke/deploy/
+├── DeployApplication.java
+├── controller/        # REST 接口：Auth/Config/Deployment/DeploymentJob/File/PlatformRole/PlatformUser/Server/Ssh/WebSocketSsh/Test
+├── service/           # 业务逻辑：ConfigService/DeploymentService/FileStorageService/PlatformRoleService/PlatformUserService/ServerService/SshService
+├── core/
+│   ├── ssh/           # 基于 JSch 的 SSH 会话管理
+│   └── websocket/     # 浏览器端 SSH 终端的 STOMP / WebSocket 通道
+├── messaging/         # RocketMQ 集成：config/producer/consumer/transaction/selector/idempotent/dto
+├── model/
+│   ├── dto/           # 服务层数据传输对象
+│   ├── entity/        # JPA 实体（不直接暴露给上层）
+│   ├── mapper/        # MapStruct 映射器
+│   ├── request/       # 请求参数
+│   └── vo/            # 视图对象
+├── repository/        # Spring Data JPA 仓库接口
+├── security/          # OAuth2 / OIDC 安全模型：config/exception/token/user
+├── config/、filter/、interceptor/、validation/、exception/
+├── constant/、enums/、util/
+```
 
-## 快速开始
+## 本地启动
 
-### 环境要求
+### 1. 准备 MySQL 8
 
-- JDK 21+
-- Maven 3.6+
-- Node.js 20.19+ (用于前端构建)
+后端默认连接 `jdbc:mysql://localhost:3306/deploy_tool`，账号 `root` / 密码 `123456`，可通过环境变量覆盖：
 
-### 构建项目
+| 变量 | 默认值 |
+| --- | --- |
+| `MYSQL_HOST` | `localhost` |
+| `MYSQL_PORT` | `3306` |
+| `MYSQL_DB` | `deploy_tool` |
+| `MYSQL_USER` | `root` |
+| `MYSQL_PASSWORD` | `123456` |
+
+dev profile 配 `spring.jpa.hibernate.ddl-auto=update`，首次启动会自动建表。可选的种子数据在 `classpath:/sql/data.sql`（默认注释掉）。
+
+### 2.（可选）准备 RocketMQ
+
+如果要跑 MQ 模块相关功能：
 
 ```bash
-# 进入项目目录
+cd ../docker
+docker compose -f docker-compose-mq.yml up -d
+```
+
+NameServer 起在 `127.0.0.1:9876`、Dashboard 在 <http://localhost:8180>。详见 [docker/README.md](../docker/README.md)。
+
+### 3. 启动后端
+
+```bash
 cd deploy-server
-
-# 构建后端
-mvn clean package
-
-# 运行项目
-mvn spring-boot:run
+mvn spring-boot:run            # dev profile（pom.xml 中 activeByDefault=true）
+mvn clean package              # 打 dev jar
+mvn clean package -Ppro        # 打 pro jar（生产环境必须通过环境变量提供 MySQL 凭据）
+mvn test                       # JUnit / spring-boot-starter-test
+mvn -Dtest=ClassName#method test   # 跑单个测试方法
 ```
 
-### 开发环境配置
+启动成功后：
 
-1. 确保已安装 JDK 21 和 Maven
-2. 配置 application-dev.yml 中的数据库连接信息
-3. 使用 dev profile 运行项目：
-   ```bash
-   mvn spring-boot:run -Pdev
-   ```
+| 端点 | URL |
+| --- | --- |
+| API（HTTPS，keystore.p12 内置自签证书，密码 `changeit`，alias `deploy`） | `https://localhost:6060` |
+| Swagger UI | `https://localhost:6060/swagger-ui.html` |
+| OpenAPI JSON | `https://localhost:6060/v3/api-docs` |
+| WebSocket（STOMP） | `wss://localhost:6060/websocket` |
+| OIDC discovery | `https://localhost:6060/.well-known/openid-configuration` |
 
-### API 文档
+### 4. 生产部署
 
-启动项目后，访问以下地址查看 API 文档：
-- Swagger UI: http://localhost:6060/swagger-ui.html
-- OpenAPI 文档: http://localhost:6060/v3/api-docs
-
-## 项目结构
-
-```
-deploy-server/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com.xiaozhanke.deploy/
-│   │   │       ├── common/         # 公共组件
-│   │   │       ├── config/         # 配置类
-│   │   │       ├── constant        # 常量类
-│   │   │       ├── controller/     # 控制器
-│   │   │       ├── enums/          # 枚举类
-│   │   │       ├── exception/      # 异常处理类
-│   │   │       ├── model/          # 数据模型
-│   │   │       │   ├── dto/        # 数据传输对象
-│   │   │       │   ├── entity/     # 实体类
-│   │   │       │   ├── mapper/     # 实体类转换器
-│   │   │       │   ├── request/    # 请求参数
-│   │   │       │   └── vo/         # 视图对象
-│   │   │       ├── repository/     # 数据访问层
-│   │   │       ├── security/       # 安全认证授权处理
-│   │   │       └── service/        # 业务逻辑层
-│   │   └── resources/
-│   │       ├── static/             # 静态资源目录
-│   │       ├── templates/          # 模板目录
-│   │       ├── application.yml     # 主配置文件
-│   │       ├── application-dev.yml # 开发环境配置
-│   │       └── application-pro.yml # 生产环境配置
-│   └── test/                       # 测试代码
-└── pom.xml                         # Maven 配置
+```bash
+mvn clean package -Ppro
+java -jar target/deploy-server-1.2.4.jar
 ```
 
-## 开发指南
+Maven 中 `dev` profile 标了 `activeByDefault=true`，会设置 `spring.profiles.active=dev`；`-Ppro` 切到生产 profile。
 
-### 添加新功能
+## 安全模型
 
-1. 在 `model` 包下创建相应的 DTO、Entity 和 VO 类
-2. 在 `repository` 包下创建数据访问接口
-3. 在 `service` 包下实现业务逻辑
-4. 在 `controller` 包下创建 REST 接口
-5. 使用 Swagger 注解添加 API 文档
+- **同进程内** Authorization Server + Resource Server，没有外部 IdP 依赖
+- OIDC 客户端 ID `oidc-client`，**公开客户端**（PKCE，`client-authentication-methods: none`）
+- 回调地址：`https://localhost:5173/ui/login/callback`（开发）
+- JWT 签名密钥从仓库根目录的 `database/jwt-key.json` 读取（仅本地开发，生产请用 env / Vault 注入）
+- WebSocket 通道走 `spring-security-messaging` 鉴权
+- `security/` 包内分 `config/`、`exception/`、`token/`、`user/` 四个子目录
 
-### 代码规范
+## 持久化要点
 
-- 遵循阿里巴巴 Java 开发手册
-- 使用 Lombok 简化代码
-- 使用 MapStruct 进行对象映射
-- 遵循 RESTful API 设计规范
+- **MySQL 8** 是当前真实使用的数据库（已从 H2 全量迁移完成）
+- JPA：dev 用 `ddl-auto: update`、pro 用 `none`；`open-in-view: false`
+- **构建期 Hibernate 字节码增强不要随意关**——`hibernate-enhance-maven-plugin` 启用了 lazy init / dirty tracking / association management，关闭会导致 JPA 审计字段写入异常（参考 commit `2047dfd`）
 
-## 部署
+## 注解处理器（容易踩坑）
 
-### 生产环境配置
+`pom.xml` 在 `annotationProcessorPaths` 里串联了 MapStruct + Lombok + `lombok-mapstruct-binding`。若 IDE 报找不到 `*Impl.java`：
 
-1. 修改 `application-pro.yml` 中的配置
-2. 使用 pro profile 构建项目：
-   ```bash
-   mvn clean package -Ppro
-   ```
-3. 运行生成的 jar 包：
-   ```bash
-   java -jar target/deploy-server-1.2.4.jar
-   ```
+1. IntelliJ → *Build, Execution, Deployment → Compiler → Annotation Processors*
+2. 勾选 `Enable annotation processing`
+3. 选 `Obtain processors from project classpath`
+4. `mvn clean` 后 rebuild
 
-## 常见问题解答（Q&A）
+## 测试
 
-### 1. IDEA 中注解处理器不生效怎么办？
+- `mvn test` 跑 JUnit（基于 `spring-boot-starter-test`）
+- `mvn -Dtest=ClassName#method test` 跑单个方法
+- 端到端部署测试用 [samples/](../samples/) 下的 sample-app-backend / sample-app-frontend + `docker/Dockerfile` 部署目标容器，详见 [samples/README.md](../samples/README.md)
 
-如果发现 Lombok、MapStruct 等注解处理器不生效，请按以下步骤检查设置：
+## 版本号
 
-1. 打开 IDEA 设置（Settings）
-2. 导航到 `Build, Execution, Deployment` > `Compiler` > `Annotation Processors`
-3. 确保以下选项已正确配置：
-   - ✅ 勾选 `Enable annotation processing`
-   - ✅ 选择 `Obtain processors from project classpath`
-   - 确保 `Store generated sources relative to:` 选择 `Module content root`
-   - 生成的源代码目录应为：
-     - Production: `target/generated-sources/annotations`
-     - Test: `target/generated-test-sources/test-annotations`
-![注解处理器设置示例](/docs/images/idea-settings-annotation-processors.png)
-
-如果配置完成后仍然不生效，请尝试：
-1. 清理项目（`mvn clean`）
-2. 重新构建项目
-3. 重启 IDEA
-
-### 2. 如何确认注解处理器工作正常？
-
-可以通过以下方式确认：
-
-1. 检查 `target/generated-sources/annotations` 目录是否生成了相应的文件
-2. 对于 MapStruct，应该能看到生成的 `*Impl.java` 文件
-3. 对于 Lombok，确认能够正常使用 `@Getter`、`@Setter` 等注解，且不会报红
+后端 `pom.xml`、前端 `package.json` 和 `application.yml` 里的 `spring.application.version` 始终保持一致（当前 `1.2.4`），变更时三处一起改。
