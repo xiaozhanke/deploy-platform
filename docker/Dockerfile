@@ -6,6 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # - openssh-server：SSH + SFTP（SFTP 是 OpenSSH 内置子系统，无需额外配置）
 # - openjdk-17-jre-headless：Java 17 运行时，向下兼容 Java 8 编译的 jar
 # - nginx：前端部署目标
+# - unzip：deploy-tool 部署前端 zip 包后解压到站点目录
 # - supervisor：进程管理，同时拉起 sshd 与 nginx
 # - procps / sudo / ca-certificates：常用工具
 RUN apt-get update && \
@@ -13,6 +14,7 @@ RUN apt-get update && \
         openssh-server \
         openjdk-17-jre-headless \
         nginx \
+        unzip \
         supervisor \
         procps \
         sudo \
@@ -28,10 +30,19 @@ RUN ssh-keygen -A
 RUN sed -i '/pam_loginuid/d' /etc/pam.d/sshd
 
 # 账号：root/root 与 deploy/deploy
+# deploy 加入 sudo 组并配置 NOPASSWD —— 普通用户 SSH 非交互场景下 sudo 拿不到密码会卡住，
+# 测试容器直接放开。生产环境请改为限定命令列表（仅 /usr/sbin/nginx 之类）
 RUN echo 'root:root' | chpasswd && \
     useradd -m -s /bin/bash deploy && \
     echo 'deploy:deploy' | chpasswd && \
-    usermod -aG sudo deploy
+    usermod -aG sudo deploy && \
+    echo 'deploy ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/deploy-nopasswd && \
+    chmod 440 /etc/sudoers.d/deploy-nopasswd
+
+# 修复非 root 用户 SSH 非交互 shell 的 PATH —— Debian 默认给普通用户的 PATH 不含 /usr/sbin /sbin，
+# 直接 `nginx -v` / `nginx -t` 会 command not found。
+# OpenSSH 非交互不读 .bashrc/.profile，但 PAM 会读 /etc/environment，写这里最稳。
+RUN echo 'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"' > /etc/environment
 
 # 允许密码认证 + 允许 root 直接登录（仅测试环境，请勿沿用至生产）
 RUN sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
