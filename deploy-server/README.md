@@ -101,7 +101,7 @@ Maven 中 `dev` profile 标了 `activeByDefault=true`，会设置 `spring.profil
 - **同进程内** Authorization Server + Resource Server，没有外部 IdP 依赖
 - OIDC 客户端 ID `oidc-client`，**公开客户端**（PKCE，`client-authentication-methods: none`）
 - 回调地址：`https://localhost:5173/ui/login/callback`（开发）
-- JWT 签名密钥从仓库根目录的 `database/jwt-key.json` 读取（仅本地开发，生产请用 env / Vault 注入）
+- JWT 签名密钥从仓库根目录的 `secrets/jwt-key.json` 读取（仅本地开发，生产请用 env / Vault 注入）
 - WebSocket 通道走 `spring-security-messaging` 鉴权
 - `security/` 包内分 `config/`、`exception/`、`token/`、`user/` 四个子目录
 

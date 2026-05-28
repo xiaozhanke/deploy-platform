@@ -12,7 +12,7 @@ deploy-tool/
 ├── deploy-web/            # Vue 3 / Vite 6 / TypeScript 前端
 ├── samples/               # 端到端部署测试用的示例应用（后端 jar + 前端 dist）
 ├── docker/                # 本地依赖：部署目标容器 + RocketMQ Compose
-├── database/              # 本地开发资产（如 jwt-key.json JWT 签名密钥）
+├── secrets/               # 本地开发资产（如 jwt-key.json JWT 签名密钥）
 ├── files/                 # 用户上传 / 下载的运行期文件
 ├── logs/                  # 运行期日志
 ├── CLAUDE.md              # 给 Claude Code / 协作者看的项目细则

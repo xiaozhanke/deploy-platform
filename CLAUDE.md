@@ -8,7 +8,7 @@
 
 - `deploy-server/` —— Spring Boot 3.5.14 后端，Java 21，Maven（artifact `com.xiaozhanke:deploy-server`，根包 `com.xiaozhanke.deploy`）
 - `deploy-web/` —— Vue 3 + Vite + TypeScript 前端
-- `database/` —— 本地开发期的轻量资产目录（如 `jwt-key.json` JWT 签名密钥）。**实际持久化用 MySQL**（见下方"持久化"段）
+- `secrets/` —— 本地开发期的轻量资产目录（如 `jwt-key.json` JWT 签名密钥）。**实际持久化用 MySQL**（见下方"持久化"段）
 - `docs/`、`files/`、`logs/` —— 运行时/资产目录
 - `MQ模块设计方案.md` —— 规划中的 RocketMQ + Kafka 模块设计稿（尚未实现）
 
