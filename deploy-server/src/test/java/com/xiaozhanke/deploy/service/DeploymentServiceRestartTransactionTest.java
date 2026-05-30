@@ -33,7 +33,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
  * 依赖 Spring AOP self-call 的隐式行为绑定单事务，重构成 doStop/doStart 私有方法 + 单 @Transactional
  * 之后必须有用例锁死这一行为，防止后续有人误把私有方法重新拆成独立事务。
  *
- * <p>用 H2 内存库避免污染开发态 ./database/deploy；JWT keystore 路径指到 target/，由 mvn clean 兜底清理。
+ * <p>连独立 MySQL 测试库 restart_tx_test（createDatabaseIfNotExist 自动建、ddl-auto=create-drop 用完即弃）
+ * 避免污染开发态 deploy_tool；JWT keystore 路径指到 target/，由 mvn clean 兜底清理。
  *
  * @author xiaozhanke
  */

@@ -9,18 +9,18 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.Comment;
+import org.springframework.data.domain.Persistable;
 
 import java.time.LocalDateTime;
 
@@ -29,6 +29,11 @@ import java.time.LocalDateTime;
  *
  * <p>对一份 {@link DeploymentRecord} 执行一次具体动作的可重试单元。详见 CONTEXT.md「部署作业」词条以及
  * ADR-0001(顺序键)、ADR-0002(幂等)、ADR-0003(重试与死信)、ADR-0004(取消语义)。
+ *
+ * <p>{@link Persistable} 显式告知 Spring Data JPA「这是新建实体」——本类的 jobId 在 service 层预生成
+ * 并塞进 RocketMQ 事务消息体,save() 默认会因 ID 非空走 merge 分支,在 listener INSERT 时触发
+ * {@code ObjectOptimisticLockingFailureException}(merge SELECT 找不到行)。重写 {@link #isNew()}
+ * 通过 createTime(由 {@code @CreatedDate} 在 INSERT 后填充)区分新建/更新,引导 save() 走 persist。
  *
  * @author xiaozhanke
  */
@@ -42,13 +47,13 @@ import java.time.LocalDateTime;
         columnNames = {"deployment_record_id", "job_type", "client_request_id"}
 ))
 @Comment("部署作业表")
-public class DeploymentJob extends BasePo {
+public class DeploymentJob extends BasePo implements Persistable<String> {
     /**
-     * 作业 Id
+     * 作业 Id(service 层预生成 UUID,用于事务消息体里携带 jobId,因此不再用 {@code @GeneratedValue})
      */
     @Comment("作业 Id")
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(length = 36)
     private String id;
 
     /**
@@ -110,4 +115,14 @@ public class DeploymentJob extends BasePo {
     @Comment("结束时间")
     @Column
     private LocalDateTime endTime;
+
+    /**
+     * 是否新建实体——引导 Spring Data JPA 的 save() 走 persist 而非 merge。
+     * createTime 在 {@code @CreatedDate} INSERT 后被填充,据此区分新建与更新。
+     */
+    @Override
+    @Transient
+    public boolean isNew() {
+        return getCreateTime() == null;
+    }
 }

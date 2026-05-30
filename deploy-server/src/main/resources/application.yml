@@ -70,6 +70,13 @@ springdoc:
     # 操作排序
     operations-sorter: method
     persistAuthorization: true
+    # OIDC 授权码 + PKCE 配置(对应 OpenApiConfig 里的 SecurityScheme "OIDC")
+    oauth:
+      client-id: oidc-client
+      use-pkce-with-authorization-code-grant: true
+      scopes:
+        - openid
+        - profile
   # 属性排序
   writer-with-order-by-keys: true
   cache:

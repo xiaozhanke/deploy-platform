@@ -9,7 +9,6 @@ import org.apache.rocketmq.spring.core.RocketMQLocalTransactionListener;
 import org.apache.rocketmq.spring.core.RocketMQLocalTransactionState;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.messaging.Message;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * RocketMQ 事务消息本地事务回调与回查(对应 MQ 方案稿场景 1、CONTEXT.md「本地事务」)。
@@ -30,14 +29,19 @@ public class DeploymentTransactionListener implements RocketMQLocalTransactionLi
     private final DeploymentJobRepository deploymentJobRepository;
 
     @Override
-    @Transactional
     public RocketMQLocalTransactionState executeLocalTransaction(Message msg, Object arg) {
         if (!(arg instanceof DeploymentJob pendingJob)) {
             log.warn("executeLocalTransaction 收到非预期的 arg 类型: {}", arg);
             return RocketMQLocalTransactionState.ROLLBACK;
         }
         try {
-            deploymentJobRepository.save(pendingJob);
+            // 必须 saveAndFlush 且不套方法级 @Transactional:唯一索引冲突要在本方法体内同步抛出,
+            // 才能被下方 catch 捕获并回滚半消息。若改回 save() + @Transactional,INSERT 会延迟到外层
+            // 事务提交时才 flush,冲突异常在方法 return 之后、代理提交事务的瞬间抛出,catch 形同虚设
+            // ——rocketmq-spring 只能将其当作 UNKNOWN 处理,退化为等待回查兜底回滚,丧失"撞索引立即
+            // ROLLBACK"的快路径。saveAndFlush 在仓库自身事务内即时落库:返回 COMMIT 时该行已持久化
+            // (契合事务消息语义),冲突时又能就地抛出供 catch 处理。
+            deploymentJobRepository.saveAndFlush(pendingJob);
             log.info("本地事务 INSERT deployment_job [{}] 成功,提交事务消息", pendingJob.getId());
             return RocketMQLocalTransactionState.COMMIT;
         } catch (DataIntegrityViolationException e) {

@@ -7,8 +7,12 @@ import io.swagger.v3.core.converter.ResolvedSchema;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.security.OAuthFlow;
+import io.swagger.v3.oas.annotations.security.OAuthFlows;
+import io.swagger.v3.oas.annotations.security.OAuthScope;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import io.swagger.v3.oas.annotations.security.SecuritySchemes;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
@@ -29,13 +33,36 @@ import org.springframework.http.MediaType;
 @OpenAPIDefinition(
         info = @Info(title = "${spring.application.name}", description = "管理端部署工具后端 API", version = "${spring" +
                 ".application.version}"),
-        security = @SecurityRequirement(name = "Bearer Authentication"))
-@SecurityScheme(
-        name = "Bearer Authentication",
-        type = SecuritySchemeType.HTTP,
-        bearerFormat = "JWT",
-        scheme = "bearer"
-)
+        security = {
+                @SecurityRequirement(name = "OIDC"),
+                @SecurityRequirement(name = "Bearer Authentication")
+        })
+@SecuritySchemes({
+        // 方式 1:走 OIDC 授权码 + PKCE(推荐,Authorize 按钮里点 "Authorize" 自动跳转到登录页拿 token)
+        @SecurityScheme(
+                name = "OIDC",
+                type = SecuritySchemeType.OAUTH2,
+                description = "OAuth2 授权码 + PKCE,Spring Authorization Server 内置 OIDC",
+                flows = @OAuthFlows(
+                        authorizationCode = @OAuthFlow(
+                                authorizationUrl = "/oauth2/authorize",
+                                tokenUrl = "/oauth2/token",
+                                refreshUrl = "/oauth2/token",
+                                scopes = {
+                                        @OAuthScope(name = "openid", description = "OIDC 必备"),
+                                        @OAuthScope(name = "profile", description = "用户基本信息")
+                                }
+                        )
+                )
+        ),
+        // 方式 2:手贴 access_token(已经有 token 时直接调接口用)
+        @SecurityScheme(
+                name = "Bearer Authentication",
+                type = SecuritySchemeType.HTTP,
+                bearerFormat = "JWT",
+                scheme = "bearer"
+        )
+})
 public class OpenApiConfig {
 
     /**

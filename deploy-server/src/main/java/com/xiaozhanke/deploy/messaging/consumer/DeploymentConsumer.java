@@ -66,7 +66,12 @@ public class DeploymentConsumer implements RocketMQListener<DeploymentJobMessage
 
         DeploymentJob job = deploymentJobRepository.findById(msg.jobId())
                 .orElseThrow(() -> new IllegalStateException("作业不存在: " + msg.jobId()));
-        DeploymentRecord record = job.getDeploymentRecord();
+        // onMessage 无事务边界:acquire() 的事务已提交关闭,job 查出即为游离态(detached),
+        // 其 deploymentRecord 是 @ManyToOne(LAZY) 代理,执行 SSH 时访问字段会因 Session 已关
+        // 抛 LazyInitializationException。改为按 recordId 直接加载——DeploymentRecord 的
+        // server/file 关联是 EAGER,findById 会 JOIN 一次性取全,游离态下也能安全读取。
+        DeploymentRecord record = deploymentRecordRepository.findById(msg.deploymentRecordId())
+                .orElseThrow(() -> new IllegalStateException("部署记录不存在: " + msg.deploymentRecordId()));
 
         try {
             switch (msg.jobType()) {

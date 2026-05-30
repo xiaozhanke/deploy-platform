@@ -22,7 +22,8 @@ import org.springframework.web.context.WebApplicationContext;
  * 跨域前端只能靠反向代理同源化兜底。本测试在非 dev profile 下注入 origin，验证 OPTIONS 预检：
  * 在白名单内的 origin 应被允许；不在的 origin 应被 Spring CORS 拒绝。
  *
- * <p>用 H2 内存库避免污染开发态 ./database/deploy；JWT keystore 路径指到 target/，由 mvn clean 兜底清理。
+ * <p>连独立 MySQL 测试库 cors_test（createDatabaseIfNotExist 自动建、ddl-auto=create-drop 用完即弃）
+ * 避免污染开发态 deploy_tool；JWT keystore 路径指到 target/，由 mvn clean 兜底清理。
  *
  * @author xiaozhanke
  */
