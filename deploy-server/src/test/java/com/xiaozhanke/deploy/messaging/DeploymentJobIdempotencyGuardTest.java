@@ -13,6 +13,7 @@ import com.xiaozhanke.deploy.enums.DeploymentStatusEnum;
 import com.xiaozhanke.deploy.enums.JobStatusEnum;
 import com.xiaozhanke.deploy.enums.JobTypeEnum;
 import com.xiaozhanke.deploy.enums.SshAuthTypeEnum;
+import com.xiaozhanke.deploy.messaging.idempotent.AcquireResult;
 import com.xiaozhanke.deploy.messaging.idempotent.JobAcquisitionService;
 import com.xiaozhanke.deploy.messaging.producer.DeploymentMQProducer;
 import com.xiaozhanke.deploy.messaging.transaction.DeploymentTransactionListener;
@@ -231,20 +232,44 @@ class DeploymentJobIdempotencyGuardTest {
     // ---------- 第三关:消费端 CAS 占据 ----------
 
     /**
-     * 第三关:首次 acquire 把 PENDING 经 CAS 改 IN_PROGRESS 并填 startTime,返回 true;
-     * 模拟重投的第二次 acquire 因 {@code WHERE status=PENDING} 已不匹配,affected=0,返回 false。
+     * 第三关:首次 acquire 把 PENDING 经 CAS 改 IN_PROGRESS 并填 startTime,返回 {@code ACQUIRED};
+     * 模拟重投的第二次 acquire 因作业已非 PENDING,返回 {@code ALREADY_HANDLED}(消费幂等)。
      */
     @Test
     void consumerCasAcquiresOnceAndBlocksReplay() {
         DeploymentJob pending = deploymentJobRepository.saveAndFlush(
                 newJob(UUID.randomUUID().toString(), JobStatusEnum.PENDING));
 
-        assertThat(jobAcquisitionService.acquire(pending.getId())).isTrue();
-        assertThat(jobAcquisitionService.acquire(pending.getId())).isFalse();
+        assertThat(jobAcquisitionService.acquire(pending.getId(), seedRecord.getId()))
+                .isEqualTo(AcquireResult.ACQUIRED);
+        assertThat(jobAcquisitionService.acquire(pending.getId(), seedRecord.getId()))
+                .isEqualTo(AcquireResult.ALREADY_HANDLED);
 
         DeploymentJob reloaded = deploymentJobRepository.findById(pending.getId()).orElseThrow();
         assertThat(reloaded.getStatus()).isEqualTo(JobStatusEnum.IN_PROGRESS);
         assertThat(reloaded.getStartTime()).isNotNull();
+    }
+
+    /**
+     * 场景 2(ADR-0006):同一份部署记录的第二个作业在前一个仍 IN_PROGRESS 时占据失败,返回
+     * {@code RECORD_BUSY}(让 ORDERLY 稍后重投),且自身仍为 PENDING——保证记录级串行、不并发。
+     */
+    @Test
+    void consumerCasSerializesJobsOfSameRecord() {
+        DeploymentJob first = deploymentJobRepository.saveAndFlush(
+                newJob(UUID.randomUUID().toString(), JobStatusEnum.PENDING));
+        DeploymentJob second = deploymentJobRepository.saveAndFlush(
+                newJob(UUID.randomUUID().toString(), JobStatusEnum.PENDING));
+
+        // 第一个作业占据成功 → 该记录进入 IN_PROGRESS
+        assertThat(jobAcquisitionService.acquire(first.getId(), seedRecord.getId()))
+                .isEqualTo(AcquireResult.ACQUIRED);
+        // 同一记录的第二个作业:自身仍 PENDING,但记录已有在途作业 → RECORD_BUSY
+        assertThat(jobAcquisitionService.acquire(second.getId(), seedRecord.getId()))
+                .isEqualTo(AcquireResult.RECORD_BUSY);
+        // 第二个作业未被推进,仍是 PENDING(稍后重投时再占)
+        assertThat(deploymentJobRepository.findById(second.getId()).orElseThrow().getStatus())
+                .isEqualTo(JobStatusEnum.PENDING);
     }
 
     // ---------- 辅助 ----------

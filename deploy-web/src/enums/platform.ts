@@ -64,3 +64,44 @@ export const UserStatusEnum = createEnum({
   LOCKED: { value: 'LOCKED', label: '锁定' },
   DISABLED: { value: 'DISABLED', label: '停用' },
 } as const)
+
+/**
+ * 部署作业状态枚举(对应后端 JobStatusEnum)
+ */
+export const JobStatusEnum = createEnum({
+  PENDING: { value: 'PENDING', label: '待执行' },
+  IN_PROGRESS: { value: 'IN_PROGRESS', label: '执行中' },
+  SUCCESS: { value: 'SUCCESS', label: '成功' },
+  FAILED: { value: 'FAILED', label: '失败' },
+  DEAD: { value: 'DEAD', label: '死信' },
+  CANCELLED: { value: 'CANCELLED', label: '已取消' },
+} as const)
+
+/**
+ * 部署作业类型枚举(对应后端 JobTypeEnum)
+ */
+export const JobTypeEnum = createEnum({
+  START: { value: 'START', label: '启动' },
+  STOP: { value: 'STOP', label: '停止' },
+  RESTART: { value: 'RESTART', label: '重启' },
+  UPDATE: { value: 'UPDATE', label: '更新' },
+} as const)
+
+/**
+ * 部署作业状态 → el-tag 类型映射(应用管理「最近作业」列、作业历史抽屉共用)
+ */
+const JOB_STATUS_TAG_TYPE: Record<string, 'success' | 'warning' | 'info' | 'primary' | 'danger'> = {
+  [JobStatusEnum.PENDING.value]: 'info',
+  [JobStatusEnum.IN_PROGRESS.value]: 'primary',
+  [JobStatusEnum.SUCCESS.value]: 'success',
+  [JobStatusEnum.FAILED.value]: 'warning',
+  [JobStatusEnum.DEAD.value]: 'danger',
+  [JobStatusEnum.CANCELLED.value]: 'info',
+}
+
+/**
+ * 取作业状态对应的 el-tag 类型,未知状态回退到 info。
+ */
+export const jobStatusTagType = (
+  status?: string,
+): 'success' | 'warning' | 'info' | 'primary' | 'danger' => (status && JOB_STATUS_TAG_TYPE[status]) || 'info'

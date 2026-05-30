@@ -8,13 +8,14 @@
 - **完全不重试,失败立即 DLQ**:顺序保留、简单,但放弃了对 SSH 断连这类**瞬时故障**的自动挽救能力,可用性差。
 - **混合策略(选定)**:
   - **基础设施级失败**(SSH 超时、网络抖动) → consumer **内部短同步重试**(2-3 次小退避,在同一条消息的消费动作内完成,对 MQ 总是 ACK 成功),顺序不破。
-  - **业务级失败 / 内部短重试用尽** → 数据库把作业 `status='FAILED'` 并写 `error_message`,**ACK 原消息**让 queue 继续推进;同时显式 `rocketMQTemplate.syncSend("%DLQ%deploy-job", ...)` 投递死信。
+  - **业务级失败 / 内部短重试用尽** → 数据库把作业 `status='FAILED'` 并写 `error_message`,**ACK 原消息**让 queue 继续推进;同时显式 `rocketMQTemplate.syncSend("deploy-job-dlq", ...)` 投递死信。
   - DLQ 消费方为 `MQMonitorController` + 前端 DLQ 页面;**手动 retry 的语义是新建一份带新 jobId 的作业**(走 HTTP 入口),不是把 DLQ 消息再投回原 Topic——后者会再次破顺序。
 
 ## Consequences
 
 - consumer 代码必须区分异常类型(`SshTransientException` vs `JobFailureException` 等),不能用一刀切的 `try/catch RuntimeException → throw`。
-- 不再依赖 RocketMQ 自动 DLQ Topic(`%DLQ%consumerGroup`);改用业务自定义 DLQ Topic 名 `%DLQ%deploy-job`,语义更可控。
+- 不再依赖 RocketMQ 自动 DLQ Topic(`%DLQ%consumerGroup`);改用业务自定义 DLQ Topic 名 `deploy-job-dlq`,语义更可控。
 - 简历/面试叙事更高级:能讲"为什么放弃 `maxReconsumeTimes`"——三段(机制层:retry topic 延迟投回破顺序;业务层:不区分故障性质;运维层:DLQ 时机由应用决定更可观测)。
 - **若未来需要演示 RocketMQ 内置重试 + 自动 DLQ 机制**(纯面试用),可以在不需要顺序约束的 topic 上(如审计日志旁路、配置广播)单独配置,作为对比演示,不污染主流程。
 - CONTEXT.md 的 Flagged ambiguities #2(顺序消息与失败重试的冲突)和 #3(死信处理流程)由本 ADR 一并 resolve。
+- **DLQ Topic 命名(实现修正)**:本 ADR 初稿写的 `%DLQ%deploy-job` 实际不可用——`%DLQ%` 是 RocketMQ 为每个 consumerGroup 自动创建的系统死信 Topic 的**保留前缀**,这类 Topic 默认权限只读(`PERM_READ`),producer 手动 `syncSend` 会被 broker 拒绝。落地改用纯业务名 `deploy-job-dlq`(配 `deploy-tool.mq.dead-letter-topic`),由 broker `autoCreateTopicEnable` 建成可读写 Topic;消费方 `DeadLetterConsumer` 以 `CONCURRENTLY` 普通并发消费、落 `dead_letter_message` 表(`existsByJobId` 去重)。

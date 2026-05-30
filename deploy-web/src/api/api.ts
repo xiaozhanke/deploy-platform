@@ -4,7 +4,13 @@ import type { ServerRecord, ServerParams } from '@/types/server'
 import type { PageParams, PageResult } from '@/types/api'
 import type { FileParams, FileRecord } from '@/types/file'
 import type { LoginRequest, PasswordForm, UserProfile } from '@/types/auth'
-import type { DeploymentRecord, DeploymentParams } from '@/types/deployment'
+import type {
+  CreateJobRequest,
+  DeadLetterMessage,
+  DeploymentJob,
+  DeploymentParams,
+  DeploymentRecord,
+} from '@/types/deployment'
 
 /**
  * 测试 API 可用性
@@ -387,4 +393,65 @@ export const deploymentRecordStatus = (id: string): Promise<DeploymentRecord> =>
  */
 export const deploymentRecordUpdatePackage = (id: string, fileRecordId: string): Promise<DeploymentRecord> => {
   return request.put(`/deployments/${id}/package`, null, { params: { fileRecordId } })
+}
+
+/**
+ * 创建部署作业(异步入口,经 MQ 执行)
+ * @param deploymentRecordId 部署记录 Id
+ * @param params 作业类型与客户端请求 Id（用于幂等）
+ * @returns 新建的部署作业
+ */
+export const deploymentJobCreate = (
+  deploymentRecordId: string,
+  params: CreateJobRequest,
+): Promise<DeploymentJob> => {
+  return request.post(`/deployments/${deploymentRecordId}/jobs`, params)
+}
+
+/**
+ * 分页查询某部署记录下的作业
+ * @param deploymentRecordId 部署记录 Id
+ * @param queryParams 查询参数（可按作业状态过滤）
+ * @param pageParams 分页参数
+ * @returns 作业分页列表
+ */
+export const deploymentJobQueryPage = (
+  deploymentRecordId: string,
+  queryParams: { status?: DeploymentJob['status'] },
+  pageParams?: PageParams,
+): Promise<PageResult<DeploymentJob>> => {
+  return request.get(`/deployments/${deploymentRecordId}/jobs`, {
+    params: { ...queryParams, ...pageParams },
+  })
+}
+
+/**
+ * 根据作业 Id 获取作业当前状态
+ * @param jobId 作业 Id
+ * @returns 部署作业
+ */
+export const deploymentJobQueryById = (jobId: string): Promise<DeploymentJob> => {
+  return request.get(`/jobs/${jobId}`)
+}
+
+/**
+ * 分页查询死信列表
+ * @param queryParams 查询参数（可按是否已重试过滤）
+ * @param pageParams 分页参数
+ * @returns 死信分页列表
+ */
+export const deadLetterQueryPage = (
+  queryParams: { retried?: boolean },
+  pageParams?: PageParams,
+): Promise<PageResult<DeadLetterMessage>> => {
+  return request.get('/mq/dead-letters', { params: { ...queryParams, ...pageParams } })
+}
+
+/**
+ * 人工重试死信（用死信里的 recordId + jobType 新建一份新作业）
+ * @param id 死信记录 Id
+ * @returns 新建的部署作业
+ */
+export const deadLetterRetry = (id: string): Promise<DeploymentJob> => {
+  return request.post(`/mq/dead-letters/${id}/retry`)
 }

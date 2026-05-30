@@ -3,21 +3,27 @@ defineOptions({
   name: 'ApplicationIndex',
 })
 
-import {
-  deploymentRecordDelete,
-  deploymentRecordQueryPage,
-  deploymentRecordRestart,
-  deploymentRecordStart,
-  deploymentRecordStop,
-} from '@/api/api'
+import { deploymentJobCreate, deploymentRecordDelete, deploymentRecordQueryPage } from '@/api/api'
 import TablePagination from '@/components/table-pagination/index.vue'
-import { ApplicationTypeEnum, DeploymentStatusEnum } from '@/enums/platform'
+import { ApplicationTypeEnum, DeploymentStatusEnum, JobStatusEnum, JobTypeEnum, jobStatusTagType } from '@/enums/platform'
 import type { PageParams } from '@/types/api'
-import type { DeploymentParams, DeploymentRecord } from '@/types/deployment'
+import type { DeploymentJob, DeploymentParams, DeploymentRecord } from '@/types/deployment'
 import type { FormInstance } from 'element-plus'
-import { Refresh, Search, View, Edit, Delete, SwitchButton, Loading, Document, Switch } from '@element-plus/icons-vue'
+import {
+  Refresh,
+  Search,
+  View,
+  Edit,
+  Delete,
+  SwitchButton,
+  Loading,
+  Document,
+  Switch,
+  Tickets,
+} from '@element-plus/icons-vue'
 import ApplicationDetails from './ApplicationDetails.vue'
 import ApplicationUpdate from './ApplicationUpdate.vue'
+import JobHistory from './JobHistory.vue'
 import ServerSelect from '@/views/server/components/ServerSelect.vue'
 import FileSelect from '@/views/file/FileSelect.vue'
 import type { FileRecord } from '@/types/file'
@@ -25,6 +31,8 @@ import type { ServerRecord } from '@/types/server'
 import LogView from '@/views/log/components/LogView.vue'
 import ApplicationUpdatePackage from './ApplicationUpdatePackage.vue'
 import ApplicationUpdateConfig from './ApplicationUpdateConfig.vue'
+import { useWebSocketStore } from '@/stores/websocket'
+import type { StompSubscription } from '@stomp/stompjs'
 
 const formRef = ref<FormInstance>()
 const tablePaginationRef = ref()
@@ -32,9 +40,65 @@ const tableSelection = ref<DeploymentRecord[]>([])
 
 const form = reactive<Partial<DeploymentParams>>({})
 
-// table-pagination 组件的查询方法
+// recordId → 最近一次作业（WebSocket 实时推送 / 提交后乐观写入），用于「最近作业」列展示
+const latestJobMap = reactive<Record<string, DeploymentJob>>({})
+
+const websocketStore = useWebSocketStore()
+let subscriptions: StompSubscription[] = []
+
+// 作业终态：到达后记录的运行态可能已变，需刷新当前页
+const isTerminalStatus = (status: string) =>
+  status === JobStatusEnum.SUCCESS.value ||
+  status === JobStatusEnum.FAILED.value ||
+  status === JobStatusEnum.DEAD.value ||
+  status === JobStatusEnum.CANCELLED.value
+
+// 刷新当前页（不重置到第一页）
+const refreshCurrentPage = () => tablePaginationRef.value?.queryPage()
+
+// 终态推送可能密集到达，合并 300ms 内的多次刷新
+let refreshTimer: ReturnType<typeof setTimeout> | undefined
+const scheduleRefresh = () => {
+  clearTimeout(refreshTimer)
+  refreshTimer = setTimeout(() => refreshCurrentPage(), 300)
+}
+
+const unsubscribeAll = () => {
+  subscriptions.forEach((subscription) => {
+    try {
+      subscription.unsubscribe()
+    } catch {
+      /* 忽略重复退订 */
+    }
+  })
+  subscriptions = []
+}
+
+// 为当前页每条记录订阅作业状态频道
+const subscribeJobs = (records: DeploymentRecord[]) => {
+  unsubscribeAll()
+  if (!websocketStore.client?.connected) return
+  records.forEach((record) => {
+    try {
+      const subscription = websocketStore.subscribe(`/topic/jobs/${record.id}`, (body) => {
+        const job = JSON.parse(body) as DeploymentJob
+        latestJobMap[job.deploymentRecordId] = job
+        if (isTerminalStatus(job.status)) {
+          scheduleRefresh()
+        }
+      })
+      subscriptions.push(subscription)
+    } catch {
+      // 未连接则跳过，下次查询会再尝试订阅
+    }
+  })
+}
+
+// table-pagination 的查询方法：查询后拿到当前页记录，重新订阅它们的作业频道
 const queryMethod = async (queryParams: Record<string, unknown>, pageParams: PageParams) => {
-  return deploymentRecordQueryPage(queryParams as Partial<DeploymentRecord>, pageParams)
+  const result = await deploymentRecordQueryPage(queryParams as Partial<DeploymentRecord>, pageParams)
+  subscribeJobs(result.content)
+  return result
 }
 
 // 查询
@@ -59,56 +123,35 @@ const handleSelectionChange = (selection: DeploymentRecord[]) => {
   tableSelection.value = selection
 }
 
-// 应用启动
-const handleApplicationStart = async () => {
+// 提交作业（每条选中记录一个作业，经 MQ 异步执行）
+const submitJobs = async (jobType: DeploymentJob['jobType'], actionLabel: string) => {
   if (tableSelection.value.length === 0) {
     ElMessage.info('请选择要操作的记录')
     return
   }
   for (const record of tableSelection.value) {
     try {
-      await deploymentRecordStart(record.id)
-      ElNotification.success(`应用 [${record.fileRecord.fileName}] 启动成功`)
-    } catch {
-      ElMessage.error(`应用 [${record.fileRecord.fileName}] 启动失败`)
+      const job = await deploymentJobCreate(record.id, {
+        jobType,
+        clientRequestId: crypto.randomUUID(),
+      })
+      latestJobMap[record.id] = job
+      ElNotification.success(`应用 [${record.fileRecord.fileName}] ${actionLabel}作业已提交`)
+    } catch (error) {
+      ElMessage.error(`应用 [${record.fileRecord.fileName}] ${actionLabel}作业提交失败: ` + extractErrorMessage(error))
     }
   }
-  await handleQuery()
+  refreshCurrentPage()
 }
+
+// 应用启动
+const handleApplicationStart = () => submitJobs(JobTypeEnum.START.value, '启动')
 
 // 应用停止
-const handleApplicationStop = async () => {
-  if (tableSelection.value.length === 0) {
-    ElMessage.info('请选择要操作的记录')
-    return
-  }
-  for (const record of tableSelection.value) {
-    try {
-      await deploymentRecordStop(record.id)
-      ElNotification.success(`应用 [${record.fileRecord.fileName}] 停止成功`)
-    } catch {
-      ElMessage.error(`应用 [${record.fileRecord.fileName}] 停止失败`)
-    }
-  }
-  await handleQuery()
-}
+const handleApplicationStop = () => submitJobs(JobTypeEnum.STOP.value, '停止')
 
 // 应用重启
-const handleApplicationRestart = async () => {
-  if (tableSelection.value.length === 0) {
-    ElMessage.info('请选择要操作的记录')
-    return
-  }
-  for (const record of tableSelection.value) {
-    try {
-      await deploymentRecordRestart(record.id)
-      ElNotification.success(`应用 [${record.fileRecord.fileName}] 重启成功`)
-    } catch {
-      ElMessage.error(`应用 [${record.fileRecord.fileName}] 重启失败`)
-    }
-  }
-  await handleQuery()
-}
+const handleApplicationRestart = () => submitJobs(JobTypeEnum.RESTART.value, '重启')
 
 const updatePackageVisible = ref(false)
 // 应用更新应用包
@@ -123,6 +166,7 @@ const handleApplicationUpdate = () => {
 const currentRecord = ref<DeploymentRecord>({} as DeploymentRecord)
 const detailVisible = ref(false)
 const updateVisible = ref(false)
+const jobHistoryVisible = ref(false)
 
 // 查看部署记录详情
 const handleView = (row: DeploymentRecord) => {
@@ -134,6 +178,12 @@ const handleView = (row: DeploymentRecord) => {
 const handleEdit = (row: DeploymentRecord) => {
   currentRecord.value = row
   updateVisible.value = true
+}
+
+// 查看作业历史
+const handleJobHistory = (row: DeploymentRecord) => {
+  currentRecord.value = row
+  jobHistoryVisible.value = true
 }
 
 // 删除部署记录
@@ -207,6 +257,15 @@ const handleFileSelectClear = () => {
 
 onActivated(async () => {
   await handleQuery()
+})
+
+onDeactivated(() => {
+  unsubscribeAll()
+})
+
+onUnmounted(() => {
+  clearTimeout(refreshTimer)
+  unsubscribeAll()
 })
 </script>
 
@@ -325,11 +384,27 @@ onActivated(async () => {
           />
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="278px" fixed="right">
+      <el-table-column label="最近作业" width="150">
+        <template #default="{ row }">
+          <el-tag
+            v-if="latestJobMap[row.id]"
+            :type="jobStatusTagType(latestJobMap[row.id]?.status)"
+            size="small"
+            effect="dark"
+          >
+            {{ JobTypeEnum.getLabel(latestJobMap[row.id]?.jobType) }}·{{
+              JobStatusEnum.getLabel(latestJobMap[row.id]?.status)
+            }}
+          </el-tag>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="340px" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link :icon="View" @click="handleView(row)">详情</el-button>
           <el-button type="warning" link :icon="Edit" @click="handleEdit(row)">修改</el-button>
           <el-button type="danger" link :icon="Delete" @click="handleDelete(row)">删除</el-button>
+          <el-button type="info" link :icon="Tickets" @click="handleJobHistory(row)">作业</el-button>
           <el-button
             link
             :icon="Document"
@@ -342,6 +417,7 @@ onActivated(async () => {
     </table-pagination>
     <application-details v-if="detailVisible" v-model="detailVisible" :record="currentRecord" />
     <application-update v-if="updateVisible" v-model="updateVisible" :record="currentRecord" @complete="handleQuery" />
+    <job-history v-if="jobHistoryVisible" v-model="jobHistoryVisible" :record="currentRecord" />
     <server-select v-if="serverSelectVisible" v-model="serverSelectVisible" @select="handleServerSelectComplete" />
     <file-select v-if="fileSelectVisible" v-model="fileSelectVisible" @select="handleFileSelectComplete" />
     <log-view v-if="logVisible" v-model="logVisible" :server-id="logServerId" :log-path="logPath" />

@@ -74,3 +74,7 @@ deploy-tool:
     deploy-job-consumer-group: deploy-job-consumer
     # 顺序键按 deploymentRecordId 分队列(详见 ADR-0001),队列数与 broker.conf 的 defaultTopicQueueNums 对齐
     deploy-job-queue-count: 8
+    # 自定义死信 Topic / Consumer Group(场景 5,ADR-0003)
+    # 用业务名而非 RocketMQ 系统保留前缀 %DLQ%(后者默认只读,producer 手动投递会失败)
+    dead-letter-topic: deploy-job-dlq
+    dead-letter-consumer-group: deploy-job-dlq-consumer

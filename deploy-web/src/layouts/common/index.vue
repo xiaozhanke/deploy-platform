@@ -52,6 +52,11 @@ const menuList = ref([
     icon: 'star',
   },
   {
+    index: '/dead-letter',
+    title: '死信队列',
+    icon: 'warning',
+  },
+  {
     index: '/file',
     title: '文件资源',
     icon: 'folder',

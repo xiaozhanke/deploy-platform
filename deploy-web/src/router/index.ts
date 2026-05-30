@@ -80,6 +80,15 @@ const router = createRouter({
           },
         },
         {
+          path: 'dead-letter',
+          name: 'DeadLetterIndex',
+          component: () => import('@/views/dead-letter/index.vue'),
+          meta: {
+            title: '死信队列',
+            keepAlive: true,
+          },
+        },
+        {
           path: 'file',
           name: 'FileIndex',
           component: () => import('@/views/file/index.vue'),
