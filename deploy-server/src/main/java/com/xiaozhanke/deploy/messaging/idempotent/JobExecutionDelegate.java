@@ -1,6 +1,5 @@
 package com.xiaozhanke.deploy.messaging.idempotent;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xiaozhanke.deploy.core.ssh.SshOperationExecutor;
 import com.xiaozhanke.deploy.enums.JobTypeEnum;
 import com.xiaozhanke.deploy.exception.JobFailureException;
@@ -11,6 +10,7 @@ import com.xiaozhanke.deploy.model.entity.DeploymentJob;
 import com.xiaozhanke.deploy.model.entity.DeploymentRecord;
 import com.xiaozhanke.deploy.model.mapper.DeploymentJobPoVoMapper;
 import com.xiaozhanke.deploy.repository.DeploymentJobRepository;
+import com.xiaozhanke.deploy.repository.DeploymentRecordRepository;
 import com.xiaozhanke.deploy.service.DeploymentJobExecutionService;
 import com.xiaozhanke.deploy.util.ErrorMessageUtils;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +45,7 @@ public class JobExecutionDelegate {
     private final DeploymentJobPoVoMapper deploymentJobPoVoMapper;
     private final RocketMQTemplate rocketMQTemplate;
     private final RocketMQProperties properties;
-    private final ObjectMapper objectMapper;
+    private final DeploymentRecordRepository deploymentRecordRepository;
 
     /**
      * 按作业类型分发 SSH 命令(不与数据库交互——状态回写由 {@link DeploymentJobExecutionService} 负责)。
@@ -69,6 +69,7 @@ public class JobExecutionDelegate {
                 executionService.markStartSuccess(jobId, deploymentRecordId, processId);
             }
             case UPDATE -> throw new JobFailureException("UPDATE 作业类型暂未支持");
+            default -> throw new JobFailureException("不支持的作业类型: " + jobType);
         }
         log.info("作业 [{}] 执行成功", jobId);
     }
@@ -82,9 +83,10 @@ public class JobExecutionDelegate {
                                               JobTypeEnum jobType, DeploymentRecord record,
                                               String originalPayload) {
         int retryCount = 0;
+        DeploymentRecord currentRecord = record;
         while (true) {
             try {
-                dispatch(jobId, deploymentRecordId, jobType, record);
+                dispatch(jobId, deploymentRecordId, jobType, currentRecord);
                 pushStatus(jobId, deploymentRecordId);
                 return;
             } catch (SshTransientException e) {
@@ -92,6 +94,9 @@ public class JobExecutionDelegate {
                 if (retryCount < MAX_TRANSIENT_ATTEMPTS) {
                     log.warn("作业 [{}] 第 {} 次瞬时故障,退避后重试: {}", jobId, retryCount, e.getMessage());
                     backoff(retryCount);
+                    // 重试前重新加载 record,避免前次 dispatch 部分成功导致的状态过时
+                    currentRecord = deploymentRecordRepository.findById(deploymentRecordId)
+                            .orElse(currentRecord);
                     continue;
                 }
                 deadLetter(jobId, deploymentRecordId, jobType, originalPayload,
@@ -112,16 +117,7 @@ public class JobExecutionDelegate {
     public void deadLetterDirect(String jobId, String deploymentRecordId, JobTypeEnum jobType,
                                  String originalPayload, String reason) {
         log.error("作业 [{}] 直接进入死信(不经重试): {}", jobId, reason);
-        executionService.markDead(jobId, reason, 0);
-        try {
-            DeadLetterMqMessage deadLetterMqMessage = new DeadLetterMqMessage(jobId,
-                    deploymentRecordId, jobType,
-                    ErrorMessageUtils.truncate(reason), originalPayload, LocalDateTime.now());
-            rocketMQTemplate.syncSend(properties.deadLetterTopic(), deadLetterMqMessage);
-        } catch (Exception e) {
-            log.error("投递死信队列失败: jobId=[{}]", jobId, e);
-        }
-        pushStatus(jobId, deploymentRecordId);
+        deadLetter(jobId, deploymentRecordId, jobType, originalPayload, 0, reason);
     }
 
     /**
@@ -152,6 +148,10 @@ public class JobExecutionDelegate {
             log.error("投递死信队列失败: jobId=[{}]", jobId, e);
         }
         pushStatus(jobId, deploymentRecordId);
+        // 清除中断标志,防止 backoff() 中断残留影响 ORDERLY 消费者后续消息处理
+        if (Thread.interrupted()) {
+            log.debug("已清除线程中断标志");
+        }
     }
 
     private void backoff(int attempt) {

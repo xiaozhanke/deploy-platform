@@ -64,7 +64,9 @@ public class DeploymentConsumer implements RocketMQListener<DeploymentJobMessage
         try {
             payload = objectMapper.writeValueAsString(msg);
         } catch (Exception e) {
-            throw new IllegalStateException("序列化部署作业消息失败: " + msg.jobId(), e);
+            log.error("序列化部署作业消息失败,使用降级 payload: jobId=[{}]", msg.jobId(), e);
+            payload = "{\"jobId\":\"" + msg.jobId() + "\",\"_serialization_error\":true}";
+            // jobId 为系统生成的 UUID,不含 JSON 特殊字符,字符串拼接安全
         }
         executionDelegate.executeWithRetryAndDeadLetter(
                 msg.jobId(), msg.deploymentRecordId(), msg.jobType(), record, payload);
