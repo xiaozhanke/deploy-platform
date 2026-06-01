@@ -89,6 +89,15 @@ const router = createRouter({
           },
         },
         {
+          path: 'audit-log',
+          name: 'AuditLogIndex',
+          component: () => import('@/views/audit-log/index.vue'),
+          meta: {
+            title: '操作审计',
+            keepAlive: true,
+          },
+        },
+        {
           path: 'file',
           name: 'FileIndex',
           component: () => import('@/views/file/index.vue'),

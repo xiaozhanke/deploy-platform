@@ -57,6 +57,11 @@ const menuList = ref([
     icon: 'warning',
   },
   {
+    index: '/audit-log',
+    title: '操作审计',
+    icon: 'document-checked',
+  },
+  {
     index: '/file',
     title: '文件资源',
     icon: 'folder',

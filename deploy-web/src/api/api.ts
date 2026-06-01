@@ -5,6 +5,8 @@ import type { PageParams, PageResult } from '@/types/api'
 import type { FileParams, FileRecord } from '@/types/file'
 import type { LoginRequest, PasswordForm, UserProfile } from '@/types/auth'
 import type {
+  AuditLog,
+  AuditLogQueryParams,
   CreateJobRequest,
   DeadLetterMessage,
   DeploymentJob,
@@ -454,4 +456,17 @@ export const deadLetterQueryPage = (
  */
 export const deadLetterRetry = (id: string): Promise<DeploymentJob> => {
   return request.post(`/mq/dead-letters/${id}/retry`)
+}
+
+/**
+ * 分页查询操作审计日志(场景 4 Kafka 审计)
+ * @param queryParams 查询参数（操作人、操作类型、操作结果）
+ * @param pageParams 分页参数
+ * @returns 审计日志分页列表
+ */
+export const auditLogQueryPage = (
+  queryParams: AuditLogQueryParams,
+  pageParams?: PageParams,
+): Promise<PageResult<AuditLog>> => {
+  return request.get('/audit-logs', { params: { ...queryParams, ...pageParams } })
 }

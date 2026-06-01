@@ -73,6 +73,32 @@ export interface DeploymentJob {
 export interface CreateJobRequest {
   jobType: keyof typeof JobTypeEnum
   clientRequestId: string
+  /** 期望执行时间(ISO 格式);设置后创建延迟作业,留空则立即执行 */
+  executeAt?: string
+}
+
+/**
+ * 操作审计日志(对应后端 AuditLogVo,场景 4)
+ */
+export interface AuditLog {
+  id: string
+  operator: string
+  operationType: string
+  target: string
+  description: string
+  outcome: 'SUCCESS' | 'FAILURE'
+  errorMessage: string
+  clientIp: string
+  operationTime: string
+}
+
+/**
+ * 审计日志查询参数
+ */
+export interface AuditLogQueryParams {
+  operator?: string
+  operationType?: string
+  outcome?: string
 }
 
 /**

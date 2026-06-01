@@ -105,3 +105,48 @@ const JOB_STATUS_TAG_TYPE: Record<string, 'success' | 'warning' | 'info' | 'prim
 export const jobStatusTagType = (
   status?: string,
 ): 'success' | 'warning' | 'info' | 'primary' | 'danger' => (status && JOB_STATUS_TAG_TYPE[status]) || 'info'
+
+/**
+ * 审计操作类型枚举(对应后端 AuditOperationTypeEnum,场景 4)
+ */
+export const AuditOperationTypeEnum = createEnum({
+  SSH_EXEC: { value: 'SSH_EXEC', label: 'SSH 命令执行' },
+  FILE_UPLOAD: { value: 'FILE_UPLOAD', label: '文件上传' },
+  FILE_DOWNLOAD: { value: 'FILE_DOWNLOAD', label: '文件下载' },
+  FILE_DELETE: { value: 'FILE_DELETE', label: '文件删除' },
+  LOGIN: { value: 'LOGIN', label: '登录' },
+  LOGOUT: { value: 'LOGOUT', label: '登出' },
+  DEPLOYMENT_CREATE: { value: 'DEPLOYMENT_CREATE', label: '创建部署记录' },
+  DEPLOYMENT_UPDATE: { value: 'DEPLOYMENT_UPDATE', label: '更新部署记录' },
+  DEPLOYMENT_DELETE: { value: 'DEPLOYMENT_DELETE', label: '删除部署记录' },
+  JOB_CREATE: { value: 'JOB_CREATE', label: '创建部署作业' },
+  JOB_CANCEL: { value: 'JOB_CANCEL', label: '取消部署作业' },
+  SERVER_CREATE: { value: 'SERVER_CREATE', label: '创建服务器' },
+  SERVER_UPDATE: { value: 'SERVER_UPDATE', label: '更新服务器' },
+  SERVER_DELETE: { value: 'SERVER_DELETE', label: '删除服务器' },
+  USER_CREATE: { value: 'USER_CREATE', label: '创建用户' },
+  USER_UPDATE: { value: 'USER_UPDATE', label: '更新用户' },
+  USER_DELETE: { value: 'USER_DELETE', label: '删除用户' },
+  ROLE_CREATE: { value: 'ROLE_CREATE', label: '创建角色' },
+  ROLE_UPDATE: { value: 'ROLE_UPDATE', label: '更新角色' },
+  ROLE_DELETE: { value: 'ROLE_DELETE', label: '删除角色' },
+} as const)
+
+/**
+ * 审计操作结果枚举(对应后端 AuditOutcomeEnum,场景 4)
+ */
+export const AuditOutcomeEnum = createEnum({
+  SUCCESS: { value: 'SUCCESS', label: '成功' },
+  FAILURE: { value: 'FAILURE', label: '失败' },
+} as const)
+
+/**
+ * 审计操作结果标签类型映射(场景 4)
+ */
+const AUDIT_OUTCOME_TAG_TYPE: Record<string, 'success' | 'danger'> = {
+  SUCCESS: 'success',
+  FAILURE: 'danger',
+}
+
+export const auditOutcomeTagType = (outcome?: string): 'success' | 'danger' | 'info' =>
+  (outcome && AUDIT_OUTCOME_TAG_TYPE[outcome]) || 'info'
