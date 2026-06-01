@@ -1,0 +1,4 @@
+# 测试环境禁用广播消费——BROADCASTING 模式不允许同一 consumerGroup 被重复注册
+deploy-tool:
+  mq:
+    config-broadcast-enabled: false
