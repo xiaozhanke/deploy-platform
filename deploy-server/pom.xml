@@ -124,6 +124,11 @@
             <artifactId>rocketmq-spring-boot-starter</artifactId>
             <version>2.3.4</version>
         </dependency>
+        <!-- Kafka:审计日志高吞吐数据流(场景 4,ADR-0005),版本由 spring-boot-starter-parent 管理 -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

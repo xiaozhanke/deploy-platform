@@ -1,5 +1,7 @@
 package com.xiaozhanke.deploy.controller;
 
+import com.xiaozhanke.deploy.aspect.Auditable;
+import com.xiaozhanke.deploy.enums.AuditOperationTypeEnum;
 import com.xiaozhanke.deploy.model.request.ServerParams;
 import com.xiaozhanke.deploy.model.vo.ServerRecordVo;
 import com.xiaozhanke.deploy.service.ServerService;
@@ -46,6 +48,7 @@ public class ServerController {
      * @return 保存后的服务器信息
      */
     @Operation(summary = "添加服务器", description = "添加服务器信息")
+    @Auditable(operationType = AuditOperationTypeEnum.SERVER_CREATE, target = "#params.host")
     @PostMapping
     public ResponseEntity<ServerRecordVo> addServer(@Validated @RequestBody ServerParams params) {
         ServerRecordVo createdRecord = serverService.addServer(params);
@@ -62,6 +65,7 @@ public class ServerController {
      * @return 更新后的服务器信息
      */
     @Operation(summary = "更新服务器", description = "更新服务器信息")
+    @Auditable(operationType = AuditOperationTypeEnum.SERVER_UPDATE, target = "#id")
     @PutMapping("/{id}")
     public ServerRecordVo updateServer(@Parameter(description = "服务器 Id", required = true) @PathVariable String id,
                                        @Validated @RequestBody ServerParams params) {
@@ -74,6 +78,7 @@ public class ServerController {
      * @param id 服务器 Id
      */
     @Operation(summary = "删除服务器", description = "删除服务器信息")
+    @Auditable(operationType = AuditOperationTypeEnum.SERVER_DELETE, target = "#id")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteServer(@Parameter(description = "服务器 Id", required = true) @PathVariable String id) {

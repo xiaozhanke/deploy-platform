@@ -1,5 +1,7 @@
 package com.xiaozhanke.deploy.controller;
 
+import com.xiaozhanke.deploy.aspect.Auditable;
+import com.xiaozhanke.deploy.enums.AuditOperationTypeEnum;
 import com.xiaozhanke.deploy.model.request.RoleParams;
 import com.xiaozhanke.deploy.model.response.PageResult;
 import com.xiaozhanke.deploy.model.vo.PlatformRoleVo;
@@ -49,6 +51,7 @@ public class PlatformRoleController {
      * @return 保存后的角色信息
      */
     @Operation(summary = "创建角色", description = "创建角色")
+    @Auditable(operationType = AuditOperationTypeEnum.ROLE_CREATE, target = "#params.name")
     @PostMapping
     public ResponseEntity<PlatformRoleVo> addRole(@Validated @RequestBody RoleParams params) {
         PlatformRoleVo createdRecord = platformRoleService.createRole(params);
@@ -94,6 +97,7 @@ public class PlatformRoleController {
      * @return 更新后的角色信息
      */
     @Operation(summary = "更新角色", description = "更新角色")
+    @Auditable(operationType = AuditOperationTypeEnum.ROLE_UPDATE, target = "#id")
     @PutMapping("/{id}")
     public PlatformRoleVo updateRole(@Parameter(description = "角色 Id", required = true) @PathVariable String id,
                                      @Validated @RequestBody RoleParams params) {
@@ -106,6 +110,7 @@ public class PlatformRoleController {
      * @param id 角色 Id
      */
     @Operation(summary = "删除角色", description = "删除角色")
+    @Auditable(operationType = AuditOperationTypeEnum.ROLE_DELETE, target = "#id")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteRole(@Parameter(description = "角色 Id", required = true) @PathVariable String id) {

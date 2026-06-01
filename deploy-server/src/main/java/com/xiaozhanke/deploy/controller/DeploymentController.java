@@ -1,5 +1,7 @@
 package com.xiaozhanke.deploy.controller;
 
+import com.xiaozhanke.deploy.aspect.Auditable;
+import com.xiaozhanke.deploy.enums.AuditOperationTypeEnum;
 import com.xiaozhanke.deploy.model.request.DeploymentParams;
 import com.xiaozhanke.deploy.model.response.PageResult;
 import com.xiaozhanke.deploy.model.vo.DeploymentRecordVo;
@@ -51,6 +53,7 @@ public class DeploymentController {
      * @return 保存后的部署记录信息
      */
     @Operation(summary = "创建部署记录", description = "创建部署记录")
+    @Auditable(operationType = AuditOperationTypeEnum.DEPLOYMENT_CREATE, target = "#params.serverId")
     @PostMapping
     public ResponseEntity<DeploymentRecordVo> addDeployment(@Validated @RequestBody DeploymentParams params) {
         DeploymentRecordVo createdRecord = deploymentService.createDeployment(params);
@@ -111,6 +114,7 @@ public class DeploymentController {
      * @return 更新后的部署记录信息
      */
     @Operation(summary = "更新部署记录", description = "更新部署记录")
+    @Auditable(operationType = AuditOperationTypeEnum.DEPLOYMENT_UPDATE, target = "#id")
     @PutMapping("/{id}")
     public DeploymentRecordVo updateDeployment(@Parameter(description = "部署记录 Id", required = true) @PathVariable String id,
                                                @Validated @RequestBody DeploymentParams params) {
@@ -123,6 +127,7 @@ public class DeploymentController {
      * @param id 部署记录 Id
      */
     @Operation(summary = "删除部署记录", description = "删除部署记录")
+    @Auditable(operationType = AuditOperationTypeEnum.DEPLOYMENT_DELETE, target = "#id")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteDeployment(@Parameter(description = "部署记录 Id", required = true) @PathVariable String id) {

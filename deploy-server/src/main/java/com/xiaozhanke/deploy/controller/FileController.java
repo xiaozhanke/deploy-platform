@@ -1,5 +1,7 @@
 package com.xiaozhanke.deploy.controller;
 
+import com.xiaozhanke.deploy.aspect.Auditable;
+import com.xiaozhanke.deploy.enums.AuditOperationTypeEnum;
 import com.xiaozhanke.deploy.model.request.FileParams;
 import com.xiaozhanke.deploy.model.response.PageResult;
 import com.xiaozhanke.deploy.model.vo.FileRecordVo;
@@ -122,6 +124,7 @@ public class FileController {
      * @return 保存后的文件记录
      */
     @Operation(summary = "上传文件", description = "上传文件并保存文件记录")
+    @Auditable(operationType = AuditOperationTypeEnum.FILE_UPLOAD, target = "#file.originalFilename")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<FileRecordVo> uploadFile(@Parameter(description = "文件", required = true) @RequestParam MultipartFile file,
                                                    @ParameterObject @ModelAttribute FileParams params) {
@@ -137,6 +140,7 @@ public class FileController {
      * @param id 文件 Id
      */
     @Operation(summary = "删除文件", description = "根据文件 Id 删除文件和记录")
+    @Auditable(operationType = AuditOperationTypeEnum.FILE_DELETE, target = "#id")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteFile(@Parameter(description = "文件 Id", required = true) @PathVariable String id) {

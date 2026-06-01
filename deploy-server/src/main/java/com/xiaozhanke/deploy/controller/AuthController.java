@@ -1,5 +1,7 @@
 package com.xiaozhanke.deploy.controller;
 
+import com.xiaozhanke.deploy.aspect.Auditable;
+import com.xiaozhanke.deploy.enums.AuditOperationTypeEnum;
 import com.xiaozhanke.deploy.model.request.LoginRequest;
 import com.xiaozhanke.deploy.model.vo.PlatformUserVo;
 import com.xiaozhanke.deploy.service.PlatformUserService;
@@ -55,6 +57,7 @@ public class AuthController {
      * @param loginRequest 登录请求
      */
     @Operation(summary = "用户登录", description = "通过用户名和密码进行认证，成功后建立会话")
+    @Auditable(operationType = AuditOperationTypeEnum.LOGIN, target = "#loginRequest.username")
     @PostMapping("/login")
     public void login(@Validated @RequestBody LoginRequest loginRequest, HttpServletRequest request,
                       HttpServletResponse response) {
@@ -75,6 +78,7 @@ public class AuthController {
      * 用户登出
      */
     @Operation(summary = "用户登出", description = "结束当前用户的会话")
+    @Auditable(operationType = AuditOperationTypeEnum.LOGOUT, operator = "#authentication?.name")
     @PostMapping("/logout")
     public void logout(Authentication authentication, HttpServletRequest request, HttpServletResponse response) {
         // 清理安全上下文，使会话无效

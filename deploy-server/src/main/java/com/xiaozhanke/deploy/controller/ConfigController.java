@@ -27,7 +27,10 @@ public class ConfigController {
     }
 
     /**
-     * 生成 Nginx 配置文件内容
+     * 生成 Nginx 配置文件内容(Service 层在生成后通过 MQ 广播配置变更,场景 6:BROADCASTING)。
+     *
+     * <p>与部署作业 Topic 的 CLUSTERING(实例间分摊)对比:配置变更 Topic 用 BROADCASTING,
+     * 每条消息送达所有订阅实例——位移在消费者本地,而非 Broker。
      *
      * @param params 配置文件参数
      * @return 根据模板生成的 conf 文件内容

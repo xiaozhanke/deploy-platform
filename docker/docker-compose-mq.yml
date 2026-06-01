@@ -1,8 +1,12 @@
-# RocketMQ 5.x 单机开发环境(NameServer + Broker + Dashboard)
+# RocketMQ 5.x + Kafka 3.x 单机开发环境
 # 用途:deploy-tool MQ 模块开发与本地验证
 # 启动:cd docker && docker compose -f docker-compose-mq.yml up -d
+#
+# RocketMQ Dashboard: http://localhost:8180
+# Kafka UI:           http://localhost:8080
 
 services:
+  # ==================== RocketMQ ====================
   rmqnamesrv:
     image: apache/rocketmq:5.3.2
     container_name: deploy-tool-rmqnamesrv
@@ -44,3 +48,43 @@ services:
       - "8180:8080"
     environment:
       JAVA_OPTS: "-Drocketmq.namesrv.addr=rmqnamesrv:9876 -Dcom.rocketmq.sendMessageWithVIPChannel=false"
+
+  # ==================== Kafka (KRaft 模式, 无需 Zookeeper) ====================
+  kafka:
+    image: apache/kafka:3.9.0
+    container_name: deploy-tool-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      # KRaft 模式:单节点同时充当 Controller + Broker
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@localhost:9093"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://127.0.0.1:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      # 单机开发:副本因子 1,min.insync.replicas 实际为 1
+      # 生产环境:3 broker + replication.factor=3 + min.insync.replicas=2
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-broker-api-versions.sh", "--bootstrap-server", "127.0.0.1:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: deploy-tool-kafka-ui
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: deploy-tool-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
+      DYNAMIC_CONFIG_ENABLED: "true"

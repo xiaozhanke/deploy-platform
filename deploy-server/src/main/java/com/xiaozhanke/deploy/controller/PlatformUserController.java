@@ -1,5 +1,7 @@
 package com.xiaozhanke.deploy.controller;
 
+import com.xiaozhanke.deploy.aspect.Auditable;
+import com.xiaozhanke.deploy.enums.AuditOperationTypeEnum;
 import com.xiaozhanke.deploy.model.request.UserParams;
 import com.xiaozhanke.deploy.model.request.UserPasswordParams;
 import com.xiaozhanke.deploy.model.request.UserProfileParams;
@@ -51,6 +53,7 @@ public class PlatformUserController {
      * @return 保存后的用户信息
      */
     @Operation(summary = "创建用户", description = "创建用户")
+    @Auditable(operationType = AuditOperationTypeEnum.USER_CREATE, target = "#params.username")
     @PostMapping
     public ResponseEntity<PlatformUserVo> addUser(@Validated @RequestBody UserParams params) {
         PlatformUserVo createdRecord = platformUserService.createUser(params);
@@ -101,6 +104,7 @@ public class PlatformUserController {
      * @return 更新后的用户信息
      */
     @Operation(summary = "更新用户", description = "更新用户")
+    @Auditable(operationType = AuditOperationTypeEnum.USER_UPDATE, target = "#id")
     @PutMapping("/{id}")
     public PlatformUserVo updateUser(@Parameter(description = "用户 Id", required = true) @PathVariable String id,
                                      @Validated @RequestBody UserParams params) {
@@ -113,6 +117,7 @@ public class PlatformUserController {
      * @param id 用户 Id
      */
     @Operation(summary = "删除用户", description = "删除用户")
+    @Auditable(operationType = AuditOperationTypeEnum.USER_DELETE, target = "#id")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@Parameter(description = "用户 Id", required = true) @PathVariable String id) {

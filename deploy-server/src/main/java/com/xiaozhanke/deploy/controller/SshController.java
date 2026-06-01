@@ -1,6 +1,8 @@
 package com.xiaozhanke.deploy.controller;
 
 
+import com.xiaozhanke.deploy.aspect.Auditable;
+import com.xiaozhanke.deploy.enums.AuditOperationTypeEnum;
 import com.xiaozhanke.deploy.model.dto.ServerRecordDto;
 import com.xiaozhanke.deploy.model.dto.SshExecResult;
 import com.xiaozhanke.deploy.model.request.SshExecMessage;
@@ -112,6 +114,7 @@ public class SshController {
      * @return 命令执行结果
      */
     @Operation(summary = "创建 Exec 通道，连接并执行命令", description = "创建一个 Exec 通道连接并执行命令，返回命令执行结果")
+    @Auditable(operationType = AuditOperationTypeEnum.SSH_EXEC, target = "#message.command")
     @PostMapping("/sessions/{sessionId}/exec")
     public SshExecResult exec(@Parameter(description = "会话 Id", required = true) @PathVariable String sessionId,
                               @Validated @RequestBody SshExecMessage message) {

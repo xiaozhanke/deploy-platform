@@ -1,5 +1,6 @@
 package com.xiaozhanke.deploy.repository;
 
+import com.xiaozhanke.deploy.enums.JobStatusEnum;
 import com.xiaozhanke.deploy.enums.JobTypeEnum;
 import com.xiaozhanke.deploy.model.entity.DeploymentJob;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -44,4 +46,19 @@ public interface DeploymentJobRepository extends JpaRepository<DeploymentJob, St
             ") busy)", nativeQuery = true)
     int acquireJobIfRecordIdle(@Param("jobId") String jobId, @Param("recordId") String recordId,
                                @Param("now") LocalDateTime now);
+
+    /**
+     * 取消作业 CAS:仅当状态为 PENDING 时才允许转入 CANCELLED(ADR-0004 取消语义)。
+     *
+     * <p>受影响行数为 1 表示取消成功;为 0 表示作业已开始执行(IN_PROGRESS)或已终态,不可撤销。
+     */
+    @Modifying(clearAutomatically = true)
+    @Query(value = "UPDATE deployment_job SET status = 'CANCELLED', end_time = :now " +
+            "WHERE id = :jobId AND status = 'PENDING'", nativeQuery = true)
+    int cancelIfPending(@Param("jobId") String jobId, @Param("now") LocalDateTime now);
+
+    /**
+     * 查指定部署记录下处于 PENDING 状态的所有作业(供"待执行作业"列表使用,场景 3 延迟作业)。
+     */
+    List<DeploymentJob> findByDeploymentRecordIdAndStatus(String deploymentRecordId, JobStatusEnum status);
 }

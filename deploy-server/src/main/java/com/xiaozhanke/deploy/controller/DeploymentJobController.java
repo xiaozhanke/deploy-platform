@@ -1,6 +1,8 @@
 package com.xiaozhanke.deploy.controller;
 
 import com.xiaozhanke.deploy.enums.JobStatusEnum;
+import com.xiaozhanke.deploy.aspect.Auditable;
+import com.xiaozhanke.deploy.enums.AuditOperationTypeEnum;
 import com.xiaozhanke.deploy.model.request.CreateJobRequest;
 import com.xiaozhanke.deploy.model.response.PageResult;
 import com.xiaozhanke.deploy.model.vo.DeploymentJobVo;
@@ -18,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,6 +48,8 @@ public class DeploymentJobController {
      */
     @Operation(summary = "创建部署作业", description = "为指定部署记录新建一个作业并通过 MQ 异步执行;"
             + "幂等依据 (deploymentRecordId, jobType, clientRequestId) 唯一索引")
+    @Auditable(operationType = AuditOperationTypeEnum.JOB_CREATE,
+            target = "#deploymentRecordId", description = "#request.jobType.description + ' 作业'")
     @PostMapping("/deployments/{id}/jobs")
     public ResponseEntity<DeploymentJobVo> createJob(
             @Parameter(description = "部署记录 Id", required = true) @PathVariable("id") String deploymentRecordId,
@@ -77,5 +82,19 @@ public class DeploymentJobController {
     public DeploymentJobVo getJob(
             @Parameter(description = "作业 Id", required = true) @PathVariable String jobId) {
         return deploymentJobService.getJob(jobId);
+    }
+
+    /**
+     * 取消 PENDING 状态的作业(场景 3 延迟作业取消,ADR-0004)。
+     *
+     * <p>仅 PENDING 作业可撤销;已开始执行(IN_PROGRESS)的作业撤销会被拒绝。
+     * 取消是终态——延迟消息到期后 CAS 不命中,链条自然终止。
+     */
+    @Operation(summary = "取消部署作业", description = "撤销 PENDING 状态的作业(延迟作业取消);已开始执行的作业不可撤销")
+    @Auditable(operationType = AuditOperationTypeEnum.JOB_CANCEL, target = "#jobId")
+    @PutMapping("/jobs/{jobId}/cancel")
+    public DeploymentJobVo cancelJob(
+            @Parameter(description = "作业 Id", required = true) @PathVariable String jobId) {
+        return deploymentJobService.cancelJob(jobId);
     }
 }
