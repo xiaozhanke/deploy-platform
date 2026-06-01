@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { deploymentJobQueryPage } from '@/api/api'
+import { deploymentJobCancel, deploymentJobQueryPage } from '@/api/api'
 import TablePagination from '@/components/table-pagination/index.vue'
 import { JobStatusEnum, JobTypeEnum, jobStatusTagType } from '@/enums/platform'
 import type { PageParams } from '@/types/api'
@@ -51,8 +51,8 @@ const subscribe = () => {
     subscription = websocketStore.subscribe(`/topic/jobs/${props.record.id}`, () => {
       scheduleRefresh()
     })
-  } catch {
-    // 未连接则忽略：打开抽屉时的首次查询已能拿到最新历史
+  } catch (e) {
+    console.warn('WebSocket 订阅作业频道失败:', e)
   }
 }
 
@@ -69,6 +69,23 @@ onMounted(() => {
   refresh()
   subscribe()
 })
+
+const handleCancel = async (row: DeploymentJob) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要撤销作业 [${row.id.slice(0, 8)}...] 吗？撤销后无法恢复。`,
+      '撤销确认',
+      { confirmButtonText: '确定撤销', cancelButtonText: '取消', type: 'warning' },
+    )
+    await deploymentJobCancel(row.id)
+    ElMessage.success('作业已撤销')
+    refresh()
+  } catch (e) {
+    if (e !== 'cancel' && e !== 'close') {
+      ElMessage.error('撤销失败：' + extractErrorMessage(e))
+    }
+  }
+}
 
 onUnmounted(() => {
   clearTimeout(refreshTimer)
@@ -97,6 +114,19 @@ onUnmounted(() => {
         <el-table-column prop="startTime" label="开始时间" min-width="160" />
         <el-table-column prop="endTime" label="结束时间" min-width="160" />
         <el-table-column prop="errorMessage" label="错误信息" min-width="200" />
+        <el-table-column label="操作" width="80" fixed="right">
+          <template #default="{ row }">
+            <el-button
+              v-if="row.status === JobStatusEnum.PENDING.value"
+              type="danger"
+              size="small"
+              link
+              @click="handleCancel(row)"
+            >
+              撤销
+            </el-button>
+          </template>
+        </el-table-column>
       </table-pagination>
     </div>
   </el-drawer>

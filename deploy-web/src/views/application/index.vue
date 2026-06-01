@@ -3,7 +3,7 @@ defineOptions({
   name: 'ApplicationIndex',
 })
 
-import { deploymentJobCreate, deploymentRecordDelete, deploymentRecordQueryPage } from '@/api/api'
+import { deploymentJobCancel, deploymentJobCreate, deploymentRecordDelete, deploymentRecordQueryPage } from '@/api/api'
 import TablePagination from '@/components/table-pagination/index.vue'
 import { ApplicationTypeEnum, DeploymentStatusEnum, JobStatusEnum, JobTypeEnum, jobStatusTagType } from '@/enums/platform'
 import type { PageParams } from '@/types/api'
@@ -18,6 +18,7 @@ import {
   SwitchButton,
   Loading,
   Document,
+  CircleClose,
   Switch,
   Tickets,
 } from '@element-plus/icons-vue'
@@ -178,6 +179,33 @@ const handleView = (row: DeploymentRecord) => {
 const handleEdit = (row: DeploymentRecord) => {
   currentRecord.value = row
   updateVisible.value = true
+}
+
+// 取消 PENDING 作业(场景 3 延迟作业取消)
+const handleJobCancel = async (row: DeploymentRecord) => {
+  const job = latestJobMap[row.id]
+  if (!job || job.status !== JobStatusEnum.PENDING.value) return
+  const jobId = job.id
+  try {
+    await ElMessageBox.confirm(
+      `确定撤销该应用的 [${JobTypeEnum.getLabel(job.jobType)}] 作业吗？`,
+      '撤销作业',
+      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' },
+    )
+    // await 后重新校验：用户确认期间 WebSocket 可能已更新 latestJobMap
+    const currentJob = latestJobMap[row.id]
+    if (!currentJob || currentJob.id !== jobId) {
+      ElMessage.warning('作业状态已变更，请刷新后重试')
+      return
+    }
+    await deploymentJobCancel(jobId)
+    ElMessage.success('作业已撤销')
+    refreshCurrentPage()
+  } catch (e) {
+    if (e !== 'cancel' && e !== 'close') {
+      ElMessage.error('撤销失败：' + extractErrorMessage(e))
+    }
+  }
 }
 
 // 查看作业历史
@@ -405,6 +433,15 @@ onUnmounted(() => {
           <el-button type="warning" link :icon="Edit" @click="handleEdit(row)">修改</el-button>
           <el-button type="danger" link :icon="Delete" @click="handleDelete(row)">删除</el-button>
           <el-button type="info" link :icon="Tickets" @click="handleJobHistory(row)">作业</el-button>
+          <el-button
+            v-if="latestJobMap[row.id]?.status === JobStatusEnum.PENDING.value"
+            type="danger"
+            link
+            :icon="CircleClose"
+            @click="handleJobCancel(row)"
+          >
+            撤销
+          </el-button>
           <el-button
             link
             :icon="Document"

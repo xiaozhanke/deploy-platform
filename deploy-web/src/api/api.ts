@@ -437,6 +437,15 @@ export const deploymentJobQueryById = (jobId: string): Promise<DeploymentJob> =>
 }
 
 /**
+ * 取消 PENDING 状态的部署作业(场景 3 延迟作业取消)
+ * @param jobId 作业 Id
+ * @returns 更新后的部署作业
+ */
+export const deploymentJobCancel = (jobId: string): Promise<DeploymentJob> => {
+  return request.put(`/jobs/${jobId}/cancel`)
+}
+
+/**
  * 分页查询死信列表
  * @param queryParams 查询参数（可按是否已重试过滤）
  * @param pageParams 分页参数
