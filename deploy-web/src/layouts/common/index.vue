@@ -177,7 +177,7 @@ onMounted(() => {
   <el-container class="common-layout">
     <el-header class="layout-header">
       <div class="header-left">
-        <div class="title">管理端部署工具</div>
+        <div class="title">运维部署平台</div>
       </div>
       <div class="header-right">
         <el-dropdown trigger="click" @command="handleUserCommand">

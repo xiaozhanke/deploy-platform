@@ -31,7 +31,7 @@ import org.springframework.http.MediaType;
  */
 @Configuration
 @OpenAPIDefinition(
-        info = @Info(title = "${spring.application.name}", description = "管理端部署工具后端 API", version = "${spring" +
+        info = @Info(title = "${spring.application.name}", description = "运维部署平台后端 API", version = "${spring" +
                 ".application.version}"),
         security = {
                 @SecurityRequirement(name = "OIDC"),

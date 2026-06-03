@@ -8,7 +8,7 @@ defineOptions({
   <div class="login-layout">
     <div class="login-container">
       <div class="login-header">
-        <h1>管理端部署工具</h1>
+        <h1>运维部署平台</h1>
       </div>
 
       <router-view v-slot="{ Component }">
