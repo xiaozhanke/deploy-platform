@@ -20,8 +20,6 @@
 .DS_Store
 
 /logs/
-/secrets/jwt-key.json
 /deploy-server/secrets/
 # 运行时通过接口上传的文件存储目录
-/files
 /deploy-server/files/
