@@ -7,10 +7,38 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import basicSsl from '@vitejs/plugin-basic-ssl'
+import type { ClientRequest } from 'node:http'
+
+interface ProxyServer {
+  on(event: 'proxyReq', listener: (proxyReq: ClientRequest) => void): void
+}
+
+/**
+ * 为代理请求注入 X-Forwarded-* 头，让 Spring 的 forward-headers-strategy=framework
+ * 据此重建 issuer/discovery/endpoints 为 https://localhost:5173/...
+ *
+ * 注意：必须操作 proxyReq（出站请求到后端），而非 req（入站请求来自浏览器）。
+ */
+function withForwardedHeaders(proxy: ProxyServer) {
+  proxy.on('proxyReq', (proxyReq: ClientRequest) => {
+    proxyReq.setHeader('X-Forwarded-Proto', 'https')
+    proxyReq.setHeader('X-Forwarded-Host', 'localhost:5173')
+    proxyReq.setHeader('X-Forwarded-Port', '5173')
+  })
+}
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
+  // 反代到后端 API 时注入 X-Forwarded-*，让 Spring(forward-headers-strategy=framework) 据此
+  // 重建 issuer/discovery/endpoints 为 https://localhost:5173/...。每次返回独立 options 对象，
+  // 避免多个前缀共享同一引用被 http-proxy 写入内部状态。
+  const apiProxy = () => ({
+    target: env.VITE_PROXY_TARGET,
+    changeOrigin: true,
+    secure: false,
+    configure: withForwardedHeaders,
+  })
   return {
     base: env.VITE_BASE_URL,
     plugins: [
@@ -56,19 +84,22 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
+      // 下列前缀统一反代后端：API、OIDC discovery/授权/登出/userinfo、AS 自托管登录页与表单
+      // （/login 仅命中根路径，不命中 SPA 的 /ui/login/*，base 在 /ui）、CSRF 引导（/csrf，单独控制器、
+      // 脱离 /login 前缀）、Swagger UI 与 OpenAPI JSON。
       proxy: {
-        // 规则一：代理所有 API 请求
-        [env.VITE_API_ROOT]: {
-          target: env.VITE_PROXY_TARGET,
-          changeOrigin: true,
-          secure: false, // 忽略 SSL 证书错误
-        },
-        // 规则二：代理 OIDC 的发现端点
-        '/.well-known': {
-          target: env.VITE_PROXY_TARGET,
-          changeOrigin: true,
-          secure: false, // 忽略 SSL 证书错误
-        },
+        [env.VITE_API_ROOT]: apiProxy(),
+        '/.well-known': apiProxy(),
+        '/oauth2': apiProxy(),
+        '/connect': apiProxy(),
+        '/userinfo': apiProxy(),
+        '/login': apiProxy(),
+        '/csrf': apiProxy(),
+        '/swagger-ui': apiProxy(),
+        '/v3/api-docs': apiProxy(),
+        // WebSocket(STOMP)：浏览器侧用同源 wss://localhost:5173/websocket，经此升级代理到后端明文 ws，
+        // 规避 HTTPS 页面直连 ws:// 的混合内容限制。WS 握手不需 issuer 重写，故不挂 withForwardedHeaders。
+        '/websocket': { target: env.VITE_PROXY_TARGET, changeOrigin: true, secure: false, ws: true },
       },
     },
   }

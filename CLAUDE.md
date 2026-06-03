@@ -54,7 +54,7 @@ Vite 代理两个前缀到后端 API（见 `vite.config.ts`）：
 - `${VITE_API_ROOT}`（默认 `/api`） → `https://localhost:6060`
 - `/.well-known` → `https://localhost:6060`（OIDC discovery）
 
-WebSocket 直连后端 `wss://localhost:6060/websocket`，不走代理 —— 见 `.env.development`。
+WebSocket(STOMP) 经 vite 升级代理（`/websocket`，`ws: true`）到后端 `ws://localhost:6060/websocket`；浏览器侧用同源 `wss://localhost:5173/websocket`（由 `getWebSocketUrl()` 按页面协议推导），避免 HTTPS 页面直连明文 `ws://` 的混合内容限制 —— 见 `vite.config.ts`。
 
 ### 安全模型
 - Spring Authorization Server + Resource Server（OAuth2 / OIDC）**同进程内**部署，API 自己签发 token
