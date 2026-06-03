@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.xiaozhanke.deploy.enums.UserStatusEnum;
 import com.xiaozhanke.deploy.repository.PlatformUserRepository;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * <ul>
  *   <li>{@code passwordValidityDays <= 0} —— 永不过期，绕过 plusDays 计算</li>
  *   <li>{@code maxFailedLogins <= 0} —— 禁用失败锁定，{@link UserStatusEnum#LOCKED} 仍然能锁</li>
+ *   <li>已达阈值但冷却到点 → 自动放行一次（固定冷却，非滑动）</li>
  * </ul>
  *
  * @author xiaozhanke
@@ -62,28 +64,60 @@ class SecurityUserServiceBoundaryTest {
     void zeroMaxFailedLoginsDisablesAutoLock() {
         service.setMaxFailedLogins(0);
         // 任何失败次数都不应触发自动锁定
-        assertThat(service.isAccountNonLocked(UserStatusEnum.ACTIVE, 0)).isTrue();
-        assertThat(service.isAccountNonLocked(UserStatusEnum.ACTIVE, 99)).isTrue();
+        assertThat(service.isAccountNonLocked(UserStatusEnum.ACTIVE, 0, null)).isTrue();
+        assertThat(service.isAccountNonLocked(UserStatusEnum.ACTIVE, 99, null)).isTrue();
     }
 
     @Test
     void negativeMaxFailedLoginsDisablesAutoLock() {
         service.setMaxFailedLogins(-1);
-        assertThat(service.isAccountNonLocked(UserStatusEnum.ACTIVE, 5)).isTrue();
+        assertThat(service.isAccountNonLocked(UserStatusEnum.ACTIVE, 5, null)).isTrue();
     }
 
     @Test
     void manualLockedStatusOverridesAutoLockSetting() {
         // 即便禁用自动锁定，LOCKED 状态依然要锁
         service.setMaxFailedLogins(0);
-        assertThat(service.isAccountNonLocked(UserStatusEnum.LOCKED, 0)).isFalse();
+        assertThat(service.isAccountNonLocked(UserStatusEnum.LOCKED, 0, null)).isFalse();
     }
 
     @Test
     void positiveMaxFailedLoginsLocksAtThreshold() {
         service.setMaxFailedLogins(3);
-        assertThat(service.isAccountNonLocked(UserStatusEnum.ACTIVE, 2)).isTrue();
-        assertThat(service.isAccountNonLocked(UserStatusEnum.ACTIVE, 3)).isFalse();
-        assertThat(service.isAccountNonLocked(UserStatusEnum.ACTIVE, 99)).isFalse();
+        // 未达阈值
+        assertThat(service.isAccountNonLocked(UserStatusEnum.ACTIVE, 2, null)).isTrue();
+        // 达阈值但无失败时间记录 → 锁定
+        assertThat(service.isAccountNonLocked(UserStatusEnum.ACTIVE, 3, null)).isFalse();
+        assertThat(service.isAccountNonLocked(UserStatusEnum.ACTIVE, 99, null)).isFalse();
+    }
+
+    @Test
+    void cooldownExpiredAllowsRetry() {
+        service.setMaxFailedLogins(3);
+        service.setLockoutCooldown(Duration.ofMinutes(15));
+        // 20 分钟前失败 → 冷却已过 → 放行
+        assertThat(service.isAccountNonLocked(UserStatusEnum.ACTIVE, 3,
+                LocalDateTime.now().minusMinutes(20))).isTrue();
+    }
+
+    @Test
+    void withinCooldownStillLocked() {
+        service.setMaxFailedLogins(3);
+        service.setLockoutCooldown(Duration.ofMinutes(15));
+        // 5 分钟前失败 → 仍在冷却内 → 锁定
+        assertThat(service.isAccountNonLocked(UserStatusEnum.ACTIVE, 3,
+                LocalDateTime.now().minusMinutes(5))).isFalse();
+    }
+
+    @Test
+    void cooldownBoundaryReleasesJustAfterAndHoldsJustBefore() {
+        service.setMaxFailedLogins(3);
+        service.setLockoutCooldown(Duration.ofMinutes(15));
+        // 刚过冷却边界（15 分 1 秒前失败）→ 放行；锁死 isBefore↔isAfter 边界语义
+        assertThat(service.isAccountNonLocked(UserStatusEnum.ACTIVE, 3,
+                LocalDateTime.now().minusMinutes(15).minusSeconds(1))).isTrue();
+        // 刚好在冷却边界内（14 分 59 秒前失败）→ 锁定
+        assertThat(service.isAccountNonLocked(UserStatusEnum.ACTIVE, 3,
+                LocalDateTime.now().minusMinutes(14).minusSeconds(59))).isFalse();
     }
 }
