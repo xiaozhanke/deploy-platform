@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,6 +45,16 @@ public class SecurityUserService implements UserDetailsService {
      */
     @Value("${app.security.max-failed-logins:5}")
     private int maxFailedLogins;
+    /**
+     * 失败锁定冷却时长。
+     *
+     * <p>失败次数达阈值后进入冷却期，冷却期内 {@code LockedException}（不自增计数器，冷却不被续期）；
+     * 冷却到点后自动放行一次尝试——再错则重新起算，成功则清零。
+     *
+     * <p>支持 {@code Duration} 格式（如 {@code 15m}、{@code 600s}、{@code PT15M}）。默认 15 分钟。
+     */
+    @Value("${app.security.lockout-cooldown:15m}")
+    private Duration lockoutCooldown;
 
     public SecurityUserService(PlatformUserRepository platformUserRepository) {
         this.platformUserRepository = platformUserRepository;
@@ -84,8 +95,9 @@ public class SecurityUserService implements UserDetailsService {
         if (user.getAccountExpiredTime() != null) {
             accountNonExpired = user.getAccountExpiredTime().isAfter(LocalDateTime.now());
         }
-        // 用户未锁定状态：LOCKED 永远代表手工锁定；maxFailedLogins <= 0 表示禁用失败锁定
-        boolean accountNonLocked = isAccountNonLocked(user.getStatus(), user.getFailedLoginCount());
+        // 用户未锁定状态：LOCKED = 手工永久锁定；失败锁定走时间窗冷却
+        boolean accountNonLocked = isAccountNonLocked(user.getStatus(), user.getFailedLoginCount(),
+                user.getLastFailedLoginTime());
         // 密码未过期状态：passwordValidityDays <= 0 视为永不过期
         boolean credentialsNonExpired = isCredentialsNonExpired(user.getPasswordLastChangedTime());
 
@@ -94,20 +106,43 @@ public class SecurityUserService implements UserDetailsService {
     }
 
     /**
-     * 判断账户是否未被失败锁定。
+     * 判断账户是否未被失败锁定（含时间窗冷却）。
      *
-     * @param status           账户状态
-     * @param failedLoginCount 当前连续失败次数
+     * <p>判定优先级：
+     * <ol>
+     *   <li>{@link UserStatusEnum#LOCKED} → 永久锁定（管理员手工操作）</li>
+     *   <li>{@code maxFailedLogins <= 0} → 未启用失败锁定，始终放行</li>
+     *   <li>{@code failedLoginCount < maxFailedLogins} → 未达阈值，放行</li>
+     *   <li>已达阈值但无失败时间记录 → 锁定</li>
+     *   <li>已达阈值且在冷却窗口内 → 锁定</li>
+     *   <li>已达阈值但冷却已到 → 自动放行一次（固定冷却，非滑动）</li>
+     * </ol>
+     *
+     * @param status             账户状态
+     * @param failedLoginCount   当前连续失败次数
+     * @param lastFailedLoginTime 最后一次登录失败时间，可能为 null
      * @return true 表示账户未被锁定
      */
-    boolean isAccountNonLocked(UserStatusEnum status, int failedLoginCount) {
+    boolean isAccountNonLocked(UserStatusEnum status, int failedLoginCount,
+                               LocalDateTime lastFailedLoginTime) {
+        // 1. 手工永久锁定
         if (status == UserStatusEnum.LOCKED) {
             return false;
         }
+        // 2. 未启用失败锁定
         if (maxFailedLogins <= 0) {
             return true;
         }
-        return failedLoginCount < maxFailedLogins;
+        // 3. 未达阈值
+        if (failedLoginCount < maxFailedLogins) {
+            return true;
+        }
+        // 4. 已无失败时间记录 → 锁定（防御性）
+        if (lastFailedLoginTime == null) {
+            return false;
+        }
+        // 5-6. 时间窗冷却：冷却到点则自动放行，冷却内保持锁定
+        return lastFailedLoginTime.plus(lockoutCooldown).isBefore(LocalDateTime.now());
     }
 
     /**
@@ -135,5 +170,12 @@ public class SecurityUserService implements UserDetailsService {
      */
     void setMaxFailedLogins(int maxFailedLogins) {
         this.maxFailedLogins = maxFailedLogins;
+    }
+
+    /**
+     * 测试入口：注入锁定冷却时长。
+     */
+    void setLockoutCooldown(Duration lockoutCooldown) {
+        this.lockoutCooldown = lockoutCooldown;
     }
 }

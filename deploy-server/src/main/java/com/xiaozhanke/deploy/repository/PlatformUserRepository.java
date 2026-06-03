@@ -4,8 +4,13 @@ import com.xiaozhanke.deploy.model.entity.PlatformUser;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
@@ -28,4 +33,28 @@ public interface PlatformUserRepository extends JpaRepository<PlatformUser, Stri
 
     @EntityGraph(attributePaths = "roles")
     Optional<PlatformUser> findWithRolesById(String id);
+
+    /**
+     * 原子递增登录失败计数并更新最后失败时间。
+     *
+     * <p>按用户名更新，规避「读-改-写」竞态；用户不存在则影响 0 行，不暴露用户是否存在。
+     */
+    @Transactional
+    @Modifying
+    @Query("UPDATE PlatformUser u SET u.failedLoginCount = u.failedLoginCount + 1, "
+            + "u.lastFailedLoginTime = :lastFailedTime WHERE u.username = :username")
+    int incrementFailedLoginCount(@Param("username") String username,
+                                  @Param("lastFailedTime") LocalDateTime lastFailedTime);
+
+    /**
+     * 原子清零登录失败计数（登录成功时调用），并清空最后失败时间。
+     *
+     * <p>成功登录后已无未决失败记录，故 lastFailedLoginTime 置 null，而非写入成功时间——
+     * 避免「最后失败时间」列里出现一个并非失败的时间戳。
+     */
+    @Transactional
+    @Modifying
+    @Query("UPDATE PlatformUser u SET u.failedLoginCount = 0, "
+            + "u.lastFailedLoginTime = null WHERE u.username = :username")
+    int resetFailedLoginCount(@Param("username") String username);
 }
