@@ -13,8 +13,3 @@ export interface PasswordForm {
   newPassword: string
   confirmPassword: string
 }
-
-export interface LoginRequest {
-  username: string
-  password: string
-}

@@ -3,8 +3,8 @@ import { defineStore } from 'pinia'
 import { useWebSocketStore } from './websocket'
 import type { User } from 'oidc-client-ts'
 import { oidcService } from '@/services/oidcService'
-import type { LoginRequest, UserProfile } from '@/types/auth'
-import { authLogin, authLogout, authUserCurrent } from '@/api/api'
+import type { UserProfile } from '@/types/auth'
+import { authUserCurrent } from '@/api/api'
 
 interface AuthStore {
   oidcUser: User | null
@@ -92,7 +92,8 @@ export const useAuthStore = defineStore('auth', {
       // access token 过期且静默刷新失败时触发
       oidcService.events.addAccessTokenExpired(async () => {
         console.error('访问令牌已过期，无法续订。正在注销。')
-        await this.logout()
+        // 非交互登出：优先借仍可能存活的 AS 会话静默恢复，不主动踢掉
+        await this.logout({ interactive: false })
       })
     },
 
@@ -125,39 +126,34 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    // 用户名密码登录
-    async passwordLogin(params: LoginRequest): Promise<void> {
-      // 重置会话中止控制器
-      this.sessionAbortController = null
-      // 调用后端登录接口
-      await authLogin(params)
-      // 成功后，后端会在浏览器中设置会话 Cookie
-    },
-
     // 触发 OAuth2 授权码流程
-    async oauth2Authorize() {
+    // @param redirectPath 登录成功后要跳回的 SPA 路径（守卫传入目标页 to.fullPath）；
+    //        缺省（如落地页主动重登）则不带回跳路径，handleOAuth2Callback 默认回首页。
+    //        该路径写进 OAuth state，由 handleOAuth2Callback 读 state.redirectPath 跳回。
+    async oauth2Authorize(redirectPath?: string) {
       // 重置会话中止控制器
       this.sessionAbortController = null
-      // 路由守卫在跳登录页时把原始路径写进 query.redirect，这里读出来一路带到 OAuth state，
-      // 让 handleOAuth2Callback 拿到 state.redirectPath 即可跳回；query 只是中间载体，state 是唯一终点。
-      const redirectQuery = router.currentRoute.value.query.redirect
-      const redirectPath = typeof redirectQuery === 'string' ? redirectQuery : undefined
       await oidcService.handleAuthorizationRedirect({ state: { redirectPath } })
     },
 
-    // 登出
-    async logout() {
-      // 重置会话中止控制器
+    // 登出（OIDC RP-Initiated Logout）
+    // @param options.interactive true（默认，用户主动退出 / 改密后）→ 彻底结束 AS 会话；
+    //        false（access_token 过期自动触发）→ 优先借仍可能存活的 SSO 会话静默恢复，不主动踢掉。
+    async logout(options?: { interactive?: boolean }) {
+      const interactive = options?.interactive ?? true
       this.sessionAbortController = null
-      try {
-        // 先调用后端的登出API，让会话失效
-        await authLogout()
-      } catch {
-      } finally {
-        // 清理本地状态
-        await this.handleUserUnloaded()
-        // 触发 OIDC 的登出重定向
+      // 先断 WebSocket、清 pinia 本地态
+      await this.handleUserUnloaded()
+      const user = await oidcService.getUser()
+      if (interactive && user?.id_token) {
+        // 只要本地还存有 id_token（即便 access_token 已过期）即可发起 RP-Initiated Logout：
+        // signoutRedirect 自动带 id_token_hint + post_logout_redirect_uri 失效 AS 会话；
+        // 即便 AS 因 token 过期 / 会话不存在而拒，OidcLogoutErrorRedirectHandler 也会失效会话再跳落地页。
         await oidcService.handleLogoutRedirect()
+      } else {
+        // 非交互，或本地已无 id_token（无从构造 id_token_hint）→ 清本地态并跳落地页，借 SSO 重新发起授权。
+        await oidcService.removeUser()
+        await router.push('/login/landing')
       }
     },
 
@@ -179,7 +175,9 @@ export const useAuthStore = defineStore('auth', {
       } catch (error) {
         console.error('登录回调处理失败:', error)
         await this.handleUserUnloaded()
-        await router.push('/login')
+        // 跳落地页（/login/landing）而非 /login —— 后者 redirect 到 /login/callback 会再次进回调、
+        // 无 code/state 再抛错 → 无限重定向。落地页负责 removeUser + 重新发起授权。
+        await router.push('/login/landing')
       }
     },
 
@@ -198,8 +196,8 @@ export const useAuthStore = defineStore('auth', {
       await ElMessageBox.alert('未授权或登录已过期，请重新登录', '认证失败', {
         confirmButtonText: '确定',
       })
-      // 重定向到登录页
-      await router.push('/login')
+      // 重定向到登录落地页（触发重新登录）
+      await router.push('/login/landing')
     },
   },
 })

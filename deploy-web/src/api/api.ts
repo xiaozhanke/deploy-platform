@@ -3,7 +3,7 @@ import request from './request'
 import type { ServerRecord, ServerParams } from '@/types/server'
 import type { PageParams, PageResult } from '@/types/api'
 import type { FileParams, FileRecord } from '@/types/file'
-import type { LoginRequest, PasswordForm, UserProfile } from '@/types/auth'
+import type { PasswordForm, UserProfile } from '@/types/auth'
 import type {
   AuditLog,
   AuditLogQueryParams,
@@ -247,22 +247,6 @@ export const fileQueryPath = (params: FileParams): Promise<string> => {
  */
 export const fileQueryPathById = (id: string): Promise<string> => {
   return request.get(`/files/${id}/path`)
-}
-
-/**
- * 用户登录
- * @param username 用户名
- * @param password 密码
- */
-export const authLogin = (params: LoginRequest): Promise<void> => {
-  return request.post('/auth/login', params, { noAuth: true })
-}
-
-/**
- * 用户登出
- */
-export const authLogout = (): Promise<void> => {
-  return request.post('/auth/logout')
 }
 
 /**

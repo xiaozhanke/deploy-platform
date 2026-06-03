@@ -180,26 +180,24 @@ const router = createRouter({
     {
       path: '/login',
       name: 'Login',
-      redirect: '/login/password',
+      // 登录区布局壳子（居中卡片 + 标题/页脚 + 内嵌 router-view），callback/landing 都渲染在卡片内
       component: () => import('@/views/login/index.vue'),
+      // 裸 /ui/login → 落地页（removeUser + 重新发起授权）。不要指向 callback：
+      // 否则任何到 /ui/login 的导航都会跑一次 signinCallback()，无 code/state 必失败
+      redirect: '/login/landing',
       meta: {
         requiresAuth: false,
       },
       children: [
         {
-          path: 'password',
-          name: 'PasswordLogin',
-          component: () => import('@/views/login/password/PasswordLogin.vue'),
-        },
-        {
-          path: 'oauth2',
-          name: 'OAuth2Login',
-          component: () => import('@/views/login/oauth2/OAuth2Login.vue'),
-        },
-        {
           path: 'callback',
           name: 'OAuth2Callback',
           component: () => import('@/views/login/oauth2/OAuth2Callback.vue'),
+        },
+        {
+          path: 'landing',
+          name: 'LoginLanding',
+          component: () => import('@/views/login/LoginLanding.vue'),
         },
       ],
     },
@@ -223,14 +221,16 @@ router.beforeEach(async (to, from, next) => {
   }
 
   if (requiresAuth && !authStore.isAuthenticated) {
-    // 需要认证，但 OIDC 令牌无效
-    // 保存用户想去的页面，登录后可以跳转回去
-    const redirectPath = to.fullPath
-    // 重定向到我们自己的前端登录页
-    next({ name: 'PasswordLogin', query: { redirect: redirectPath } })
-  } else if (to.name === 'PasswordLogin' && authStore.isAuthenticated) {
-    // 已登录用户访问登录页，路由到首页
-    next({ name: 'Home' })
+    // 需要认证但 OIDC 令牌无效 → 触发 OIDC 授权码流程（带上目标页，登录后跳回）
+    // signinRedirect 会整页离开 SPA，跳 /oauth2/authorize → /login 登录页
+    try {
+      await authStore.oauth2Authorize(to.fullPath)
+    } catch (error) {
+      // signinRedirect 失败（如 authority 不可达）→ 终止本次导航，避免 NProgress 卡死、路由悬挂
+      console.error('OIDC 授权跳转失败:', error)
+      next(false)
+    }
+    return
   } else {
     // 无需认证，或者已认证，直接放行
     next()

@@ -31,8 +31,6 @@ vi.mock('@/services/oidcService', () => ({
 }))
 
 vi.mock('@/api/api', () => ({
-  authLogin: vi.fn(),
-  authLogout: vi.fn(),
   authUserCurrent: vi.fn().mockResolvedValue({ id: 'u-1', username: 'tester' }),
 }))
 

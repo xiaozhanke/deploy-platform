@@ -4,7 +4,6 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { userPasswordUpdate } from '@/api/api'
 import type { PasswordForm } from '@/types/auth'
 import { useAuthStore } from '@/stores/auth'
-import router from '@/router'
 
 const formRef = ref<FormInstance>()
 const form = reactive<PasswordForm>({
@@ -53,12 +52,11 @@ const handleSubmit = async () => {
           closeOnPressEscape: false,
         })
           .then(async () => {
+            // logout() 内部已负责导航（signoutRedirect 整页跳转，或跳落地页），无需再 push
             await authStore.logout()
-            await router.push('/login')
           })
           .catch(async () => {
             await authStore.logout()
-            await router.push('/login')
           })
       } catch (error) {
         ElNotification.error('密码修改失败: ' + extractErrorMessage(error))
