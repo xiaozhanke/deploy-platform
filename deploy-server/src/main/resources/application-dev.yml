@@ -51,10 +51,10 @@ spring:
                 - "refresh_token"
               redirect-uris:
                 - "https://localhost:5173/ui/login/callback"
-                # 让 Swagger UI(同进程,经 server.port=6060)走 OIDC 登录拿 token
-                - "https://localhost:6060/swagger-ui/oauth2-redirect.html"
+                # Swagger UI 经 vite 代理同源访问（issuer 变为 :5173）
+                - "https://localhost:5173/swagger-ui/oauth2-redirect.html"
               post-logout-redirect-uris:
-                - "https://localhost:5173/ui/login"
+                - "https://localhost:5173/ui/login/landing"
               scopes:
                 - "openid"
                 - "profile"

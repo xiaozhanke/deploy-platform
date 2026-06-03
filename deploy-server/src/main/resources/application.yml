@@ -1,7 +1,9 @@
 server:
   port: 6060
   ssl:
-    enabled: true
+    enabled: false
+    # TLS 由 nginx 终止，后端仅提供 HTTP。
+    # 原 keystore.p12 保留在 classpath 以兼容旧配置，不再加载。
     key-store: classpath:keystore.p12
     key-store-type: PKCS12
     key-alias: deploy
@@ -34,6 +36,9 @@ app:
     password-validity-days: 365
     # 连续登录失败锁定阈值。> 0：达到该值即锁定；<= 0：禁用失败锁定（仅手工锁定仍生效）。
     max-failed-logins: 5
+    # 失败锁定冷却时长（支持 Duration 格式：15m、600s、PT15M）。默认 15 分钟。
+    # 冷却到点自动放行一次尝试；冷却期内不自增计数器（冷却不被续期）。
+    lockout-cooldown: 15m
     jwt:
       # JWT 签名密钥（JWK JSON）持久化文件路径，跨进程重启稳定，避免重启踢出已登录用户。
       # 生产环境请预先生成并以受限权限部署；dev profile 默认允许自动生成。

@@ -29,9 +29,12 @@ spring:
                 - "authorization_code"
                 - "refresh_token"
               redirect-uris:
-                - "/ui/login/callback"
+                # 生产环境必须使用绝对 URL，与 oidc-client-ts 发出的 redirect_uri 精确匹配
+                - "${APP_BASE_URL:https://deploy.example.com}/ui/login/callback"
               post-logout-redirect-uris:
-                - "/ui/login"
+                # 必须指向落地路由 /ui/login/landing（与前端 .env.production 一致），
+                # 不能是 /ui/login —— 后者会被 SPA 重定向进 /login/callback 造成回调死循环
+                - "${APP_BASE_URL:https://deploy.example.com}/ui/login/landing"
               scopes:
                 - "openid"
                 - "profile"

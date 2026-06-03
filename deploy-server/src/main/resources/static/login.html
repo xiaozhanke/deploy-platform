@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>运维部署平台</title>
+    <style>
+      :root {
+        /* 主色与前端一致：deploy-web src/styles/element/index.scss 把 Element Plus
+           $colors.primary.base 覆盖为 #1f75cb；hover/active 按 EP 派生规则 light-3 / dark-2 取色 */
+        --primary: #1f75cb;
+        --primary-hover: #629edb;
+        --primary-active: #195ea2;
+        --text-main: #303133;
+        --text-regular: #606266;
+        --border: #dcdfe6;
+        --border-hover: #c0c4cc;
+        --danger: #f56c6c;
+        --bg: #f0f2f5;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+          'Microsoft YaHei', sans-serif;
+        background-color: var(--bg);
+        color: var(--text-main);
+      }
+      .login-layout {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+      }
+      .login-container {
+        width: 460px;
+        max-width: 100%;
+        background: #fff;
+        border: 1px solid #e4e7ed;
+        border-radius: 8px;
+        text-align: center;
+        padding: 32px 28px;
+        transition: box-shadow 0.2s;
+      }
+      .login-container:hover,
+      .login-container:focus-within {
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.12);
+      }
+      .login-header h1 {
+        font-size: 26px;
+        font-weight: 500;
+        color: var(--text-main);
+        margin: 8px 0 24px;
+      }
+      .login-alert {
+        margin-bottom: 16px;
+        padding: 10px 14px;
+        border-radius: 4px;
+        font-size: 14px;
+        text-align: left;
+        background: #fef0f0;
+        color: var(--danger);
+        border: 1px solid #fde2e2;
+      }
+      .login-content {
+        padding: 0 4px;
+      }
+      .form-item {
+        margin-bottom: 20px;
+        text-align: left;
+      }
+      .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #000;
+      }
+      .form-input {
+        width: 100%;
+        height: 44px;
+        padding: 0 14px;
+        font-size: 16px;
+        color: var(--text-regular);
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .form-input::placeholder {
+        color: #a8abb2;
+      }
+      .form-input:hover {
+        border-color: var(--border-hover);
+      }
+      .form-input:focus {
+        border-color: var(--primary);
+      }
+      .form-input.is-error {
+        border-color: var(--danger);
+      }
+      .password-wrapper {
+        position: relative;
+      }
+      .password-wrapper .form-input {
+        padding-right: 42px;
+      }
+      .password-toggle {
+        position: absolute;
+        right: 6px;
+        top: 0;
+        height: 44px;
+        width: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        color: #a8abb2;
+        padding: 0;
+      }
+      .password-toggle:hover {
+        color: var(--text-regular);
+      }
+      .password-toggle .icon-eye-off {
+        display: none;
+      }
+      .password-toggle.is-visible .icon-eye {
+        display: none;
+      }
+      .password-toggle.is-visible .icon-eye-off {
+        display: inline;
+      }
+      .field-error {
+        margin: 6px 0 0;
+        font-size: 12px;
+        color: var(--danger);
+        text-align: left;
+      }
+      .login-button {
+        width: 100%;
+        height: 44px;
+        margin-top: 4px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #fff;
+        background: var(--primary);
+        border: 1px solid var(--primary);
+        border-radius: 20px;
+        cursor: pointer;
+        transition:
+          background-color 0.2s,
+          border-color 0.2s;
+      }
+      .login-button:hover:not(:disabled) {
+        background: var(--primary-hover);
+        border-color: var(--primary-hover);
+      }
+      .login-button:active:not(:disabled) {
+        background: var(--primary-active);
+        border-color: var(--primary-active);
+      }
+      .login-button:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+      .login-footer {
+        margin-top: 30px;
+        padding-top: 20px;
+        font-size: 12px;
+        color: #888;
+        border-top: 1px solid #e0e0e0;
+      }
+      .login-footer p {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-layout">
+      <!--
+        单一原生表单：用户名/密码/隐藏 _csrf 都带 name，直接原生 POST /login/authenticate，
+        触发 Spring Security formLogin → SavedRequestAwareAuthenticationSuccessHandler 自动回放
+        被缓存的 /oauth2/authorize 请求。无需像旧 Vue 版那样另起隐藏表单。
+      -->
+      <form
+        class="login-container"
+        id="login-form"
+        method="post"
+        action="/login/authenticate"
+        autocomplete="on"
+        novalidate
+      >
+        <div class="login-header">
+          <h1>运维部署平台</h1>
+        </div>
+
+        <div class="login-alert" id="login-alert" role="alert" hidden></div>
+
+        <div class="login-content">
+          <div class="form-item">
+            <label class="form-label" for="username">用户名:</label>
+            <input
+              class="form-input"
+              id="username"
+              name="username"
+              type="text"
+              placeholder="请输入用户名"
+              autocomplete="username"
+              autofocus
+            />
+            <p class="field-error" id="username-error" hidden></p>
+          </div>
+
+          <div class="form-item">
+            <label class="form-label" for="password">密码:</label>
+            <div class="password-wrapper">
+              <input
+                class="form-input"
+                id="password"
+                name="password"
+                type="password"
+                placeholder="请输入密码"
+                autocomplete="current-password"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                id="password-toggle"
+                aria-label="显示密码"
+                tabindex="-1"
+              >
+                <svg
+                  class="icon-eye"
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M2.04 12.32a1 1 0 010-.64C3.42 7.51 7.36 4.5 12 4.5s8.57 3.01 9.96 7.18c.07.21.07.43 0 .64C20.58 16.49 16.64 19.5 12 19.5s-8.57-3.01-9.96-7.18z"
+                  />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <svg
+                  class="icon-eye-off"
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M3.98 8.22A10.48 10.48 0 001.93 12C3.23 16.34 7.24 19.5 12 19.5c.99 0 1.95-.14 2.86-.4M6.23 6.23A10.45 10.45 0 0112 4.5c4.76 0 8.77 3.16 10.07 7.5a10.52 10.52 0 01-4.29 5.77M3 3l18 18"
+                  />
+                </svg>
+              </button>
+            </div>
+            <p class="field-error" id="password-error" hidden></p>
+          </div>
+
+          <!-- token 取到前由 JS 填值，取到前提交按钮保持 disabled -->
+          <input type="hidden" name="_csrf" id="csrf" />
+
+          <button type="submit" class="login-button" id="submit" disabled>登录</button>
+        </div>
+
+        <footer class="login-footer">
+          <p>© <span id="year"></span> All Rights Reserved.</p>
+        </footer>
+      </form>
+    </div>
+
+    <script>
+      (() => {
+        'use strict'
+
+        // 错误码 → 中文提示（与后端 GlobalExceptionHandler 的 6 码对齐，文案归前端、不读后端 message）
+        const ERROR_MESSAGES = {
+          INVALID_CREDENTIALS: '用户名或密码错误',
+          ACCOUNT_LOCKED: '账户已锁定，请稍后再试',
+          CREDENTIALS_EXPIRED: '密码已过期，请联系管理员',
+          ACCOUNT_DISABLED: '账户已被禁用',
+          ACCOUNT_EXPIRED: '账户已过期',
+          AUTHENTICATION_FAILED: '认证失败，请重试',
+        }
+        const DEFAULT_ERROR_MESSAGE = '认证失败，请重试'
+
+        const form = document.getElementById('login-form')
+        const alertBox = document.getElementById('login-alert')
+        const submitButton = document.getElementById('submit')
+        const csrfInput = document.getElementById('csrf')
+        const usernameInput = document.getElementById('username')
+        const passwordInput = document.getElementById('password')
+        const passwordToggle = document.getElementById('password-toggle')
+        let hasToken = false
+
+        document.getElementById('year').textContent = String(new Date().getFullYear())
+
+        const showAlert = (message) => {
+          alertBox.textContent = message
+          alertBox.hidden = false
+        }
+        const clearAlert = () => {
+          alertBox.textContent = ''
+          alertBox.hidden = true
+        }
+        const setFieldError = (fieldId, message) => {
+          const errorEl = document.getElementById(`${fieldId}-error`)
+          const inputEl = document.getElementById(fieldId)
+          errorEl.textContent = message ?? ''
+          errorEl.hidden = !message
+          inputEl.classList.toggle('is-error', Boolean(message))
+        }
+
+        // 1. 读取 ?error=<code> 显示提示，显示后清掉 query 避免刷新重复弹错
+        const errorCode = new URLSearchParams(window.location.search).get('error')
+        if (errorCode) {
+          showAlert(ERROR_MESSAGES[errorCode] ?? DEFAULT_ERROR_MESSAGE)
+          history.replaceState(null, '', window.location.pathname)
+        }
+
+        // 2. 密码显示/隐藏
+        passwordToggle.addEventListener('click', () => {
+          const willShow = passwordInput.type === 'password'
+          passwordInput.type = willShow ? 'text' : 'password'
+          passwordToggle.classList.toggle('is-visible', willShow)
+          passwordToggle.setAttribute('aria-label', willShow ? '隐藏密码' : '显示密码')
+        })
+
+        // 3. 引导 CSRF token：取到前提交按钮保持 disabled，杜绝空 _csrf 被 CsrfFilter 拒为 403
+        const bootstrapCsrfToken = async () => {
+          try {
+            const response = await fetch('/csrf', { credentials: 'same-origin' })
+            if (!response.ok) throw new Error(`csrf http ${response.status}`)
+            const { token, parameterName } = await response.json()
+            csrfInput.setAttribute('name', parameterName || '_csrf')
+            csrfInput.value = token
+            hasToken = true
+            submitButton.disabled = false
+          } catch {
+            // 取不到 token：保持按钮 disabled 并提示刷新（不允许带空 _csrf 提交）
+            showAlert('安全令牌获取失败，请刷新页面重试')
+          }
+        }
+        bootstrapCsrfToken()
+
+        // 4. 字段非空校验
+        const validate = () => {
+          const username = usernameInput.value.trim()
+          const password = passwordInput.value
+          setFieldError('username', username ? '' : '用户名不能为空')
+          setFieldError('password', password ? '' : '密码不能为空')
+          return Boolean(username && password)
+        }
+        usernameInput.addEventListener('blur', () => {
+          if (usernameInput.value.trim()) setFieldError('username', '')
+        })
+        passwordInput.addEventListener('blur', () => {
+          if (passwordInput.value) setFieldError('password', '')
+        })
+
+        // 5. 提交：无 token 绝不提交（同时拦回车）；校验通过则放行原生 POST 触发 SavedRequest 回放
+        form.addEventListener('submit', (event) => {
+          if (!hasToken) {
+            event.preventDefault()
+            showAlert('安全令牌获取失败，请刷新页面重试')
+            return
+          }
+          if (!validate()) {
+            event.preventDefault()
+            return
+          }
+          clearAlert()
+          // 防重复提交（原生提交随即整页导航离开）
+          submitButton.disabled = true
+          submitButton.textContent = '登录中…'
+        })
+      })()
+    </script>
+  </body>
+</html>

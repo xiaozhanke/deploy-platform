@@ -1,19 +1,23 @@
 package com.xiaozhanke.deploy.config;
 
+import com.xiaozhanke.deploy.security.handler.LoginAuthFailureHandler;
+import com.xiaozhanke.deploy.security.handler.LoginAuthSuccessHandler;
+import com.xiaozhanke.deploy.security.handler.OidcLogoutErrorRedirectHandler;
 import com.xiaozhanke.deploy.security.token.JwtToSecurityUserConverter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
@@ -25,12 +29,12 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
-import org.springframework.security.web.authentication.logout.HeaderWriterLogoutHandler;
-import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
-import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -61,6 +65,13 @@ public class SecurityConfig {
     }
 
     /**
+     * OIDC 登出校验失败时的优雅降级跳转地址（固定可信路径，避免开放重定向）。
+     * 默认指向前端 SPA 落地路由；relative 路径由浏览器按当前 origin 解析，dev / prod 通用。
+     */
+    @Value("${app.logout.error-redirect-uri:/ui/login/landing}")
+    private String logoutErrorRedirectUri;
+
+    /**
      * 配置 OAuth2 授权服务器的安全过滤链
      *
      * @param http 安全配置
@@ -89,6 +100,12 @@ public class SecurityConfig {
                                         .userInfoEndpoint(userInfo -> userInfo
                                                 .userInfoMapper(userInfoMapper)
                                         )
+                                        // RP-Initiated Logout 失败优雅降级：会话已失效（重启/过期）时
+                                        // 不甩 Whitelabel，而是失效本端会话并跳落地页（详见该 handler 注释）
+                                        .logoutEndpoint(logout -> logout
+                                                .errorResponseHandler(
+                                                        new OidcLogoutErrorRedirectHandler(logoutErrorRedirectUri))
+                                        )
                                 )
                 )
                 .authorizeHttpRequests(authorize -> authorize
@@ -114,9 +131,9 @@ public class SecurityConfig {
                 .securityContext(context -> context
                         .securityContextRepository(new HttpSessionSecurityContextRepository())
                 )
-                // 异常处理
-                .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint(authenticationEntryPoint)
+                // 未认证导航到 AS 端点（如 /oauth2/authorize）→ 统一重定向到 /login（单一登录入口）。
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
                         .accessDeniedHandler(accessDeniedHandler)
                 );
 
@@ -124,51 +141,48 @@ public class SecurityConfig {
     }
 
     /**
-     * 默认的安全过滤链
+     * 默认的安全过滤链 —— 处理登录页面、表单登录、CSRF 令牌引导（/csrf）与 OIDC discovery。
      */
     @Bean
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 匹配规则：只处理认证 API 与 OIDC discovery
-                .securityMatcher("/.well-known/**", "/api/auth/login", "/api/auth/logout")
+                .securityMatcher("/.well-known/**", "/login", "/login/**", "/csrf")
                 .authorizeHttpRequests(authorize -> authorize
-                        // 允许公共资源访问
-                        .requestMatchers("/.well-known/**", "/api/auth/login").permitAll()
+                        .requestMatchers("/.well-known/**", "/login", "/login/**", "/csrf").permitAll()
                         .anyRequest().authenticated()
                 )
-                .headers(headers -> headers
-                        // 禁用 X-Frame-Options，改用 CSP
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)
-                        // 配置内容安全策略 (CSP)
-                        .contentSecurityPolicy(csp -> csp
-                                // 允许来自 'self' 的页面嵌入
-                                .policyDirectives("frame-ancestors 'self'")
-                        )
+                // 表单登录
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login/authenticate")
+                        .successHandler(authSuccessHandler())
+                        .failureHandler(authFailureHandler())
+                        .permitAll()
                 )
-                // 开启 CSRF 防护
+                // 会话管理：登记到 SessionRegistry（OIDC 登出依赖），不限制并发
+                .sessionManagement(session -> session
+                        .maximumSessions(-1)
+                        .sessionRegistry(sessionRegistry())
+                )
+                // CSRF 防护：plain CsrfTokenRequestAttributeHandler + HttpOnly cookie
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/auth/login")
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRepository(new CookieCsrfTokenRepository())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                 )
-                // 登出
-                .logout(logout -> logout
-                        // 登出端点 URI
-                        .logoutUrl("/api/auth/logout").permitAll()
-                        // 显示配置清理 JSESSIONID 和 XSRF-TOKEN 的 Cookie
-                        .deleteCookies("JSESSIONID", "XSRF-TOKEN")
-                        // 使用 Clear-Site-Data 清理 Cookie
-                        .addLogoutHandler(new HeaderWriterLogoutHandler(
-                                new ClearSiteDataHeaderWriter(ClearSiteDataHeaderWriter.Directive.COOKIES)))
-                        // 登出成功返回 HTTP 状态码
-                        .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler())
+                // 请求缓存：登录成功后自动回放被缓存的 /oauth2/authorize
+                .requestCache(requestCache -> requestCache
+                        .requestCache(new HttpSessionRequestCache())
                 )
-                // 使用基于 HttpSession 的有状态会话管理策略
                 .securityContext(context -> context
                         .securityContextRepository(new HttpSessionSecurityContextRepository())
                 )
-                // 异常处理
+                .headers(headers -> headers
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives("frame-ancestors 'self'")
+                        )
+                )
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler)
@@ -185,7 +199,6 @@ public class SecurityConfig {
         http
                 .securityMatcher("/api/**", "/actuator/**", "/websocket/**")
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
                         // 仅管理员可访问 actuator
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
                         // /websocket 升级请求放行：浏览器原生 WebSocket 握手不允许自定义 Authorization header，
@@ -227,12 +240,38 @@ public class SecurityConfig {
     }
 
     /**
-     * 暴露 AuthenticationManager Bean
+     * SessionRegistry —— OIDC 登出的硬依赖。
+     * <p>AS 链通过 {@code OAuth2ConfigurerUtils.getSessionRegistry} 自动取此 Bean，
+     * 供 {@code OidcLogoutAuthenticationProvider} 按 {@code id_token_hint} 查找并失效会话。
      */
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
-            throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }
+
+    /**
+     * 桥接容器 session 生命周期事件到 Spring，使 {@link SessionRegistry} 能感知会话失效。
+     */
+    @Bean
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
+    }
+
+    /**
+     * 登录成功处理器 —— 继承 SavedRequestAware 自动回放被缓存的 /oauth2/authorize，
+     * 并清零 failedLoginCount。
+     */
+    @Bean
+    public LoginAuthSuccessHandler authSuccessHandler() {
+        return new LoginAuthSuccessHandler();
+    }
+
+    /**
+     * 登录失败处理器 —— 三合一：错误码回显 + failedLoginCount 自增 + LOGIN/FAILURE 审计。
+     */
+    @Bean
+    public LoginAuthFailureHandler authFailureHandler() {
+        return new LoginAuthFailureHandler();
     }
 
     /**
