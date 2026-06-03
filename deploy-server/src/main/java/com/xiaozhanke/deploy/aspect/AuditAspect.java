@@ -4,8 +4,8 @@ import com.xiaozhanke.deploy.enums.AuditOutcomeEnum;
 import com.xiaozhanke.deploy.messaging.dto.AuditLogMessage;
 import com.xiaozhanke.deploy.messaging.producer.AuditLogProducer;
 import com.xiaozhanke.deploy.util.AuthenticationHelper;
+import com.xiaozhanke.deploy.util.ClientIpResolver;
 import com.xiaozhanke.deploy.util.ErrorMessageUtils;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
@@ -20,9 +20,6 @@ import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
@@ -78,7 +75,7 @@ public class AuditAspect {
                     : ErrorMessageUtils.truncate(ex.getMessage() != null ? ex.getMessage() : ex.toString());
 
             AuditLogMessage message = new AuditLogMessage(operator, auditable.operationType(), target,
-                    description, outcome, errorMessage, resolveClientIp(), LocalDateTime.now());
+                    description, outcome, errorMessage, ClientIpResolver.resolveFromContext(), LocalDateTime.now());
             auditLogProducer.send(message);
         } catch (Exception e) {
             // 审计绝不影响业务:吞掉所有异常,仅记日志
@@ -117,18 +114,5 @@ public class AuditAspect {
             return null;
         }
         return target.length() <= MAX_TARGET_LENGTH ? target : target.substring(0, MAX_TARGET_LENGTH);
-    }
-
-    private String resolveClientIp() {
-        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
-        if (attributes instanceof ServletRequestAttributes servletRequestAttributes) {
-            HttpServletRequest request = servletRequestAttributes.getRequest();
-            String forwarded = request.getHeader("X-Forwarded-For");
-            if (forwarded != null && !forwarded.isBlank()) {
-                return forwarded.split(",")[0].trim();
-            }
-            return request.getRemoteAddr();
-        }
-        return null;
     }
 }

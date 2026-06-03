@@ -2,6 +2,7 @@ package com.xiaozhanke.deploy.exception;
 
 import com.xiaozhanke.deploy.model.response.RestErrorResponse;
 import com.xiaozhanke.deploy.model.response.RestErrorResponse.FieldViolation;
+import com.xiaozhanke.deploy.security.exception.AuthenticationErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,11 +10,6 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.authentication.AccountExpiredException;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.CredentialsExpiredException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
@@ -142,23 +138,16 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 处理 Spring Security 认证异常（AuthController.login 直接调用 AuthenticationManager 时冒泡上来的）
+     * 处理从控制器路径冒泡上来的 Spring Security 认证异常（兜底，防御性保留）。
      *
-     * <p>没有这个 handler 时所有认证失败都会落到通用 Exception 兜底，返回 HTTP 500，与 RFC 7235 不一致：
-     * 凭据错误/账户锁定/凭据过期/账户禁用/账户过期都属于「未通过身份认证」，应返回 401。
-     *
-     * <p>backendStatus 按子类细分，前端可据此区分不同失败原因；HTTP status 统一 401。
+     * <p>form-login 失败由过滤器层 {@code LoginAuthFailureHandler} 处理、资源服务器 JWT 失败由
+     * {@code authenticationEntryPoint} 处理，均不进 {@code @RestControllerAdvice}；本 handler 仅为
+     * 「控制器方法直接抛 AuthenticationException」兜底，避免落到通用 Exception 返回 500——按 RFC 7235
+     * 应返回 401。错误码经 {@link AuthenticationErrorCode} 按子类细分，HTTP status 统一 401。
      */
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<RestErrorResponse> handleAuthenticationException(AuthenticationException e) {
-        String backendStatus = switch (e) {
-            case BadCredentialsException ignored -> "INVALID_CREDENTIALS";
-            case CredentialsExpiredException ignored -> "CREDENTIALS_EXPIRED";
-            case LockedException ignored -> "ACCOUNT_LOCKED";
-            case DisabledException ignored -> "ACCOUNT_DISABLED";
-            case AccountExpiredException ignored -> "ACCOUNT_EXPIRED";
-            default -> "AUTHENTICATION_FAILED";
-        };
+        String backendStatus = AuthenticationErrorCode.from(e);
         log.warn("认证失败 [{}]: {}", backendStatus, e.getMessage());
         RestErrorResponse response = RestErrorResponse.of(HttpStatus.UNAUTHORIZED.value(), backendStatus,
                 e.getMessage());
