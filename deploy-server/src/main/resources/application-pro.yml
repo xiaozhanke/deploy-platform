@@ -31,6 +31,8 @@ spring:
               redirect-uris:
                 # 生产环境必须使用绝对 URL，与 oidc-client-ts 发出的 redirect_uri 精确匹配
                 - "${APP_BASE_URL:https://deploy.example.com}/ui/login/callback"
+                # Swagger UI 的 OAuth2 授权码回调地址，与 OpenApiConfig 中的 OIDC SecurityScheme 配套
+                - "${APP_BASE_URL:https://deploy.example.com}/swagger-ui/oauth2-redirect.html"
               post-logout-redirect-uris:
                 # 必须指向落地路由 /ui/login/landing（与前端 .env.production 一致），
                 # 不能是 /ui/login —— 后者会被 SPA 重定向进 /login/callback 造成回调死循环
