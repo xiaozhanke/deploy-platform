@@ -4,7 +4,6 @@ import { oneDark } from '@codemirror/theme-one-dark'
 import { yaml } from '@codemirror/lang-yaml'
 import { EditorView } from 'codemirror'
 import { highlightWhitespace } from '@codemirror/view'
-import { Close } from '@element-plus/icons-vue'
 import { sshExecCommand, sshWriteFile } from '@/api/api'
 import { useTheme } from '@/composables/useTheme'
 
@@ -135,104 +134,94 @@ defineExpose({
 </script>
 
 <template>
-  <el-dialog v-model="visible" width="1000px" top="5vh" draggable :show-close="false" :close-on-click-modal="false">
-    <template #header="{ close, titleId, titleClass }">
-      <div class="dialog-header">
-        <h4 :id="titleId" :class="titleClass">{{ filePath }}</h4>
-        <div class="action-wrapper">
-          <div class="status-bar">
-            <el-tooltip content="可编辑" placement="top">
-              <div :class="['status-icon', editable ? 'active' : 'inactive']" @click="toggleEditable">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                  <path
-                    fill="currentColor"
-                    d="M4 14v-2h7v2zm0-4V8h11v2zm0-4V4h11v2zm9 14v-3.075l5.525-5.5q.225-.225.5-.325t.55-.1q.3 0 .575.113t.5.337l.925.925q.2.225.313.5t.112.55t-.1.563t-.325.512l-5.5 5.5zm6.575-5.6l.925-.975l-.925-.925l-.95.95z"
-                  />
-                </svg>
-              </div>
-            </el-tooltip>
-            <el-tooltip content="是否高亮空格" placement="top">
-              <div
-                :class="['status-icon', highlightWhiteSpace ? 'active' : 'inactive']"
-                @click="toggleHighlightWhiteSpace"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                  <path
-                    fill="currentColor"
-                    d="M11 4v10q0 .425-.288.713T10 15t-.712-.288T9 14v-4q-1.65 0-2.825-1.175T5 6t1.175-2.825T9 2h7q.425 0 .713.287T17 3t-.288.713T16 4h-1v10q0 .425-.288.713T14 15t-.712-.288T13 14V4zm6.2 15H4q-.425 0-.712-.288T3 18t.288-.712T4 17h13.2l-.9-.9q-.275-.275-.275-.7t.275-.7t.7-.275t.7.275l2.6 2.6q.3.3.3.7t-.3.7l-2.6 2.6q-.275.275-.7.275t-.7-.275t-.275-.7t.275-.7z"
-                  />
-                </svg>
-              </div>
-            </el-tooltip>
-            <el-tooltip content="主题明暗" placement="top">
-              <div :class="['status-icon', theme === 'dark' ? 'active' : 'inactive']" @click="toggleTheme">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                  <path
-                    fill="currentColor"
-                    d="M12 21q-3.75 0-6.375-2.625T3 12t2.625-6.375T12 3q.35 0 .688.025t.662.075q-1.025.725-1.638 1.888T11.1 7.5q0 2.25 1.575 3.825T16.5 12.9q1.375 0 2.525-.613T20.9 10.65q.05.325.075.662T21 12q0 3.75-2.625 6.375T12 21"
-                  />
-                </svg>
-              </div>
-            </el-tooltip>
+  <!-- 通用代码编辑器外壳：宽抽屉承载 codemirror，标题即文件路径 -->
+  <app-drawer v-model="visible" :title="filePath" width="lg">
+    <!-- 主体顶部工具行：三个编辑器开关（关闭叉由抽屉自带，此处不再放关闭按钮） -->
+    <div class="editor-body">
+      <div class="status-bar">
+        <el-tooltip content="可编辑" placement="top">
+          <div :class="['status-icon', editable ? 'active' : 'inactive']" @click="toggleEditable">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M4 14v-2h7v2zm0-4V8h11v2zm0-4V4h11v2zm9 14v-3.075l5.525-5.5q.225-.225.5-.325t.55-.1q.3 0 .575.113t.5.337l.925.925q.2.225.313.5t.112.55t-.1.563t-.325.512l-5.5 5.5zm6.575-5.6l.925-.975l-.925-.925l-.95.95z"
+              />
+            </svg>
           </div>
-          <el-button class="close-button" type="danger" :icon="Close" @click="close" />
-        </div>
+        </el-tooltip>
+        <el-tooltip content="是否高亮空格" placement="top">
+          <div :class="['status-icon', highlightWhiteSpace ? 'active' : 'inactive']" @click="toggleHighlightWhiteSpace">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M11 4v10q0 .425-.288.713T10 15t-.712-.288T9 14v-4q-1.65 0-2.825-1.175T5 6t1.175-2.825T9 2h7q.425 0 .713.287T17 3t-.288.713T16 4h-1v10q0 .425-.288.713T14 15t-.712-.288T13 14V4zm6.2 15H4q-.425 0-.712-.288T3 18t.288-.712T4 17h13.2l-.9-.9q-.275-.275-.275-.7t.275-.7t.7-.275t.7.275l2.6 2.6q.3.3.3.7t-.3.7l-2.6 2.6q-.275.275-.7.275t-.7-.275t-.275-.7t.275-.7z"
+              />
+            </svg>
+          </div>
+        </el-tooltip>
+        <el-tooltip content="主题明暗" placement="top">
+          <div :class="['status-icon', theme === 'dark' ? 'active' : 'inactive']" @click="toggleTheme">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M12 21q-3.75 0-6.375-2.625T3 12t2.625-6.375T12 3q.35 0 .688.025t.662.075q-1.025.725-1.638 1.888T11.1 7.5q0 2.25 1.575 3.825T16.5 12.9q1.375 0 2.525-.613T20.9 10.65q.05.325.075.662T21 12q0 3.75-2.625 6.375T12 21"
+              />
+            </svg>
+          </div>
+        </el-tooltip>
       </div>
-    </template>
 
-    <!-- 代码编辑器 -->
-    <codemirror
-      v-model="fileContent"
-      :extensions="extensions"
-      autofocus
-      :disabled="!editable"
-      :style="{ maxHeight: '75vh' }"
-    />
+      <!-- 代码编辑器：撑满抽屉主体剩余高度，不写死视口百分比 -->
+      <codemirror v-model="fileContent" :extensions="extensions" autofocus :disabled="!editable" class="editor" />
+    </div>
 
     <template #footer>
-      <el-button type="warning" @click="toggleEditable">
+      <!-- 动作按钮中性化：编辑切换降为 plain，主操作「保存」唯一 primary -->
+      <el-button plain @click="toggleEditable">
         {{ editable ? '取消编辑' : '编辑' }}
       </el-button>
       <el-button v-show="editable" type="primary" @click="handleSave">保存</el-button>
       <el-button @click="handleClose">关闭</el-button>
     </template>
-  </el-dialog>
+  </app-drawer>
 </template>
 
 <style lang="scss" scoped>
-.dialog-header {
+// 主体纵向铺满抽屉：工具行固定高、编辑器吃掉剩余空间
+.editor-body {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  .action-wrapper {
+  flex-direction: column;
+  height: 100%;
+  gap: 12px;
+
+  .status-bar {
     display: flex;
-    gap: 20px;
+    gap: 4px;
     align-items: center;
-    .status-bar {
-      display: flex;
-      gap: 4px;
-      align-items: center;
-      .status-icon {
-        cursor: pointer;
-        transition: color 0.3s ease;
-        display: inline-block;
-        height: 32px;
-        width: 32px;
-        line-height: 0;
-        &.active {
-          color: var(--el-text-color-primary);
-        }
-        &.inactive {
-          color: var(--el-text-color-secondary);
-        }
+
+    .status-icon {
+      cursor: pointer;
+      transition: color 0.3s ease;
+      display: inline-block;
+      height: 32px;
+      width: 32px;
+      line-height: 0;
+
+      &.active {
+        color: var(--el-text-color-primary);
+      }
+
+      &.inactive {
+        color: var(--el-text-color-secondary);
       }
     }
-    .close-button {
-      font-size: 18px;
-      padding: 8px;
-    }
+  }
+
+  // 编辑器占满工具行以下的全部高度，内部自身滚动
+  .editor {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
   }
 }
 </style>
