@@ -192,7 +192,11 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-    <server-sidebar />
+    <!-- 部署页专属容器：把复用组件 ServerSidebar 在本页表现为页面内面板 -->
+    <!-- （正常文档流、不再固定浮在右侧），样式由本页 :deep(.server-sidebar) 覆盖 -->
+    <aside class="server-panel">
+      <server-sidebar />
+    </aside>
 
     <front-end-run v-if="frontEndRunVisible" v-model="frontEndRunVisible" :file-record="currentFile" />
     <back-end-run v-if="backEndRunVisible" v-model="backEndRunVisible" :file-record="currentFile" />
@@ -203,10 +207,11 @@ onMounted(async () => {
 .deployment-index-section {
   position: relative;
   display: flex;
-  padding-right: calc(var(--layout-right-sidebar-width) + var(--layout-common-padding)) !important;
+  gap: var(--layout-common-gap);
 
   .content-container {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     .content-wrapper {
       display: flex;
       flex-direction: column;
@@ -259,6 +264,33 @@ onMounted(async () => {
           }
         }
       }
+    }
+  }
+
+  // 复用组件 ServerSidebar 默认是「固定右栏浮层」（position: fixed + top/right/z-index）。
+  // 本页只需在文档流内把它当面板用，故在此用页面级样式覆盖其定位，不改组件本身，
+  // 也不影响 environment 两页对同一组件的固定右栏复用。
+  .server-panel {
+    flex: 0 0 var(--layout-right-sidebar-width);
+    // 跟随文件列表滚动时面板常驻可见，吸顶定位在页头内边距之下
+    align-self: flex-start;
+    position: sticky;
+    top: var(--layout-common-padding);
+
+    :deep(.server-sidebar) {
+      // 解除固定定位，回到正常文档流（宽度由本面板容器决定，铺满即可）
+      position: static;
+      top: auto;
+      right: auto;
+      z-index: auto;
+      width: 100%;
+      // 面板高度随内容自适应，并以视口为上限、内部独立滚动，避免长环境列表撑破页面
+      height: auto;
+      max-height: calc(
+        100vh - var(--system-header-height) - 2 * var(--layout-common-padding)
+      );
+      overflow-y: auto;
+      border-radius: var(--layout-common-border-radius);
     }
   }
 }
