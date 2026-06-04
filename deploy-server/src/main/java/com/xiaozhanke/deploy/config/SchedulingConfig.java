@@ -6,7 +6,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 /**
  * 定时任务配置。
  *
- * <p>当前用于审计兜底文件回放({@code AuditFallbackReplayJob},MQ 方案稿场景 4)。
+ * <p>当前用于审计兜底文件回放({@code AuditFallbackReplayJob})。
  *
  * @author xiaozhanke
  */

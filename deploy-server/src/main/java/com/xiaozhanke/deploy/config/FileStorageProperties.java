@@ -1,6 +1,7 @@
 package com.xiaozhanke.deploy.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Locale;
@@ -26,9 +27,9 @@ public record FileStorageProperties(List<String> allowedExtensions) {
         allowedExtensions = allowedExtensions == null
                 ? List.of()
                 : allowedExtensions.stream()
-                .filter(ext -> ext != null && !ext.isBlank())
-                .map(ext -> ext.trim().toLowerCase(Locale.ROOT))
-                .map(ext -> ext.startsWith(".") ? ext : "." + ext)
+                .filter(StringUtils::hasText)
+                .map(extension -> extension.trim().toLowerCase(Locale.ROOT))
+                .map(extension -> extension.startsWith(".") ? extension : "." + extension)
                 .toList();
     }
 
@@ -42,7 +43,7 @@ public record FileStorageProperties(List<String> allowedExtensions) {
         if (allowedExtensions.isEmpty()) {
             return true;
         }
-        if (fileName == null || fileName.isBlank()) {
+        if (!StringUtils.hasText(fileName)) {
             return false;
         }
         String lower = fileName.toLowerCase(Locale.ROOT);

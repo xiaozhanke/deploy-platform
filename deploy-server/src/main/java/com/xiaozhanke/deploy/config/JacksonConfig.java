@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Configuration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.TimeZone;
 
@@ -26,12 +27,23 @@ import java.util.TimeZone;
 @Configuration
 public class JacksonConfig {
 
+    // 默认时区
+    private static final ZoneId DEFAULT_ZONE_ID = ZoneId.of("Asia/Shanghai");
     // 默认日期时间格式
     private static final String DEFAULT_DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
     // 默认日期格式
     private static final String DEFAULT_DATE_PATTERN = "yyyy-MM-dd";
     // 默认时间格式
     private static final String DEFAULT_TIME_PATTERN = "HH:mm:ss";
+    // 默认日期时间格式化器
+    private static final DateTimeFormatter DEFAULT_DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_PATTERN);
+    // 默认日期格式化器
+    private static final DateTimeFormatter DEFAULT_DATE_FORMATTER =
+            DateTimeFormatter.ofPattern(DEFAULT_DATE_PATTERN);
+    // 默认时间格式化器
+    private static final DateTimeFormatter DEFAULT_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern(DEFAULT_TIME_PATTERN);
 
     /**
      * Jackson 自动配置定制器
@@ -40,24 +52,18 @@ public class JacksonConfig {
     public Jackson2ObjectMapperBuilderCustomizer jackson2ObjectMapperBuilderCustomizer() {
         return builder -> {
             // 设置时区
-            builder.timeZone(TimeZone.getDefault());
+            builder.timeZone(TimeZone.getTimeZone(DEFAULT_ZONE_ID));
 
             // 配置日期时间格式化
             // 配置 LocalDateTime 序列化和反序列化
-            builder.serializerByType(LocalDateTime.class,
-                    new LocalDateTimeSerializer(DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_PATTERN)));
-            builder.deserializerByType(LocalDateTime.class,
-                    new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_PATTERN)));
+            builder.serializerByType(LocalDateTime.class, new LocalDateTimeSerializer(DEFAULT_DATE_TIME_FORMATTER));
+            builder.deserializerByType(LocalDateTime.class, new LocalDateTimeDeserializer(DEFAULT_DATE_TIME_FORMATTER));
             // 配置 LocalDate 序列化和反序列化
-            builder.serializerByType(LocalDate.class,
-                    new LocalDateSerializer(DateTimeFormatter.ofPattern(DEFAULT_DATE_PATTERN)));
-            builder.deserializerByType(LocalDate.class,
-                    new LocalDateDeserializer(DateTimeFormatter.ofPattern(DEFAULT_DATE_PATTERN)));
+            builder.serializerByType(LocalDate.class, new LocalDateSerializer(DEFAULT_DATE_FORMATTER));
+            builder.deserializerByType(LocalDate.class, new LocalDateDeserializer(DEFAULT_DATE_FORMATTER));
             // 配置 LocalTime 序列化和反序列化
-            builder.serializerByType(LocalTime.class,
-                    new LocalTimeSerializer(DateTimeFormatter.ofPattern(DEFAULT_TIME_PATTERN)));
-            builder.deserializerByType(LocalTime.class,
-                    new LocalTimeDeserializer(DateTimeFormatter.ofPattern(DEFAULT_TIME_PATTERN)));
+            builder.serializerByType(LocalTime.class, new LocalTimeSerializer(DEFAULT_TIME_FORMATTER));
+            builder.deserializerByType(LocalTime.class, new LocalTimeDeserializer(DEFAULT_TIME_FORMATTER));
             // 兼容 java.util.Date 的格式化
             builder.simpleDateFormat(DEFAULT_DATE_TIME_PATTERN);
 
