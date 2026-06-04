@@ -96,7 +96,7 @@ onUnmounted(() => {
 <template>
   <el-drawer v-model="visible" title="作业历史" size="60%" :close-on-click-modal="false">
     <div class="drawer-table-wrapper">
-      <table-pagination ref="tablePaginationRef" stripe show-overflow-tooltip :query-method="queryMethod">
+      <table-pagination ref="tablePaginationRef" show-overflow-tooltip :query-method="queryMethod">
         <el-table-column type="index" label="序号" width="54" fixed="left" />
         <el-table-column prop="jobType" label="类型" width="80">
           <template #default="{ row }">

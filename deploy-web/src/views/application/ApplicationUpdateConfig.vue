@@ -190,7 +190,7 @@ const handleFileRename = (filePath: string) => {
 
     <div v-else class="file-list-container">
       <el-empty v-if="fileList.length === 0" description="配置目录为空或不存在" />
-      <el-table v-else :data="fileList" stripe highlight-current-row show-overflow-tooltip>
+      <el-table v-else :data="fileList" highlight-current-row show-overflow-tooltip>
         <el-table-column prop="name" label="文件名" min-width="160" sortable>
           <template #default="{ row }">
             <div class="file-name">

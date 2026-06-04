@@ -140,7 +140,6 @@ onMounted(async () => {
           <el-table
             :data="filteredFileList"
             :default-sort="fileSort"
-            stripe
             highlight-current-row
             show-overflow-tooltip
             @sort-change="handleSortChange"

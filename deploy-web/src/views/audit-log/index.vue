@@ -85,7 +85,6 @@ onActivated(() => {
     <el-card shadow="never" style="margin-top: 16px">
       <table-pagination
         ref="tablePaginationRef"
-        stripe
         show-overflow-tooltip
         :query-method="queryMethod"
       >

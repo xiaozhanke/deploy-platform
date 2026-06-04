@@ -375,7 +375,6 @@ onUnmounted(() => {
     </div>
     <table-pagination
       ref="tablePaginationRef"
-      stripe
       highlight-current-row
       show-overflow-tooltip
       :query-method="queryMethod"

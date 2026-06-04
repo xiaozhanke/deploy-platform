@@ -147,7 +147,7 @@ onMounted(async () => {
     </div>
 
     <!-- 列表视图 -->
-    <el-table v-else :data="serverList" stripe highlight-current-row show-overflow-tooltip>
+    <el-table v-else :data="serverList" highlight-current-row show-overflow-tooltip>
       <el-table-column prop="name" label="服务器名称" min-width="150" />
       <el-table-column prop="host" label="主机地址" min-width="120" />
       <el-table-column prop="port" label="端口" min-width="60" />

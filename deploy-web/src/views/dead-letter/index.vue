@@ -92,7 +92,7 @@ onActivated(() => {
         </el-tooltip>
       </div>
     </div>
-    <table-pagination ref="tablePaginationRef" stripe show-overflow-tooltip :query-method="queryMethod">
+    <table-pagination ref="tablePaginationRef" show-overflow-tooltip :query-method="queryMethod">
       <el-table-column type="index" label="序号" width="54" fixed="left" />
       <el-table-column prop="jobId" label="原作业 Id" min-width="180" />
       <el-table-column prop="jobType" label="类型" width="80">

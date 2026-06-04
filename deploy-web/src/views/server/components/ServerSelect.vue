@@ -53,7 +53,6 @@ onActivated(async () => {
   <el-dialog title="选择服务器" width="880px" draggable :close-on-click-modal="false" @close="handleClose">
     <el-table
       :data="serverList"
-      stripe
       highlight-current-row
       show-overflow-tooltip
       @selection-change="handleSelectionChange"

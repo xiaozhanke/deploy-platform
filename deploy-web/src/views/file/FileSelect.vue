@@ -165,7 +165,6 @@ onMounted(async () => {
       <table-pagination
         ref="tablePaginationRef"
         :default-sort="fileSort"
-        stripe
         highlight-current-row
         show-overflow-tooltip
         :query-method="queryMethod"

@@ -415,7 +415,6 @@ onActivated(async () => {
       <el-table
         v-else
         :data="fileList"
-        stripe
         highlight-current-row
         show-overflow-tooltip
         @selection-change="handleSelectionChange"
