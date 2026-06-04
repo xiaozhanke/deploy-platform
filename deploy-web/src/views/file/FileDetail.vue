@@ -10,9 +10,11 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
   (e: 'complete'): void
 }>()
+
+// 可见性由父级 v-model 接管：AppDrawer 内层 el-drawer 非单根，必须显式绑定才会开合
+const visible = defineModel<boolean>()
 
 const editable = ref(false)
 const formRef = ref<FormInstance>()
@@ -61,19 +63,12 @@ const handleSubmit = async () => {
 
 const handleClose = () => {
   formRef.value?.resetFields()
-  emit('update:modelValue', false)
+  visible.value = false
 }
 </script>
 
 <template>
-  <el-dialog
-    :title="dialogTitle"
-    width="500px"
-    top="5vh"
-    draggable
-    :close-on-click-modal="false"
-    :before-close="handleClose"
-  >
+  <app-drawer v-model="visible" :title="dialogTitle" width="md">
     <el-form ref="formRef" :model="form" :rules="formRules" label-width="120px">
       <el-form-item label="文件名">
         <span>{{ file.fileName }}</span>
@@ -139,5 +134,5 @@ const handleClose = () => {
       <el-button v-if="editable" @click="toggleEditable">取消编辑</el-button>
       <el-button v-if="editable" type="primary" @click="handleSubmit">保存</el-button>
     </template>
-  </el-dialog>
+  </app-drawer>
 </template>

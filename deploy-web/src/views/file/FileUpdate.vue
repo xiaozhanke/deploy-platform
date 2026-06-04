@@ -8,9 +8,11 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', visible: boolean): void
   (e: 'complete'): void
 }>()
+
+// 可见性由父级 v-model 接管：AppDrawer 内层 el-drawer 非单根，必须显式绑定才会开合
+const visible = defineModel<boolean>()
 
 const uploadRef = ref<UploadInstance>()
 
@@ -47,12 +49,12 @@ const handleUpload = async (request: UploadRequestOptions) => {
 }
 
 const handleClose = () => {
-  emit('update:modelValue', false)
+  visible.value = false
 }
 </script>
 
 <template>
-  <el-dialog title="上传文件" width="500px" draggable :close-on-click-modal="false" :before-close="handleClose">
+  <app-drawer v-model="visible" title="上传文件" width="sm">
     <el-upload
       ref="uploadRef"
       drag
@@ -70,10 +72,8 @@ const handleClose = () => {
       </div>
     </el-upload>
     <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
-      </span>
+      <el-button @click="handleClose">取消</el-button>
+      <el-button type="primary" @click="handleSubmit">确定</el-button>
     </template>
-  </el-dialog>
+  </app-drawer>
 </template>
