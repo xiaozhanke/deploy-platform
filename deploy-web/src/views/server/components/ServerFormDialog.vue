@@ -13,8 +13,10 @@ const props = defineProps<{
   server?: Partial<ServerRecord>
 }>()
 
+// 可见性由父级 v-model 显式接管（迁到 AppDrawer 后底层非单根，靠属性透传不再生效）
+const visible = defineModel<boolean>()
+
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
   (e: 'test', server: ServerParams): void
   (e: 'submit', server: ServerParams): void
 }>()
@@ -149,12 +151,17 @@ const handleSubmit = async () => {
 
 const handleClose = () => {
   formRef.value?.resetFields()
-  emit('update:modelValue', false)
+  visible.value = false
+}
+
+// 抽屉自身关闭（关闭图标 / Esc）时 v-model 已翻为 false，这里只补一次表单重置
+const handleClosed = () => {
+  formRef.value?.resetFields()
 }
 </script>
 
 <template>
-  <el-dialog :title="dialogTitle" width="600px" top="5vh" draggable :close-on-click-modal="false" @close="handleClose">
+  <app-drawer v-model="visible" :title="dialogTitle" width="md" @close="handleClosed">
     <el-form ref="formRef" :model="form" :rules="formRules" label-width="140px" :disabled="type === 'view'">
       <el-collapse v-model="activeCollapseNames">
         <el-collapse-item title="基础信息" name="base">
@@ -249,8 +256,8 @@ const handleClose = () => {
     </el-form>
     <template #footer>
       <el-button @click="handleClose">关闭</el-button>
-      <el-button v-if="type !== 'view'" type="primary" @click="handleTest">测试连接</el-button>
+      <el-button v-if="type !== 'view'" plain @click="handleTest">测试连接</el-button>
       <el-button v-if="type !== 'view'" type="primary" @click="handleSubmit">确定</el-button>
     </template>
-  </el-dialog>
+  </app-drawer>
 </template>
