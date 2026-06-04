@@ -12,6 +12,7 @@ import ServerSidebar from '@/views/server/components/ServerSidebar.vue'
 import type { Sort, TabPaneName } from 'element-plus'
 import { RefreshRight, Search } from '@element-plus/icons-vue'
 import FrontEndRun from './FrontEndRun.vue'
+// 注：行内「部署」操作为纯文字链（不配图标），故无需引入动作图标
 import BackEndRun from './BackEndRun.vue'
 
 const sessionId = ref<string>('')
@@ -109,6 +110,30 @@ onMounted(async () => {
   <section class="deployment-index-section">
     <div class="content-container">
       <div class="content-wrapper">
+        <!-- 页头：标题取 route.meta.title（应用部署），筛选行放搜索框 + 中性刷新；本页部署动作在表格行内，页头无实色主操作 -->
+        <page-header>
+          <template #filter>
+            <div class="deployment-filter">
+              <el-input
+                v-model="fileFilter"
+                :prefix-icon="Search"
+                placeholder="搜索"
+                clearable
+              />
+              <!-- 刷新为中性次操作（plain，非实色），loading 时图标旋转 -->
+              <el-tooltip content="刷新" placement="top">
+                <el-button
+                  plain
+                  :icon="RefreshRight"
+                  :loading="fileLoading"
+                  @click="handleQuery"
+                />
+              </el-tooltip>
+            </div>
+          </template>
+        </page-header>
+
+        <!-- 前后端切换：页内内容切换，保留在页头下方 -->
         <el-tabs v-model="activeTabName" @tab-change="handleTabChange">
           <el-tab-pane name="APPLICATION_BACKEND">
             <template #label>
@@ -128,14 +153,6 @@ onMounted(async () => {
           </el-tab-pane>
         </el-tabs>
 
-        <div class="toolbar">
-          <el-input v-model="fileFilter" :prefix-icon="Search" placeholder="搜索" clearable />
-
-          <el-icon :class="['refresh-button', { 'is-loading': fileLoading }]" size="26" @click="handleQuery">
-            <RefreshRight />
-          </el-icon>
-        </div>
-
         <div class="file-list-container">
           <el-table
             :data="filteredFileList"
@@ -144,6 +161,10 @@ onMounted(async () => {
             show-overflow-tooltip
             @sort-change="handleSortChange"
           >
+            <!-- 空态：区分加载中与无数据，加载态由表格自身 loading 处理，此处仅渲染空结果 -->
+            <template #empty>
+              <empty-state v-if="!fileLoading" description="暂无可部署的应用包" />
+            </template>
             <el-table-column prop="groupId" label="应用分组" min-width="104px" sortable>
               <template #default="{ row }">
                 <span>{{ row.groupId }}</span>
@@ -174,18 +195,12 @@ onMounted(async () => {
               </template>
             </el-table-column>
             <el-table-column prop="updateTime" label="更新时间" width="172px" sortable />
-            <el-table-column label="操作" width="60px" fixed="right">
+            <el-table-column label="操作" width="76px" fixed="right">
               <template #default="{ row }">
-                <div class="file-actions-button" @click="handleRun(row)">
-                  <el-tooltip content="部署" placement="top">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-                      <path
-                        fill="currentColor"
-                        d="M8 17.175V6.825q0-.425.3-.713t.7-.287q.125 0 .263.037t.262.113l8.15 5.175q.225.15.338.375t.112.475t-.112.475t-.338.375l-8.15 5.175q-.125.075-.262.113T9 18.175q-.4 0-.7-.288t-.3-.712m2-1.825L15.25 12L10 8.65z"
-                      />
-                    </svg>
-                  </el-tooltip>
-                </div>
+                <!-- 行内操作纯文字链（克制、不带图标）；tooltip 与点击行为保持不变 -->
+                <el-tooltip content="部署" placement="top">
+                  <el-button link @click="handleRun(row)">部署</el-button>
+                </el-tooltip>
               </template>
             </el-table-column>
           </el-table>
@@ -227,22 +242,13 @@ onMounted(async () => {
         }
       }
 
-      .toolbar {
+      // 页头筛选行：搜索框 + 中性刷新按钮横向排布
+      .deployment-filter {
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        gap: var(--app-space-3);
         .el-input {
           width: 240px;
-        }
-        .refresh-button {
-          color: var(--el-color-primary);
-          cursor: pointer;
-          width: 32px;
-          height: 32px;
-          &:hover {
-            border-radius: 50%;
-            background-color: var(--el-color-primary-light-8);
-          }
         }
       }
 
@@ -251,17 +257,6 @@ onMounted(async () => {
           display: flex;
           align-items: center;
           gap: 8px;
-        }
-        .file-actions-button {
-          color: var(--el-color-primary);
-          cursor: pointer;
-          display: flex;
-          width: 32px;
-          height: 32px;
-          &:hover {
-            border-radius: 50%;
-            background-color: var(--el-color-primary-light-8);
-          }
         }
       }
     }
