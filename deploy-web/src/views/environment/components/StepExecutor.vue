@@ -43,55 +43,55 @@ onUnmounted(() => {
 // 往 Shell 发送命令
 const handleSendShellCommand = async (commands: string[]) => {
   for (const command of commands) {
-    await new Promise<number>((resolve) => {
+    await new Promise<number>((resolve, reject) => {
       const taskId = generateRandomId(6)
-      websocketStore.subscribe(
+      const subscription = websocketStore.subscribe(
         `/topic/ssh/sessions/${sessionId.value}/shell/${channelId.value}/task/${taskId}`,
         (message) => {
-          const exitCode = Number(message)
-          resolve(exitCode)
+          // 收到退出码即完成：退订一次性订阅，避免注册表累积与跨重连重放
+          subscription.unsubscribe()
+          resolve(Number(message))
         },
+        { replay: false },
       )
       setTimeout(() => {
-        websocketStore.send(`/app/ssh/sessions/${sessionId.value}/shell/${channelId.value}`, { taskId, command })
+        try {
+          websocketStore.send(`/app/ssh/sessions/${sessionId.value}/shell/${channelId.value}`, { taskId, command })
+        } catch (error) {
+          // 连接已断时 send 抛错：退订并让步骤以错误结束，而非永久挂起
+          subscription.unsubscribe()
+          reject(error)
+        }
       }, 1000)
     })
   }
 }
 
 // SFTP 上传文件
-const handleUploadFile = (localPath: string, remoteDir: string) => {
-  return new Promise((resolve) => {
-    websocketStore.subscribe(`/topic/ssh/sessions/${sessionId.value}/sftp/upload`, (message) => {
+const handleUploadFile = (localPath: string, remoteDir: string) =>
+  websocketStore.sendAndAwait(
+    `/topic/ssh/sessions/${sessionId.value}/sftp/upload`,
+    `/app/ssh/sessions/${sessionId.value}/sftp/upload`,
+    { localPath, remoteDir },
+    (message, done) => {
       const percentage = Number(message)
       steps.value[activeStep.value].percentage = percentage
-      if (percentage === 100) {
-        resolve(true)
-      }
-    })
-    websocketStore.send(`/app/ssh/sessions/${sessionId.value}/sftp/upload`, {
-      localPath,
-      remoteDir,
-    })
-  })
-}
+      if (percentage === 100) done()
+    },
+  )
 
 // SFTP 下载文件
-const handleDownloadFile = (remotePath: string, localDir: string) => {
-  return new Promise((resolve) => {
-    websocketStore.subscribe(`/topic/ssh/sessions/${sessionId.value}/sftp/download`, (message) => {
+const handleDownloadFile = (remotePath: string, localDir: string) =>
+  websocketStore.sendAndAwait(
+    `/topic/ssh/sessions/${sessionId.value}/sftp/download`,
+    `/app/ssh/sessions/${sessionId.value}/sftp/download`,
+    { remotePath, localDir },
+    (message, done) => {
       const percentage = Number(message)
       steps.value[activeStep.value].percentage = percentage
-      if (percentage === 100) {
-        resolve(true)
-      }
-    })
-    websocketStore.send(`/app/ssh/sessions/${sessionId.value}/sftp/download`, {
-      remotePath,
-      localDir,
-    })
-  })
-}
+      if (percentage === 100) done()
+    },
+  )
 
 // 执行当前步骤
 const handleExecuteCurrentStep = async () => {

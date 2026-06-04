@@ -90,21 +90,17 @@ const handleUploadJarStep = async () => {
 }
 
 // 上传 jar 包到服务器
-const handleUploadJar = (localPath: string, remoteDir: string) => {
-  return new Promise((resolve) => {
-    websocketStore.subscribe(`/topic/ssh/sessions/${sessionId.value}/sftp/upload`, (message) => {
+const handleUploadJar = (localPath: string, remoteDir: string) =>
+  websocketStore.sendAndAwait(
+    `/topic/ssh/sessions/${sessionId.value}/sftp/upload`,
+    `/app/ssh/sessions/${sessionId.value}/sftp/upload`,
+    { localPath, remoteDir },
+    (message, done) => {
       const percentage = Number(message)
       uploadForm.percentage = percentage
-      if (percentage === 100) {
-        resolve(true)
-      }
-    })
-    websocketStore.send(`/app/ssh/sessions/${sessionId.value}/sftp/upload`, {
-      localPath,
-      remoteDir,
-    })
-  })
-}
+      if (percentage === 100) done()
+    },
+  )
 
 // 配置文件夹路径
 const configDir = ref(`${uploadForm.dir}/config`)
@@ -135,21 +131,19 @@ const fetchConfigFileList = async () => {
 
 // 上传配置文件到服务器
 const handleUploadConfig = (localPath: string, remoteDir: string, file: UploadUserFile) => {
-  return new Promise((resolve) => {
-    websocketStore.subscribe(`/topic/ssh/sessions/${sessionId.value}/sftp/upload`, (message) => {
+  // 立即标记上传中（后续进度帧再细化）；jar 与各配置文件复用同一频道，靠 sendAndAwait 完成即退订隔离
+  file.status = 'uploading'
+  return websocketStore.sendAndAwait(
+    `/topic/ssh/sessions/${sessionId.value}/sftp/upload`,
+    `/app/ssh/sessions/${sessionId.value}/sftp/upload`,
+    { localPath, remoteDir },
+    (message, done) => {
       const percentage = Number(message)
       file.percentage = percentage
       file.status = percentage === 100 ? 'success' : 'uploading'
-      if (percentage === 100) {
-        resolve(true)
-      }
-    })
-    websocketStore.send(`/app/ssh/sessions/${sessionId.value}/sftp/upload`, {
-      localPath,
-      remoteDir,
-    })
-    file.status = 'uploading'
-  })
+      if (percentage === 100) done()
+    },
+  )
 }
 
 // 执行上传配置文件步骤
@@ -505,7 +499,7 @@ onMounted(async () => {
   border-radius: var(--layout-common-border-radius);
   .config-path {
     font-size: 14px;
-    background-color: white;
+    background-color: var(--el-bg-color);
     padding: 4px 8px;
     border-radius: var(--el-border-radius-base);
     border: var(--el-border);
@@ -528,7 +522,7 @@ onMounted(async () => {
   }
 
   .file-list-container {
-    background-color: white;
+    background-color: var(--el-bg-color);
     padding: var(--layout-common-padding);
     border-radius: var(--el-border-radius-base);
     border: var(--el-border);

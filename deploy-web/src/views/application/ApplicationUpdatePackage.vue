@@ -43,25 +43,18 @@ const handleUploadToServer = (
   localPath: string,
   deploymentPath: string,
 ) => {
-  return new Promise((resolve, reject) => {
-    sshConnect(serverId)
-      .then((sessionId) => {
-        websocketStore.subscribe(`/topic/ssh/sessions/${sessionId}/sftp/upload`, (message) => {
-          const percentage = Number(message)
-          uploadProgressMap.value[deploymentRecordId] = percentage
-          if (percentage === 100) {
-            resolve(true)
-          }
-        })
-        websocketStore.send(`/app/ssh/sessions/${sessionId}/sftp/upload`, {
-          localPath,
-          remoteDir: deploymentPath,
-        })
-      })
-      .catch((error) => {
-        reject(new Error(error))
-      })
-  })
+  return sshConnect(serverId).then((sessionId) =>
+    websocketStore.sendAndAwait(
+      `/topic/ssh/sessions/${sessionId}/sftp/upload`,
+      `/app/ssh/sessions/${sessionId}/sftp/upload`,
+      { localPath, remoteDir: deploymentPath },
+      (message, done) => {
+        const percentage = Number(message)
+        uploadProgressMap.value[deploymentRecordId] = percentage
+        if (percentage === 100) done()
+      },
+    ),
+  )
 }
 
 // 执行上传步骤
@@ -321,7 +314,7 @@ const handleClose = () => {
     justify-content: space-between;
     align-items: center;
     padding: 12px;
-    border: 1px solid #dcdfe6;
+    border: 1px solid var(--el-border-color);
     border-radius: 4px;
     .record-info {
       display: flex;
@@ -331,7 +324,7 @@ const handleClose = () => {
         font-weight: bold;
       }
       .deployment-path {
-        color: #909399;
+        color: var(--el-text-color-secondary);
         font-size: 12px;
       }
     }

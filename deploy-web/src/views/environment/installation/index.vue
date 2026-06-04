@@ -72,15 +72,22 @@ const handleTabChange = () => {
 }
 
 // 连接 Shell 通道
+// 终端通道订阅句柄：长驻订阅，重连前退订旧通道、卸载时清理
+let shellSubscription: { unsubscribe: () => void } | null = null
 const handleShellConnect = async () => {
   try {
     // 创建 Shell 通道
     const channelIdResult = await sshShellAdd(sessionId.value)
     channelId.value = channelIdResult
-    // 订阅通道输出
-    websocketStore.subscribe(`/topic/ssh/sessions/${sessionId.value}/shell/${channelIdResult}`, (message) => {
-      terminalPanelRef.value?.writeToTerminal(message)
-    })
+    // 订阅通道输出（一次性会话订阅，不跨重连重放）；先退订上一次通道避免累积
+    shellSubscription?.unsubscribe()
+    shellSubscription = websocketStore.subscribe(
+      `/topic/ssh/sessions/${sessionId.value}/shell/${channelIdResult}`,
+      (message) => {
+        terminalPanelRef.value?.writeToTerminal(message)
+      },
+      { replay: false },
+    )
     ElNotification.success('Shell 通道连接成功')
     // 重置终端显示
     terminalPanelRef.value?.resetTerminal()
@@ -92,6 +99,10 @@ const handleShellConnect = async () => {
     ElNotification.error(`Shell 通道连接错误: ${extractErrorMessage(error)}`)
   }
 }
+
+onUnmounted(() => {
+  shellSubscription?.unsubscribe()
+})
 
 // 环境状态
 const environmentStatus = ref<Record<string, ExecResult>>({

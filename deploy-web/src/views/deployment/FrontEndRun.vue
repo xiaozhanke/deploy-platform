@@ -80,20 +80,15 @@ const handleSubmit = async () => {
   })
 }
 
-const handleUploadFile = (localPath: string) => {
-  return new Promise((resolve) => {
-    websocketStore.subscribe(`/topic/ssh/sessions/${sessionId.value}/sftp/upload`, (message) => {
-      const percentage = Number(message)
-      if (percentage === 100) {
-        resolve(true)
-      }
-    })
-    websocketStore.send(`/app/ssh/sessions/${sessionId.value}/sftp/upload`, {
-      localPath,
-      remoteDir: form.dir,
-    })
-  })
-}
+const handleUploadFile = (localPath: string) =>
+  websocketStore.sendAndAwait(
+    `/topic/ssh/sessions/${sessionId.value}/sftp/upload`,
+    `/app/ssh/sessions/${sessionId.value}/sftp/upload`,
+    { localPath, remoteDir: form.dir },
+    (message, done) => {
+      if (Number(message) === 100) done()
+    },
+  )
 
 const handleUnzipFile = async () => {
   const data = await sshExecCommand(sessionId.value, `unzip -o ${form.dir}/${props.fileRecord.fileName} -d ${form.dir}`)
