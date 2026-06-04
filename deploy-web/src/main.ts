@@ -1,5 +1,8 @@
+import '@/styles/tokens.scss'
 import './assets/css/main.css'
 import '@/styles/index.scss'
+import '@/styles/table.scss'
+import 'element-plus/theme-chalk/dark/css-vars.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

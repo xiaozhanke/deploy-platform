@@ -1,0 +1,75 @@
+/**
+ * 设计令牌：项目语义层的运行时 CSS 变量，是浅/深双主题的承载层。
+ *
+ * 约定：
+ * - 颜色只有「画布 / 面层 / 描边」在此立真源；文字色与状态语义色一律复用
+ *   Element Plus 的 --el-*，不另开平行调色板（避免深色下两套真源打架）。
+ * - 此处仅浅色值，命名已为深色就绪；深色覆盖在主题接入时补 html.dark 同名块。
+ * - 阴影只用于浮层（下拉 / 气泡 / 对话框 / 抽屉），其余分组一律用 1px 描边。
+ */
+:root {
+  /* 画布 / 面层 / 描边 */
+  --app-canvas: #f6f7f9;
+  --app-surface: #ffffff;
+  --app-border: #e8eaed;
+
+  /* 圆角标度：控件 6 / 卡片 8 / 弹窗 12 / 标签 4 */
+  --app-radius-control: 6px;
+  --app-radius-card: 8px;
+  --app-radius-overlay: 12px;
+  --app-radius-tag: 4px;
+
+  /* 间距标度（8px 节奏） */
+  --app-space-1: 4px;
+  --app-space-2: 8px;
+  --app-space-3: 12px;
+  --app-space-4: 16px;
+  --app-space-6: 24px;
+  --app-space-8: 32px;
+
+  /* 阴影：仅用于浮层 */
+  --app-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04), 0 2px 6px rgba(16, 24, 40, 0.06);
+  --app-shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.12), 0 4px 8px rgba(16, 24, 40, 0.06);
+
+  /* 过渡：fast 用于 hover / 按钮 / 行高亮；base 用于折叠 / 展开 */
+  --app-transition-fast: 120ms;
+  --app-transition: 200ms;
+  --app-ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* 字体：系统字体栈优先，含 CJK 回退；mono 单立一组 */
+  --app-font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC',
+    'HarmonyOS Sans SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --app-font-mono:
+    ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, 'Liberation Mono', monospace;
+}
+
+/**
+ * 深色覆盖：直接复用 Element Plus 官方深色调色板（dark/css-vars.css 在 html.dark 注入），
+ * 使外壳面层与 EP 组件面层在深色下严格同色、无需平行调色板。
+ * 阴影改用更重的纯黑——浅色那组带透明度的阴影在深底上几乎不可见。
+ */
+html.dark {
+  --app-canvas: var(--el-bg-color-page);
+  --app-surface: var(--el-bg-color);
+  --app-border: var(--el-border-color-lighter);
+
+  --app-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.4);
+  --app-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+/**
+ * 主题切换瞬态过渡：仅在切换那一下由脚本给 <html> 挂 .theme-transition，约 200ms 后摘掉，
+ * 避免常驻过渡拖累其它交互。降低动效偏好下不挂过渡（瞬时切换）。
+ */
+@media (prefers-reduced-motion: no-preference) {
+  html.theme-transition,
+  html.theme-transition *,
+  html.theme-transition *::before,
+  html.theme-transition *::after {
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      color 150ms ease !important;
+  }
+}
