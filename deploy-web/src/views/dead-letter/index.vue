@@ -68,32 +68,36 @@ onActivated(() => {
 
 <template>
   <section class="dead-letter-index-section common-page-container">
-    <div class="search-panel">
-      <el-form :model="form" class="search-panel-form" label-width="68px" inline>
-        <el-row :gutter="16">
-          <el-col :sm="12" :md="8" :lg="6" :xl="4">
-            <el-form-item label="重试状态">
-              <el-select v-model="form.retried" placeholder="重试状态" clearable>
-                <el-option
-                  v-for="item in retriedOptions"
-                  :key="String(item.value)"
-                  :value="item.value"
-                  :label="item.label"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-      <div class="search-panel-action">
-        <el-button type="primary" :icon="Search" plain @click="handleQuery">查询</el-button>
-        <el-tooltip content="重置查询条件" placement="top">
-          <el-button type="info" :icon="Refresh" @click="handleReset">重置</el-button>
-        </el-tooltip>
-      </div>
-    </div>
+    <page-header>
+      <template #filter>
+        <el-form :model="form" inline>
+          <el-form-item label="重试状态">
+            <el-select v-model="form.retried" placeholder="重试状态" clearable>
+              <el-option
+                v-for="item in retriedOptions"
+                :key="String(item.value)"
+                :value="item.value"
+                :label="item.label"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button :icon="Search" plain @click="handleQuery">查询</el-button>
+            <el-tooltip content="重置查询条件" placement="top">
+              <el-button :icon="Refresh" @click="handleReset">重置</el-button>
+            </el-tooltip>
+          </el-form-item>
+        </el-form>
+      </template>
+    </page-header>
     <table-pagination ref="tablePaginationRef" show-overflow-tooltip :query-method="queryMethod">
       <el-table-column type="index" label="序号" width="54" fixed="left" />
+      <el-table-column label="状态" width="84">
+        <!-- 每条记录均为 DEAD 终态（耗尽重试），统一红实心点标识 -->
+        <template #default>
+          <status-dot intent="danger">死信</status-dot>
+        </template>
+      </el-table-column>
       <el-table-column prop="jobId" label="原作业 Id" min-width="180" />
       <el-table-column prop="jobType" label="类型" width="80">
         <template #default="{ row }">{{ JobTypeEnum.getLabel(row.jobType) }}</template>
@@ -120,14 +124,7 @@ onActivated(() => {
       </el-table-column>
     </table-pagination>
 
-    <el-dialog
-      v-model="detailVisible"
-      title="死信详情"
-      width="800px"
-      top="8vh"
-      draggable
-      :close-on-click-modal="false"
-    >
+    <app-drawer v-model="detailVisible" title="死信详情" width="md">
       <el-descriptions border :column="1">
         <el-descriptions-item label="死信 Id">{{ currentRow.id }}</el-descriptions-item>
         <el-descriptions-item label="原作业 Id">{{ currentRow.jobId }}</el-descriptions-item>
@@ -146,26 +143,12 @@ onActivated(() => {
       <template #footer>
         <el-button @click="detailVisible = false">关闭</el-button>
       </template>
-    </el-dialog>
+    </app-drawer>
   </section>
 </template>
 
 <style lang="scss" scoped>
 .dead-letter-index-section {
-  .search-panel {
-    .search-panel-form {
-      .el-form-item {
-        width: 100%;
-        margin-right: 0;
-        margin-bottom: var(--layout-common-padding);
-      }
-    }
-    .search-panel-action {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: var(--layout-common-padding);
-    }
-  }
   .payload-pre {
     white-space: pre-wrap;
     word-break: break-all;
