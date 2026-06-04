@@ -6,14 +6,14 @@ defineProps<{
   record: DeploymentRecord
 }>()
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-}>()
+// 显式接管可见性：根由单根 el-dialog 换成 AppDrawer 后，
+// 不再有 fallthrough 到单根的隐式绑定，必须用 defineModel 显式双向绑定才能开合
+const visible = defineModel<boolean>()
 
 const activeCollapseNames = ref(['deployment'])
 
 const handleClose = () => {
-  emit('update:modelValue', false)
+  visible.value = false
 }
 
 const deploymentStatusTagTypeMap: Record<string, 'success' | 'warning' | 'info' | 'primary' | 'danger'> = {
@@ -24,7 +24,7 @@ const deploymentStatusTagTypeMap: Record<string, 'success' | 'warning' | 'info' 
 </script>
 
 <template>
-  <el-dialog title="应用详情" width="1000px" top="5vh" draggable :close-on-click-modal="false" @close="handleClose">
+  <app-drawer v-model="visible" title="应用详情" width="md">
     <el-collapse v-model="activeCollapseNames">
       <el-collapse-item title="部署信息" name="deployment">
         <el-descriptions class="common-descriptions" border :column="2">
@@ -92,7 +92,7 @@ const deploymentStatusTagTypeMap: Record<string, 'success' | 'warning' | 'info' 
     <template #footer>
       <el-button @click="handleClose">关闭</el-button>
     </template>
-  </el-dialog>
+  </app-drawer>
 </template>
 
 <style lang="scss" scoped>
