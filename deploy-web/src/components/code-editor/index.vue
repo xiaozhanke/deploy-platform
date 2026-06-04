@@ -6,6 +6,7 @@ import { EditorView } from 'codemirror'
 import { highlightWhitespace } from '@codemirror/view'
 import { Close } from '@element-plus/icons-vue'
 import { sshExecCommand, sshWriteFile } from '@/api/api'
+import { useTheme } from '@/composables/useTheme'
 
 defineOptions({
   name: 'CodeEditor',
@@ -28,8 +29,11 @@ const editable = ref<boolean>(false)
 const fileContent = ref<string>('')
 // 是否高亮空格
 const highlightWhiteSpace = ref(false)
-// 主题明暗
-const theme = ref<'light' | 'dark'>('light')
+// 全局主题单例：仅用于在「打开编辑器」那一刻取一次当前明暗作默认值，不做实时同步
+const { isDark } = useTheme()
+// 主题明暗：初值跟随打开时的全局主题（深色 app → 默认暗、浅色 app → 默认浅）；
+// 打开后允许用户手动切换，手动切换后以手动为准（不被全局主题再次拉回）
+const theme = ref<'light' | 'dark'>(isDark.value ? 'dark' : 'light')
 
 // 切换高亮空格
 const toggleHighlightWhiteSpace = () => {
@@ -75,6 +79,8 @@ const viewFile = async (path: string) => {
   filePath.value = path
   const success = await fetchFileContent()
   if (success) {
+    // 每次打开都把主题重置为当下全局主题，使默认值跟随全局；本次打开内手动切换不受影响
+    theme.value = isDark.value ? 'dark' : 'light'
     visible.value = true
   }
 }
@@ -85,6 +91,8 @@ const editFile = async (path: string) => {
   filePath.value = path
   const success = await fetchFileContent()
   if (success) {
+    // 每次打开都把主题重置为当下全局主题，使默认值跟随全局；本次打开内手动切换不受影响
+    theme.value = isDark.value ? 'dark' : 'light'
     visible.value = true
   }
 }
@@ -214,10 +222,10 @@ defineExpose({
         width: 32px;
         line-height: 0;
         &.active {
-          color: #000000;
+          color: var(--el-text-color-primary);
         }
         &.inactive {
-          color: #a8abb2;
+          color: var(--el-text-color-secondary);
         }
       }
     }
