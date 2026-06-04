@@ -202,7 +202,7 @@ onBeforeUnmount(async () => {
   height: calc(100vh - var(--system-header-height));
   border-left: var(--el-border);
   padding: 0 var(--layout-common-padding);
-  background-color: white;
+  background-color: var(--app-surface);
   position: fixed;
   top: var(--system-header-height);
   right: 0;
@@ -264,7 +264,7 @@ onBeforeUnmount(async () => {
         margin: 12px 0;
         padding: 8px;
         border-radius: var(--el-border-radius-base);
-        background: #f5f7fa;
+        background: var(--el-fill-color-light);
         &.success {
           border-left: 4px solid var(--el-color-success);
           background-color: var(--el-color-success-light-9);
@@ -291,7 +291,7 @@ onBeforeUnmount(async () => {
         }
         .env-value {
           word-break: break-all;
-          background: white;
+          background: var(--el-bg-color);
           padding: 4px;
           border-radius: var(--el-border-radius-small);
         }

@@ -522,7 +522,7 @@ onActivated(async () => {
     align-items: center;
     gap: 8px;
     font-size: 14px;
-    background-color: white;
+    background-color: var(--el-bg-color);
     padding: 4px 8px;
     border-radius: var(--el-border-radius-base);
     border: var(--el-border);
@@ -543,7 +543,7 @@ onActivated(async () => {
   }
 
   .file-list-container {
-    background-color: white;
+    background-color: var(--el-bg-color);
     padding: var(--layout-common-padding);
     border-radius: var(--el-border-radius-base);
     border: var(--el-border);

@@ -88,7 +88,7 @@ const sftpProcessing = computed(() => {
 
   h4 {
     margin: 0 0 10px 0;
-    color: #333;
+    color: var(--el-text-color-primary);
     font-size: 18px;
   }
 
@@ -98,7 +98,7 @@ const sftpProcessing = computed(() => {
     li {
       margin-bottom: 8px;
       pre {
-        background: white;
+        background: var(--el-bg-color);
         padding: 10px;
         border-radius: var(--el-border-radius-base);
         overflow-x: auto;
@@ -116,13 +116,13 @@ const sftpProcessing = computed(() => {
       margin-bottom: 8px;
       .path-label {
         font-weight: bold;
-        color: #666;
+        color: var(--el-text-color-regular);
         margin-right: 1rem;
       }
       .path-value {
         flex: 1;
         word-break: break-all;
-        background: white;
+        background: var(--el-bg-color);
         padding: 4px 8px;
         border-radius: var(--el-border-radius-base);
         border: var(--el-border);
@@ -134,7 +134,7 @@ const sftpProcessing = computed(() => {
     display: flex;
     .progress-label {
       font-weight: bold;
-      color: #666;
+      color: var(--el-text-color-regular);
       margin-right: 1rem;
     }
     .progress-bar {
