@@ -145,7 +145,8 @@ const handleReset = () => {
   }
   .avatar-uploader-icon {
     font-size: 28px;
-    color: #8c939d;
+    // 上传占位图标用次要文字色，深色模式随 Element Plus 暗色变量翻转
+    color: var(--el-text-color-secondary);
     width: 178px;
     height: 178px;
     text-align: center;
