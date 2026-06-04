@@ -11,9 +11,9 @@ const props = defineProps<{
   fileRecord: FileRecord
 }>()
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-}>()
+// 抽屉可见性由父级 v-model 显式接管：AppDrawer 底层 el-drawer 非单根，
+// 必须显式绑定才会开合（不能再靠 modelValue fallthrough）
+const visible = defineModel<boolean>()
 
 const sessionId = inject('sessionId') as Ref<string>
 const currentServer = inject('currentServer') as Ref<ServerRecord>
@@ -100,12 +100,12 @@ const handleUnzipFile = async () => {
 
 const handleClose = () => {
   formRef.value?.resetFields()
-  emit('update:modelValue', false)
+  visible.value = false
 }
 </script>
 
 <template>
-  <el-dialog title="部署前端应用" width="600px" draggable :close-on-click-modal="false" :before-close="handleClose">
+  <app-drawer v-model="visible" title="部署前端应用" width="md">
     <el-form ref="formRef" :model="form" :rules="formRules" label-width="140px">
       <el-form-item label="部署上传目录" prop="dir">
         <el-input v-model="form.dir" placeholder="部署上传目录" clearable />
@@ -118,5 +118,5 @@ const handleClose = () => {
       <el-button @click="handleClose">取消</el-button>
       <el-button type="primary" @click="handleSubmit">确定</el-button>
     </template>
-  </el-dialog>
+  </app-drawer>
 </template>
