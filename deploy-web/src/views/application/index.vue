@@ -408,7 +408,7 @@ onUnmounted(() => {
           <el-switch
             v-if="row.applicationType === ApplicationTypeEnum.BACKEND.value"
             :model-value="row.running"
-            style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+            style="--el-switch-on-color: var(--el-color-success); --el-switch-off-color: var(--el-color-danger)"
           />
         </template>
       </el-table-column>

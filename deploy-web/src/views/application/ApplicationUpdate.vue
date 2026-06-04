@@ -84,7 +84,10 @@ const handleClose = () => {
           <el-input v-model="form.processId" placeholder="进程 Id" clearable />
         </el-form-item>
         <el-form-item label="是否正在运行" prop="running">
-          <el-switch v-model="form.running" style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" />
+          <el-switch
+            v-model="form.running"
+            style="--el-switch-on-color: var(--el-color-success); --el-switch-off-color: var(--el-color-danger)"
+          />
         </el-form-item>
       </template>
     </el-form>

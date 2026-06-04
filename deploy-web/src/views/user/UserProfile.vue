@@ -134,7 +134,7 @@ const handleReset = () => {
   }
   :deep(.el-upload) {
     border: 1px dashed var(--el-border-color);
-    border-radius: 6px;
+    border-radius: var(--app-radius-control);
     cursor: pointer;
     position: relative;
     overflow: hidden;

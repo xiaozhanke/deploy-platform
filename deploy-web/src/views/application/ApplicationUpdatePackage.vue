@@ -315,7 +315,7 @@ const handleClose = () => {
     align-items: center;
     padding: 12px;
     border: 1px solid var(--el-border-color);
-    border-radius: 4px;
+    border-radius: var(--app-radius-tag);
     .record-info {
       display: flex;
       flex-direction: column;

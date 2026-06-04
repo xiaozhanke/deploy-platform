@@ -251,7 +251,7 @@ const handleFileRename = (filePath: string) => {
       code {
         background-color: var(--el-color-info-light-8);
         padding: 2px 6px;
-        border-radius: 4px;
+        border-radius: var(--app-radius-tag);
       }
     }
 
