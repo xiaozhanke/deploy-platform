@@ -130,17 +130,32 @@ const submitJobs = async (jobType: DeploymentJob['jobType'], actionLabel: string
     ElMessage.info('请选择要操作的记录')
     return
   }
+  // 失败项聚合后只发一条通知；成功项不弹 toast——「最近作业」列由乐观写入 + WS 实时更新即为反馈
+  const failures: { name: string; reason: string }[] = []
   for (const record of tableSelection.value) {
     try {
       const job = await deploymentJobCreate(record.id, {
         jobType,
         clientRequestId: crypto.randomUUID(),
       })
+      // 乐观写入「最近作业」，该行立即翻成作业态，后续由 WS 持续刷新
       latestJobMap[record.id] = job
-      ElNotification.success(`应用 [${record.fileRecord.fileName}] ${actionLabel}作业已提交`)
     } catch (error) {
-      ElMessage.error(`应用 [${record.fileRecord.fileName}] ${actionLabel}作业提交失败: ` + extractErrorMessage(error))
+      failures.push({ name: record.fileRecord.fileName, reason: extractErrorMessage(error) })
     }
+  }
+  // 有失败项时聚合成一条错误通知：列出前若干条，其余以「…等 N 个」收口
+  if (failures.length > 0) {
+    const previewCount = 3
+    const lines = failures.slice(0, previewCount).map((failure) => `${failure.name}：${failure.reason}`)
+    if (failures.length > previewCount) {
+      lines.push(`…等 ${failures.length} 个`)
+    }
+    ElNotification.error({
+      title: `部分${actionLabel}作业提交失败`,
+      message: lines.join('\n'),
+      dangerouslyUseHTMLString: false,
+    })
   }
   refreshCurrentPage()
 }
@@ -299,80 +314,87 @@ onUnmounted(() => {
 
 <template>
   <section class="application-index-section common-page-container">
-    <div class="search-panel">
-      <el-form ref="formRef" :model="form" class="search-panel-form" label-width="68px" inline>
-        <el-row :gutter="16">
-          <el-col :sm="12" :md="8" :lg="6" :xl="4">
-            <el-form-item label="服务器">
-              <el-input
-                v-model="selectedServerName"
-                placeholder="选择服务器"
-                :suffix-icon="Search"
-                clearable
-                @clear="handleServerSelectClear"
-                @click="handleServerSelect"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :sm="12" :md="8" :lg="6" :xl="4">
-            <el-form-item label="应用文件">
-              <el-input
-                v-model="selectedFileName"
-                placeholder="选择应用文件"
-                :suffix-icon="Search"
-                clearable
-                @clear="handleFileSelectClear"
-                @click="handleFileSelect"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :sm="12" :md="8" :lg="6" :xl="4">
-            <el-form-item label="应用类型" prop="applicationType">
-              <el-select v-model="form.applicationType" placeholder="应用类型" clearable>
-                <el-option
-                  v-for="item in ApplicationTypeEnum.options"
-                  :key="item.value"
-                  :value="item.value"
-                  :label="item.label"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :sm="12" :md="8" :lg="6" :xl="4">
-            <el-form-item label="部署状态" prop="status">
-              <el-select v-model="form.status" placeholder="部署状态" clearable>
-                <el-option
-                  v-for="item in DeploymentStatusEnum.options"
-                  :key="item.value"
-                  :value="item.value"
-                  :label="item.label"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :sm="12" :md="8" :lg="6" :xl="4">
-            <el-form-item label="部署端口" prop="port">
-              <el-input v-model="form.port" type="number" placeholder="部署端口" clearable />
-            </el-form-item>
-          </el-col>
-          <el-col :sm="12" :md="8" :lg="6" :xl="4">
-            <el-form-item label="配置文件" prop="activeProfiles">
-              <el-input v-model="form.activeProfiles" placeholder="激活配置文件" clearable />
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-      <div class="search-panel-action">
+    <!-- 标题取 route.meta.title（应用管理）；批量操作进标题行右侧、筛选项进筛选行 -->
+    <page-header>
+      <template #actions>
+        <!-- 应用级批量操作：启动=唯一实色主操作；停止=破坏性 danger；重启/更新中性 -->
         <el-button type="primary" :icon="SwitchButton" @click="handleApplicationStart">启动应用</el-button>
         <el-button type="danger" :icon="SwitchButton" @click="handleApplicationStop">停止应用</el-button>
-        <el-button type="success" :icon="Loading" @click="handleApplicationRestart">重启应用</el-button>
-        <el-button type="warning" :icon="Switch" @click="handleApplicationUpdate">更新应用</el-button>
-        <el-button type="primary" :icon="Search" plain @click="handleQuery">查询</el-button>
-        <el-tooltip content="重置查询条件" placement="top">
-          <el-button type="info" :icon="Refresh" @click="handleReset">重置</el-button>
-        </el-tooltip>
-      </div>
-    </div>
+        <el-button :icon="Loading" @click="handleApplicationRestart">重启应用</el-button>
+        <el-button :icon="Switch" @click="handleApplicationUpdate">更新应用</el-button>
+      </template>
+      <template #filter>
+        <el-form ref="formRef" :model="form" class="application-filter-form" label-width="68px" inline>
+          <el-row :gutter="16">
+            <el-col :sm="12" :md="8" :lg="6" :xl="4">
+              <el-form-item label="服务器">
+                <el-input
+                  v-model="selectedServerName"
+                  placeholder="选择服务器"
+                  :suffix-icon="Search"
+                  clearable
+                  @clear="handleServerSelectClear"
+                  @click="handleServerSelect"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :sm="12" :md="8" :lg="6" :xl="4">
+              <el-form-item label="应用文件">
+                <el-input
+                  v-model="selectedFileName"
+                  placeholder="选择应用文件"
+                  :suffix-icon="Search"
+                  clearable
+                  @clear="handleFileSelectClear"
+                  @click="handleFileSelect"
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :sm="12" :md="8" :lg="6" :xl="4">
+              <el-form-item label="应用类型" prop="applicationType">
+                <el-select v-model="form.applicationType" placeholder="应用类型" clearable>
+                  <el-option
+                    v-for="item in ApplicationTypeEnum.options"
+                    :key="item.value"
+                    :value="item.value"
+                    :label="item.label"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :sm="12" :md="8" :lg="6" :xl="4">
+              <el-form-item label="部署状态" prop="status">
+                <el-select v-model="form.status" placeholder="部署状态" clearable>
+                  <el-option
+                    v-for="item in DeploymentStatusEnum.options"
+                    :key="item.value"
+                    :value="item.value"
+                    :label="item.label"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :sm="12" :md="8" :lg="6" :xl="4">
+              <el-form-item label="部署端口" prop="port">
+                <el-input v-model="form.port" type="number" placeholder="部署端口" clearable />
+              </el-form-item>
+            </el-col>
+            <el-col :sm="12" :md="8" :lg="6" :xl="4">
+              <el-form-item label="配置文件" prop="activeProfiles">
+                <el-input v-model="form.activeProfiles" placeholder="激活配置文件" clearable />
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form>
+        <!-- 查询=plain 中性、重置=default，遵循筛选区无实色主操作 -->
+        <div class="application-filter-action">
+          <el-button :icon="Search" plain @click="handleQuery">查询</el-button>
+          <el-tooltip content="重置查询条件" placement="top">
+            <el-button :icon="Refresh" @click="handleReset">重置</el-button>
+          </el-tooltip>
+        </div>
+      </template>
+    </page-header>
     <table-pagination
       ref="tablePaginationRef"
       highlight-current-row
@@ -429,9 +451,9 @@ onUnmounted(() => {
       <el-table-column label="操作" width="340px" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link :icon="View" @click="handleView(row)">详情</el-button>
-          <el-button type="warning" link :icon="Edit" @click="handleEdit(row)">修改</el-button>
+          <el-button link :icon="Edit" @click="handleEdit(row)">修改</el-button>
           <el-button type="danger" link :icon="Delete" @click="handleDelete(row)">删除</el-button>
-          <el-button type="info" link :icon="Tickets" @click="handleJobHistory(row)">作业</el-button>
+          <el-button link :icon="Tickets" @click="handleJobHistory(row)">作业</el-button>
           <el-button
             v-if="latestJobMap[row.id]?.status === JobStatusEnum.PENDING.value"
             type="danger"
@@ -468,19 +490,22 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .application-index-section {
-  .search-panel {
-    .search-panel-form {
-      .el-form-item {
-        width: 100%;
-        margin-right: 0;
-        margin-bottom: var(--layout-common-padding);
-      }
-    }
-    .search-panel-action {
-      display: flex;
-      justify-content: flex-end;
+  // 筛选行：表单占据主体宽度、查询/重置贴右
+  .application-filter-form {
+    flex: 1;
+
+    .el-form-item {
+      width: 100%;
+      margin-right: 0;
       margin-bottom: var(--layout-common-padding);
     }
+  }
+
+  .application-filter-action {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--app-space-3);
+    margin-bottom: var(--layout-common-padding);
   }
 }
 </style>
