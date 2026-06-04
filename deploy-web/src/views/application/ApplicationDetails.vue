@@ -30,12 +30,12 @@ const deploymentStatusTagTypeMap: Record<string, 'success' | 'warning' | 'info' 
         <el-descriptions class="common-descriptions" border :column="2">
           <el-descriptions-item label="部署 Id" :span="2">{{ record.id }}</el-descriptions-item>
           <el-descriptions-item label="应用类型">
-            <el-tag>{{ ApplicationTypeEnum.getLabel(record.applicationType) }}</el-tag>
+            <soft-label intent="info">{{ ApplicationTypeEnum.getLabel(record.applicationType) }}</soft-label>
           </el-descriptions-item>
           <el-descriptions-item label="部署状态">
-            <el-tag :type="deploymentStatusTagTypeMap[record.status]" effect="dark">{{
+            <soft-label :intent="deploymentStatusTagTypeMap[record.status]">{{
               DeploymentStatusEnum.getLabel(record.status)
-            }}</el-tag>
+            }}</soft-label>
           </el-descriptions-item>
           <el-descriptions-item label="部署路径" :span="2">{{ record.deploymentPath }}</el-descriptions-item>
           <el-descriptions-item label="部署端口">{{ record.port }}</el-descriptions-item>

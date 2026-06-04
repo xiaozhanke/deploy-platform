@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { deploymentJobCancel, deploymentJobQueryPage } from '@/api/api'
 import TablePagination from '@/components/table-pagination/index.vue'
-import { JobStatusEnum, JobTypeEnum, jobStatusTagType } from '@/enums/platform'
+import { JobStatusEnum, JobTypeEnum } from '@/enums/platform'
 import type { PageParams } from '@/types/api'
 import type { DeploymentJob, DeploymentRecord } from '@/types/deployment'
 import { useWebSocketStore } from '@/stores/websocket'
@@ -12,18 +12,36 @@ defineOptions({
 })
 
 const props = defineProps<{
-  modelValue: boolean
   record: DeploymentRecord
 }>()
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-}>()
+// 可见性由父级 v-model 显式接管（AppDrawer 底层 el-drawer 非单根，必须显式绑定才会开合）
+const visible = defineModel<boolean>()
 
-const visible = computed({
-  get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value),
-})
+// StatusDot 的颜色意图，映射到 --el-color-*
+type StatusIntent = 'primary' | 'success' | 'warning' | 'danger' | 'info'
+
+// 作业状态 → StatusDot 形态：颜色走 --el-color-*，再叠形状/文字明暗作第二通道
+// PENDING 空心环（未开始）；IN_PROGRESS 蓝点脉冲（进行中）；SUCCESS 绿；
+// FAILED 橙（可重试）；DEAD 红（耗尽重试的终态）；CANCELLED 灰 + 文字弱化（已结束）
+const jobStatusDot = (status?: string): { intent: StatusIntent; hollow?: boolean; pulse?: boolean; muted?: boolean } => {
+  switch (status) {
+    case JobStatusEnum.PENDING.value:
+      return { intent: 'info', hollow: true }
+    case JobStatusEnum.IN_PROGRESS.value:
+      return { intent: 'primary', pulse: true }
+    case JobStatusEnum.SUCCESS.value:
+      return { intent: 'success' }
+    case JobStatusEnum.FAILED.value:
+      return { intent: 'warning' }
+    case JobStatusEnum.DEAD.value:
+      return { intent: 'danger' }
+    case JobStatusEnum.CANCELLED.value:
+      return { intent: 'info', muted: true }
+    default:
+      return { intent: 'info' }
+  }
+}
 
 const tablePaginationRef = ref()
 
@@ -94,7 +112,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <el-drawer v-model="visible" title="作业历史" size="60%" :close-on-click-modal="false">
+  <app-drawer v-model="visible" title="作业历史" width="lg">
     <div class="drawer-table-wrapper">
       <table-pagination ref="tablePaginationRef" show-overflow-tooltip :query-method="queryMethod">
         <el-table-column type="index" label="序号" width="54" fixed="left" />
@@ -105,9 +123,7 @@ onUnmounted(() => {
         </el-table-column>
         <el-table-column prop="status" label="状态" width="90">
           <template #default="{ row }">
-            <el-tag :type="jobStatusTagType(row.status)" effect="dark">
-              {{ JobStatusEnum.getLabel(row.status) }}
-            </el-tag>
+            <status-dot v-bind="jobStatusDot(row.status)">{{ JobStatusEnum.getLabel(row.status) }}</status-dot>
           </template>
         </el-table-column>
         <el-table-column prop="retryCount" label="重试次数" width="90" />
@@ -129,7 +145,7 @@ onUnmounted(() => {
         </el-table-column>
       </table-pagination>
     </div>
-  </el-drawer>
+  </app-drawer>
 </template>
 
 <style lang="scss" scoped>

@@ -5,7 +5,7 @@ defineOptions({
 
 import { deploymentJobCancel, deploymentJobCreate, deploymentRecordDelete, deploymentRecordQueryPage } from '@/api/api'
 import TablePagination from '@/components/table-pagination/index.vue'
-import { ApplicationTypeEnum, DeploymentStatusEnum, JobStatusEnum, JobTypeEnum, jobStatusTagType } from '@/enums/platform'
+import { ApplicationTypeEnum, DeploymentStatusEnum, JobStatusEnum, JobTypeEnum } from '@/enums/platform'
 import type { PageParams } from '@/types/api'
 import type { DeploymentJob, DeploymentParams, DeploymentRecord } from '@/types/deployment'
 import type { FormInstance } from 'element-plus'
@@ -35,6 +35,9 @@ import ApplicationUpdateConfig from './ApplicationUpdateConfig.vue'
 import { useWebSocketStore } from '@/stores/websocket'
 import type { StompSubscription } from '@stomp/stompjs'
 
+// StatusDot 的颜色意图，映射到 --el-color-*
+type StatusIntent = 'primary' | 'success' | 'warning' | 'danger' | 'info'
+
 const formRef = ref<FormInstance>()
 const tablePaginationRef = ref()
 const tableSelection = ref<DeploymentRecord[]>([])
@@ -43,6 +46,28 @@ const form = reactive<Partial<DeploymentParams>>({})
 
 // recordId → 最近一次作业（WebSocket 实时推送 / 提交后乐观写入），用于「最近作业」列展示
 const latestJobMap = reactive<Record<string, DeploymentJob>>({})
+
+// 作业状态 → StatusDot 形态：颜色走 --el-color-*，再叠形状/文字明暗作第二通道
+// PENDING 空心环（未开始）；IN_PROGRESS 蓝点脉冲（进行中）；SUCCESS 绿；
+// FAILED 橙（可重试）；DEAD 红（耗尽重试的终态）；CANCELLED 灰 + 文字弱化（已结束）
+const jobStatusDot = (status?: string): { intent: StatusIntent; hollow?: boolean; pulse?: boolean; muted?: boolean } => {
+  switch (status) {
+    case JobStatusEnum.PENDING.value:
+      return { intent: 'info', hollow: true }
+    case JobStatusEnum.IN_PROGRESS.value:
+      return { intent: 'primary', pulse: true }
+    case JobStatusEnum.SUCCESS.value:
+      return { intent: 'success' }
+    case JobStatusEnum.FAILED.value:
+      return { intent: 'warning' }
+    case JobStatusEnum.DEAD.value:
+      return { intent: 'danger' }
+    case JobStatusEnum.CANCELLED.value:
+      return { intent: 'info', muted: true }
+    default:
+      return { intent: 'info' }
+  }
+}
 
 const websocketStore = useWebSocketStore()
 let subscriptions: StompSubscription[] = []
@@ -435,16 +460,11 @@ onUnmounted(() => {
       </el-table-column>
       <el-table-column label="最近作业" width="150">
         <template #default="{ row }">
-          <el-tag
-            v-if="latestJobMap[row.id]"
-            :type="jobStatusTagType(latestJobMap[row.id]?.status)"
-            size="small"
-            effect="dark"
-          >
+          <status-dot v-if="latestJobMap[row.id]" v-bind="jobStatusDot(latestJobMap[row.id]?.status)">
             {{ JobTypeEnum.getLabel(latestJobMap[row.id]?.jobType) }}·{{
               JobStatusEnum.getLabel(latestJobMap[row.id]?.status)
             }}
-          </el-tag>
+          </status-dot>
           <span v-else>-</span>
         </template>
       </el-table-column>
