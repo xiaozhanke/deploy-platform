@@ -2,6 +2,8 @@
 import type { PageParams, PageResult } from '@/types/api'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import type { PaginationProps, TableInstance, TableProps, Sort } from 'element-plus'
+import EmptyState from '@/components/empty-state/index.vue'
+import ErrorState from '@/components/error-state/index.vue'
 
 defineOptions({
   name: 'TablePagination',
@@ -30,6 +32,12 @@ const tableRef = ref<TableInstance>()
 const tableData = ref<T[]>([])
 // 加载状态
 const isLoading = ref(false)
+// 首屏判断中心化：firstLoadDone 仅在首次成功加载后置真
+const firstLoadDone = ref(false)
+// 首屏加载失败标记（显示错误态、取代骨架）
+const loadError = ref(false)
+// 首屏加载中显示骨架；二次加载（已出过数据）改走遮罩并保留旧数据
+const showSkeleton = computed(() => isLoading.value && !firstLoadDone.value)
 
 // 排序映射
 const sortOrderMap: Record<string, string> = {
@@ -99,14 +107,20 @@ async function queryPage(params?: Record<string, unknown>) {
     pageParams.sort = `${currentSort.value.prop},${sortOrderMap[currentSort.value.order || 'descending']}`
   }
   isLoading.value = true
+  loadError.value = false
   try {
     const response = await props.queryMethod(queryParams.value, pageParams)
     tableData.value = response.content || []
     pagination.total = response.totalElements || 0
+    firstLoadDone.value = true
   } catch {
-    ElNotification.error('数据加载失败, 请重试')
-    tableData.value = []
-    pagination.total = 0
+    if (firstLoadDone.value) {
+      // 二次失败：保留旧数据不清空，仅轻量提示（错误原因交全局拦截器统一弹出）
+      ElMessage.warning('刷新失败，请重试')
+    } else {
+      // 首屏失败：错误态取代骨架，不落空态、也不重复弹通用 toast
+      loadError.value = true
+    }
   } finally {
     isLoading.value = false
   }
@@ -129,26 +143,46 @@ defineExpose({
 
 <template>
   <section class="table-pagination-section">
-    <el-table
-      ref="tableRef"
-      v-loading="isLoading"
-      class="table-container"
-      v-bind="{ ...attrs, ...props.tableProps }"
-      height="100%"
-      :data="tableData"
-      :default-sort="defaultSort"
-      @sort-change="handleSortChange"
-    >
-      <slot></slot>
-    </el-table>
-    <el-pagination
-      v-bind="pagination"
-      v-model:current-page="pagination.currentPage"
-      v-model:page-size="pagination.pageSize"
-      class="pagination-container"
-      @update:current-page="handleCurrentPageUpdate"
-      @update:page-size="handlePageSizeUpdate"
-    />
+    <!-- 首屏加载失败：错误态取代骨架，不落空态 -->
+    <div v-if="loadError" class="table-pagination-state">
+      <error-state title="加载失败" description="数据加载出错，请稍后重试" action-text="重试" @action="() => queryPage()" />
+    </div>
+    <!-- 首屏加载中：与布局同构的骨架行 -->
+    <div v-else-if="showSkeleton" class="table-pagination-skeleton">
+      <el-skeleton animated>
+        <template #template>
+          <div v-for="row in 8" :key="row" class="table-pagination-skeleton__row">
+            <el-skeleton-item variant="text" />
+          </div>
+        </template>
+      </el-skeleton>
+    </div>
+    <!-- 正常 / 二次加载：保留旧内容 + 浅遮罩；空数据走 EmptyState -->
+    <template v-else>
+      <el-table
+        ref="tableRef"
+        v-loading="isLoading"
+        class="table-container"
+        v-bind="{ ...attrs, ...props.tableProps }"
+        height="100%"
+        :data="tableData"
+        :default-sort="defaultSort"
+        @sort-change="handleSortChange"
+      >
+        <slot></slot>
+        <template #empty>
+          <empty-state />
+        </template>
+      </el-table>
+      <el-pagination
+        v-bind="pagination"
+        v-model:current-page="pagination.currentPage"
+        v-model:page-size="pagination.pageSize"
+        class="pagination-container"
+        @update:current-page="handleCurrentPageUpdate"
+        @update:page-size="handlePageSizeUpdate"
+      />
+    </template>
   </section>
 </template>
 
@@ -165,6 +199,23 @@ defineExpose({
   .pagination-container {
     :deep(.el-select) {
       width: 102px;
+    }
+  }
+  // 首屏错误态：填满表格区并居中
+  .table-pagination-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  // 首屏骨架：与表格同构的横线行
+  .table-pagination-skeleton {
+    flex: 1;
+    padding: var(--app-space-3) var(--app-space-2);
+    overflow: hidden;
+    &__row {
+      padding: var(--app-space-3) 0;
+      border-bottom: 1px solid var(--app-border);
     }
   }
 }

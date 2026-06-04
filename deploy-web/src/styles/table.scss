@@ -1,0 +1,25 @@
+/**
+ * 全局数据表格：去斑马纹、行间 1px 横线走 --app-border、紧凑行高、整行 hover 浅高亮、表头浅画布底。
+ * CSS 变量与内边距用「双类提权」稳过 Element Plus 单类默认规则，不依赖样式加载顺序。
+ */
+.el-table.el-table {
+  --el-table-border-color: var(--app-border);
+  --el-table-row-hover-bg-color: var(--el-fill-color-light);
+  --el-table-header-bg-color: var(--el-fill-color-light);
+}
+
+/* 紧凑：缩小单元格纵向内边距，提升长列表一屏行数 */
+.el-table.el-table .el-table__cell {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+/* 数字列对齐 */
+.el-table .cell {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 去斑马纹：抹平条纹行底色；排除 hover 行（带 .hover-row）以保留整行高亮 */
+.el-table .el-table__body tr.el-table__row--striped:not(.hover-row) td.el-table__cell {
+  background-color: transparent;
+}
