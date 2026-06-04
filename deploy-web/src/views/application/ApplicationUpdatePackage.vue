@@ -13,8 +13,10 @@ const props = defineProps<{
   recordSelection: Array<DeploymentRecord>
 }>()
 
+// 可见性由父级 v-model 显式接管（迁到 AppDrawer 后底层非单根，靠属性透传不再生效）
+const visible = defineModel<boolean>()
+
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
   (e: 'complete'): void
 }>()
 
@@ -198,14 +200,15 @@ const handleNextStep = async () => {
   }
 }
 
+// 关闭抽屉即触发父页刷新（保留原行为：关闭就同步最新部署状态）
 const handleClose = () => {
-  emit('update:modelValue', false)
+  visible.value = false
   emit('complete')
 }
 </script>
 
 <template>
-  <el-dialog title="更新应用包" width="1000px" draggable :close-on-click-modal="false" @close="handleClose">
+  <app-drawer v-model="visible" title="更新应用包" width="md" @close="handleClose">
     <el-steps :active="activeStep" align-center>
       <el-step v-for="(step, index) in steps" :key="index" :title="step.title" :status="step.status" />
     </el-steps>
@@ -276,7 +279,7 @@ const handleClose = () => {
 
     <file-select v-if="fileSelectVisible" v-model="fileSelectVisible" @select="handleFileSelectComplete" />
     <log-view v-if="logVisible" v-model="logVisible" :server-id="logServerId" :log-path="logPath" />
-  </el-dialog>
+  </app-drawer>
 </template>
 
 <style lang="scss" scoped>
@@ -284,6 +287,8 @@ const handleClose = () => {
   margin-top: 20px;
 }
 .actions-container {
+  // 撑满抽屉脚宽度，使「上一步 / 下一步」保持两端对齐（脚部容器默认右对齐）
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
