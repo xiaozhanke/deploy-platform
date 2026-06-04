@@ -89,7 +89,8 @@ const sftpProcessing = computed(() => {
   h4 {
     margin: 0 0 10px 0;
     color: var(--el-text-color-primary);
-    font-size: 18px;
+    // 与全站 section 标题字号一致（NginxConfig/RedisConfig 等同款），避免深浅主题下字号脱节
+    font-size: var(--el-font-size-large);
   }
 
   .command-list {

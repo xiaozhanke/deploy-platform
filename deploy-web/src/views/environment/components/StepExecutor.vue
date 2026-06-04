@@ -160,6 +160,24 @@ const resetSteps = () => {
   activeStep.value = 0
 }
 
+// 当前步骤状态 → StatusDot 语义（颜色全部走 intent 对应的 --el-color-*，不写死颜色）
+// wait 未开始：info 灰空心环；process 进行中：primary 蓝脉冲；
+// success 成功：success 绿实心；error 失败：warning 橙（本向导失败可重新「执行当前步骤」，属可重试，故用橙非红）
+const currentStepStatus = computed(() => {
+  const status = steps.value[activeStep.value]?.status
+  switch (status) {
+    case 'process':
+      return { intent: 'primary' as const, hollow: false, pulse: true, text: '执行中' }
+    case 'success':
+      return { intent: 'success' as const, hollow: false, pulse: false, text: '已完成' }
+    case 'error':
+      return { intent: 'warning' as const, hollow: false, pulse: false, text: '执行失败，可重试' }
+    case 'wait':
+    default:
+      return { intent: 'info' as const, hollow: true, pulse: false, text: '待执行' }
+  }
+})
+
 defineExpose({
   resetSteps,
 })
@@ -170,10 +188,17 @@ defineExpose({
     <el-steps :active="activeStep" align-center>
       <el-step v-for="(step, index) in steps" :key="index" :title="step.title" :status="step.status" />
     </el-steps>
+    <!-- 当前步骤状态：补充语义指示（步骤条连线仍由上方 el-steps 的 :status 驱动） -->
+    <div class="step-status">
+      <span class="step-status__label">当前步骤：</span>
+      <status-dot :intent="currentStepStatus.intent" :hollow="currentStepStatus.hollow" :pulse="currentStepStatus.pulse">
+        {{ currentStepStatus.text }}
+      </status-dot>
+    </div>
     <div class="step-actions">
       <el-button :disabled="activeStep === 0" @click="handlePrevStep">上一步</el-button>
       <el-button
-        type="warning"
+        plain
         :loading="stepLoading"
         :disabled="steps[activeStep].status !== 'process' && steps[activeStep].status !== 'error'"
         @click="handleExecuteCurrentStep"
@@ -209,6 +234,14 @@ defineExpose({
   flex-direction: column;
   gap: var(--layout-common-gap);
   margin-top: var(--layout-common-padding);
+  .step-status {
+    display: flex;
+    align-items: center;
+    gap: var(--app-space-1);
+    .step-status__label {
+      color: var(--el-text-color-secondary);
+    }
+  }
   .step-actions {
     display: flex;
     justify-content: space-between;
