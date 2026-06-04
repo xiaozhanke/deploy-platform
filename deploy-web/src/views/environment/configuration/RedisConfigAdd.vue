@@ -4,9 +4,11 @@ import { generateRandomNumber } from '@/utils/common'
 import type { FormInstance, FormRules } from 'element-plus'
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
   (e: 'submit', form: RedisConfigParams): void
 }>()
+
+// 抽屉非单根，可见性必须由父级 v-model 显式接管，否则抽屉打不开
+const visible = defineModel<boolean>()
 
 const formRef = ref<FormInstance>()
 const form = reactive<RedisConfigParams>({
@@ -33,11 +35,11 @@ const handleSubmit = async () => {
 }
 const handleClose = () => {
   formRef.value?.resetFields()
-  emit('update:modelValue', false)
+  visible.value = false
 }
 </script>
 <template>
-  <el-dialog title="Redis 配置参数" width="600px" draggable :close-on-click-modal="false" :before-close="handleClose">
+  <app-drawer v-model="visible" title="Redis 配置参数" width="md">
     <el-form ref="formRef" :model="form" :rules="formRules" label-width="140px">
       <el-form-item label="端口" prop="port">
         <el-input-number v-model="form.port" :min="0" :max="65535" :step="1" />
@@ -50,5 +52,5 @@ const handleClose = () => {
       <el-button @click="handleClose">取消</el-button>
       <el-button type="primary" @click="handleSubmit">确定</el-button>
     </template>
-  </el-dialog>
+  </app-drawer>
 </template>
