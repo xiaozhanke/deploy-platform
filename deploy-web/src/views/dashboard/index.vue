@@ -25,9 +25,9 @@ onActivated(async () => {
 
 <template>
   <section class="dashboard-index-section">
+    <page-header />
     <div class="deployment-container">
-      <h2>应用部署概览</h2>
-      <div class="deployment-grid">
+      <div class="deployment-grid app-card-grid">
         <deployment-card v-for="record in deploymentRecordList" :key="record.id" :record="record" />
       </div>
 
@@ -40,13 +40,11 @@ onActivated(async () => {
 </template>
 
 <style lang="scss" scoped>
+// 卡片网格容器套用全局 .app-card-grid 工具类（minmax(320px,1fr) + gap），
+// 不在本页重复声明 grid 规则。这里仅做页头与网格的纵向分隔。
 .dashboard-index-section {
-  .deployment-container {
-    .deployment-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-      gap: var(--layout-common-gap);
-    }
-  }
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-4);
 }
 </style>
