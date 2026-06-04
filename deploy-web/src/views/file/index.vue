@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import {
-  Delete,
   Document,
   Download,
-  Edit,
   Folder,
   Refresh,
   Search,
   Switch,
   Upload,
-  View,
 } from '@element-plus/icons-vue'
 import { fileDelete, fileQueryPage } from '@/api/api'
 import type { FileParams, FileRecord } from '@/types/file'
@@ -158,75 +155,77 @@ onActivated(() => {
 
 <template>
   <section class="file-index-section common-page-container">
-    <div class="search-panel">
-      <el-form ref="formRef" :model="form" class="search-panel-form" label-width="68px" inline>
-        <el-row :gutter="16">
-          <el-col :sm="12" :md="8" :lg="6" :xl="4">
-            <el-form-item label="文件名" prop="fileName">
-              <el-input v-model="form.fileName" placeholder="文件名" clearable />
-            </el-form-item>
-          </el-col>
-          <el-col :sm="12" :md="8" :lg="6" :xl="4">
-            <el-form-item label="使用范围" prop="scope">
-              <el-select v-model="form.scope" placeholder="使用范围" clearable>
-                <el-option
-                  v-for="item in FileScopeEnum.options"
-                  :key="item.value"
-                  :value="item.value"
-                  :label="item.label"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :sm="12" :md="8" :lg="6" :xl="4">
-            <el-form-item label="分组 Id" prop="groupId">
-              <el-input v-model="form.groupId" placeholder="分组 Id" clearable />
-            </el-form-item>
-          </el-col>
-          <el-col :sm="12" :md="8" :lg="6" :xl="4">
-            <el-form-item label="构件 Id" prop="artifactId">
-              <el-input v-model="form.artifactId" placeholder="构件 Id" clearable />
-            </el-form-item>
-          </el-col>
-          <el-col :sm="12" :md="8" :lg="6" :xl="4">
-            <el-form-item label="版本" prop="version">
-              <el-input v-model="form.version" placeholder="版本" clearable />
-            </el-form-item>
-          </el-col>
-          <el-col :sm="12" :md="8" :lg="6" :xl="4">
-            <el-form-item label="芯片架构" prop="architecture">
-              <el-select v-model="form.architecture" placeholder="芯片架构" clearable>
-                <el-option
-                  v-for="item in ArchitectureEnum.options"
-                  :key="item.value"
-                  :value="item.value"
-                  :label="item.label"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :sm="24" :md="24" :lg="12" :xl="8">
-            <el-form-item label="文件描述" prop="description">
-              <el-input v-model="form.description" placeholder="文件描述" clearable />
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-
-      <div class="search-panel-action">
-        <el-button type="success" :icon="Upload" @click="handleUpload">上传文件</el-button>
-        <el-button type="primary" :icon="Download" :disabled="fileSelection.length !== 1" @click="handleDownload"
-          >下载文件</el-button
-        >
-        <el-button type="warning" :icon="Switch" :disabled="fileSelection.length !== 1" @click="handleUpdate"
-          >更新文件</el-button
-        >
-        <el-button type="primary" :icon="Search" plain @click="handleQuery">查询</el-button>
-        <el-tooltip content="重置查询条件" placement="top">
-          <el-button type="info" :icon="Refresh" @click="handleReset">重置</el-button>
-        </el-tooltip>
-      </div>
-    </div>
+    <!-- 标题取 route.meta.title（文件资源）；页面主操作进标题行右侧、筛选项进筛选行 -->
+    <page-header>
+      <template #actions>
+        <!-- 上传文件=该容器唯一实色主操作；下载/更新降为中性 -->
+        <el-button type="primary" :icon="Upload" @click="handleUpload">上传文件</el-button>
+        <el-button :icon="Download" :disabled="fileSelection.length !== 1" @click="handleDownload">下载文件</el-button>
+        <el-button :icon="Switch" :disabled="fileSelection.length !== 1" @click="handleUpdate">更新文件</el-button>
+      </template>
+      <template #filter>
+        <el-form ref="formRef" :model="form" class="file-filter-form" label-width="68px" inline>
+          <el-row :gutter="16">
+            <el-col :sm="12" :md="8" :lg="6" :xl="4">
+              <el-form-item label="文件名" prop="fileName">
+                <el-input v-model="form.fileName" placeholder="文件名" clearable />
+              </el-form-item>
+            </el-col>
+            <el-col :sm="12" :md="8" :lg="6" :xl="4">
+              <el-form-item label="使用范围" prop="scope">
+                <el-select v-model="form.scope" placeholder="使用范围" clearable>
+                  <el-option
+                    v-for="item in FileScopeEnum.options"
+                    :key="item.value"
+                    :value="item.value"
+                    :label="item.label"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :sm="12" :md="8" :lg="6" :xl="4">
+              <el-form-item label="分组 Id" prop="groupId">
+                <el-input v-model="form.groupId" placeholder="分组 Id" clearable />
+              </el-form-item>
+            </el-col>
+            <el-col :sm="12" :md="8" :lg="6" :xl="4">
+              <el-form-item label="构件 Id" prop="artifactId">
+                <el-input v-model="form.artifactId" placeholder="构件 Id" clearable />
+              </el-form-item>
+            </el-col>
+            <el-col :sm="12" :md="8" :lg="6" :xl="4">
+              <el-form-item label="版本" prop="version">
+                <el-input v-model="form.version" placeholder="版本" clearable />
+              </el-form-item>
+            </el-col>
+            <el-col :sm="12" :md="8" :lg="6" :xl="4">
+              <el-form-item label="芯片架构" prop="architecture">
+                <el-select v-model="form.architecture" placeholder="芯片架构" clearable>
+                  <el-option
+                    v-for="item in ArchitectureEnum.options"
+                    :key="item.value"
+                    :value="item.value"
+                    :label="item.label"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :sm="24" :md="24" :lg="12" :xl="8">
+              <el-form-item label="文件描述" prop="description">
+                <el-input v-model="form.description" placeholder="文件描述" clearable />
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form>
+        <!-- 查询=plain 中性、重置=default，筛选区无实色主操作 -->
+        <div class="file-filter-action">
+          <el-button type="primary" :icon="Search" plain @click="handleQuery">查询</el-button>
+          <el-tooltip content="重置查询条件" placement="top">
+            <el-button :icon="Refresh" @click="handleReset">重置</el-button>
+          </el-tooltip>
+        </div>
+      </template>
+    </page-header>
 
     <table-pagination
       ref="tablePaginationRef"
@@ -265,9 +264,9 @@ onActivated(() => {
       <el-table-column prop="updateTime" label="更新时间" width="172px" sortable />
       <el-table-column label="操作" width="212px" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link :icon="View" @click="handleView(row)">详情</el-button>
-          <el-button type="warning" link :icon="Edit" @click="handleEdit(row)">修改</el-button>
-          <el-button type="danger" link :icon="Delete" @click="handleDelete(row)">删除</el-button>
+          <el-button type="primary" link @click="handleView(row)">详情</el-button>
+          <el-button link @click="handleEdit(row)">修改</el-button>
+          <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
     </table-pagination>
@@ -294,20 +293,24 @@ onActivated(() => {
 
 <style lang="scss" scoped>
 .file-index-section {
-  .search-panel {
-    .search-panel-form {
-      .el-form-item {
-        width: 100%;
-        margin-right: 0;
-        margin-bottom: var(--layout-common-padding);
-      }
-    }
-    .search-panel-action {
-      display: flex;
-      justify-content: flex-end;
+  // 筛选行：表单占据主体宽度、查询/重置贴右
+  .file-filter-form {
+    flex: 1;
+
+    .el-form-item {
+      width: 100%;
+      margin-right: 0;
       margin-bottom: var(--layout-common-padding);
     }
   }
+
+  .file-filter-action {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--app-space-3);
+    margin-bottom: var(--layout-common-padding);
+  }
+
   .file-name {
     display: flex;
     align-items: center;
