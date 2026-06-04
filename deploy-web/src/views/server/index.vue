@@ -136,7 +136,7 @@ onMounted(async () => {
     <!-- 卡片视图 -->
     <div v-if="viewMode === 'card'">
       <el-empty v-if="serverList.length === 0" style="height: 600px" />
-      <div class="server-grid">
+      <div class="app-card-grid">
         <server-card
           v-for="server in serverList"
           :key="server.id"
@@ -198,11 +198,5 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: var(--layout-common-gap);
-
-  .server-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-    gap: var(--layout-common-gap);
-  }
 }
 </style>

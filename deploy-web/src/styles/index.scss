@@ -16,3 +16,12 @@
   flex-direction: column;
   gap: 10px;
 }
+
+// 自适应卡片网格：宽屏自动多列、窄屏自动回落、卡片等高。
+// 只管网格容器本身（不带背景/内边距/卡片样式），便于多页复用。
+// gap 用 :root 级间距令牌，使其脱离布局容器也能取到值。
+.app-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--app-space-4);
+}
