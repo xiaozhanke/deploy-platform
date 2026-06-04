@@ -18,9 +18,12 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', visible: boolean): void
   (e: 'complete', record: FileRecord): void
 }>()
+
+// 可见性显式接管：底层 AppDrawer 非单根，model-value 无法 fallthrough，
+// 必须由本组件 v-model 绑定才能开合；父级上传完成后再次置真触发续传也依赖此双向绑定
+const visible = defineModel<boolean>()
 
 const formRef = ref<FormInstance>()
 const form = reactive<FileParams>({
@@ -82,20 +85,14 @@ const handleUpload = async (request: UploadRequestOptions) => {
 
 const handleClose = () => {
   formRef.value?.resetFields()
-  emit('update:modelValue', false)
+  visible.value = false
 }
 </script>
 
 <template>
-  <el-dialog
-    title="上传文件"
-    width="500px"
-    top="5vh"
-    draggable
-    :close-on-click-modal="false"
-    :before-close="handleClose"
-  >
-    <el-form ref="formRef" :model="form" :rules="formRules" label-width="80px">
+  <app-drawer v-model="visible" title="上传文件" width="sm">
+    <!-- 窄抽屉（420）标签置顶、控件满宽，比横排 label 更适配窄宽度 -->
+    <el-form ref="formRef" :model="form" :rules="formRules" label-position="top">
       <el-form-item label="文件" required>
         <el-upload
           ref="uploadRef"
@@ -144,10 +141,8 @@ const handleClose = () => {
       </el-form-item>
     </el-form>
     <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
-      </span>
+      <el-button @click="handleClose">取消</el-button>
+      <el-button type="primary" @click="handleSubmit">确定</el-button>
     </template>
-  </el-dialog>
+  </app-drawer>
 </template>
