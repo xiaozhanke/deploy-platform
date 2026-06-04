@@ -9,9 +9,11 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
   (e: 'complete'): void
 }>()
+
+// 可见性由父级 v-model 显式接管：底层 AppDrawer 非单根，缺省 fallthrough 不再生效，必须显式绑定才会开合
+const visible = defineModel<boolean>()
 
 const formRef = ref<FormInstance>()
 const form = reactive<DeploymentParams>({} as DeploymentParams)
@@ -47,12 +49,12 @@ const handleSubmit = async () => {
 }
 
 const handleClose = () => {
-  emit('update:modelValue', false)
+  visible.value = false
 }
 </script>
 
 <template>
-  <el-dialog title="部署参数修改" width="600px" draggable :close-on-click-modal="false" @close="handleClose">
+  <app-drawer v-model="visible" title="部署参数修改" width="md">
     <el-form ref="formRef" :model="form" :rules="formRules" label-width="140px">
       <el-form-item label="部署路径" prop="deploymentPath">
         <el-input v-model="form.deploymentPath" placeholder="部署路径" disabled />
@@ -95,5 +97,5 @@ const handleClose = () => {
       <el-button type="primary" @click="handleSubmit">提交</el-button>
       <el-button @click="handleClose">关闭</el-button>
     </template>
-  </el-dialog>
+  </app-drawer>
 </template>
