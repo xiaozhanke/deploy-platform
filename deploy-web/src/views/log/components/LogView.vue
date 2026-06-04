@@ -9,9 +9,9 @@ const props = defineProps<{
   logPath: string
 }>()
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-}>()
+// 可见性由父级 v-model 显式接管：AppDrawer 内的 el-drawer 非单根，
+// model-value 不会再 fallthrough 到浮层，必须显式绑定才能开合（三个宿主共用）
+const visible = defineModel<boolean>()
 
 const websocketStore = useWebSocketStore()
 const terminalPanelRef = ref<InstanceType<typeof TerminalPanel>>()
@@ -56,7 +56,7 @@ const handleClose = async () => {
   shellSubscription?.unsubscribe()
   shellSubscription = null
   await sshShellClose(sessionId.value, channelId.value)
-  emit('update:modelValue', false)
+  visible.value = false
 }
 
 onMounted(async () => {
@@ -69,10 +69,19 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <el-dialog :title="logPath" width="75%" top="5vh" draggable :close-on-click-modal="false" :before-close="handleClose">
-    <terminal-panel ref="terminalPanelRef" />
+  <app-drawer v-model="visible" :title="logPath" width="md">
+    <!-- 终端在抽屉主体内需要确定高度的容器，避免塌成 0 导致 xterm 渲染异常 -->
+    <div class="log-view__terminal">
+      <terminal-panel ref="terminalPanelRef" />
+    </div>
     <template #footer>
       <el-button @click="handleClose">关闭</el-button>
     </template>
-  </el-dialog>
+  </app-drawer>
 </template>
+
+<style lang="scss" scoped>
+.log-view__terminal {
+  height: 100%;
+}
+</style>
