@@ -30,28 +30,31 @@ defineOptions({
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f0f2f5;
+  // 画布灰背景，随 html.dark 自动转深底
+  background-color: var(--app-canvas);
 }
 
 .login-container {
   width: 460px;
-  background: white;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
+  // 白色面层卡片：描边分组，深色下翻为深色面层
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-card);
   text-align: center;
   transition: 0.3s;
-  padding: 20px;
+  padding: var(--app-space-6);
 
   &:hover,
   &:focus-within {
-    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.12);
+    // 悬浮态属浮层语义，用阴影令牌；深色下阴影已重定义为可见的纯黑
+    box-shadow: var(--app-shadow-lg);
   }
 }
 
 .login-header h1 {
   font-size: 26px;
   font-weight: 500;
-  color: #303133;
+  color: var(--el-text-color-primary);
   margin-top: 10px;
   margin-bottom: 20px;
 }
@@ -60,8 +63,9 @@ defineOptions({
   margin-top: 30px;
   padding-top: 20px;
   font-size: 12px;
-  color: #888;
-  border-top: 1px solid #e0e0e0;
+  // 页脚为最弱文字，取占位符级灰
+  color: var(--el-text-color-placeholder);
+  border-top: 1px solid var(--app-border);
 }
 
 .fade-enter-active,

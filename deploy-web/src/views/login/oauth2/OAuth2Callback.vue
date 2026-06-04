@@ -36,11 +36,12 @@ onMounted(async () => {
 .status-text {
   margin-top: 20px;
   font-size: 16px;
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 .spinner {
-  border: 4px solid rgba(0, 0, 0, 0.1);
+  // 轨道用填充灰，深色下不再是黑透明；左边框（旋转高亮）保持主色
+  border: 4px solid var(--el-fill-color);
   border-radius: 50%;
   border-left-color: var(--el-color-primary);
   width: 40px;

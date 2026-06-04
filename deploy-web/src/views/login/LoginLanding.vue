@@ -38,7 +38,7 @@ onMounted(async () => {
   <div class="landing-content">
     <template v-if="errorMessage">
       <p class="error-text">{{ errorMessage }}</p>
-      <el-button type="primary" @click="startAuthorize">重试</el-button>
+      <el-button type="primary" @click="startAuthorize">使用 OIDC 登录</el-button>
     </template>
     <p v-else class="status-text">正在返回登录页，请稍候...</p>
   </div>
@@ -52,12 +52,13 @@ onMounted(async () => {
 
 .status-text {
   font-size: 16px;
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 .error-text {
   margin-bottom: 16px;
   font-size: 16px;
-  color: #f56c6c;
+  /* 错误语义走 EP 危险色，深色自适配 */
+  color: var(--el-color-danger);
 }
 </style>
