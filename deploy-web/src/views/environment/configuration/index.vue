@@ -52,6 +52,8 @@ provide('environmentStatus', environmentStatus)
   <section class="environment-configuration-section">
     <div class="content-container">
       <div class="content-wrapper">
+        <!-- 无筛选项，仅渲染标题行；标题取自 route.meta.title -->
+        <page-header />
         <el-tabs v-model="activeTabName" @tab-change="handleTabChange">
           <el-tab-pane name="nginx">
             <template #label>

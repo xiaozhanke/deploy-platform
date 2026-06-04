@@ -377,7 +377,7 @@ onActivated(async () => {
         <el-tooltip content="测试配置">
           <el-button
             class="action-button"
-            type="warning"
+            plain
             :icon="Odometer"
             :disabled="!sessionId"
             @click="handleNginxTest"
@@ -395,7 +395,7 @@ onActivated(async () => {
         <el-tooltip content="启动服务">
           <el-button
             class="action-button"
-            type="success"
+            plain
             :icon="SwitchButton"
             :disabled="!sessionId"
             @click="handleNginxStart"
@@ -413,7 +413,7 @@ onActivated(async () => {
         <el-tooltip content="刷新文件列表">
           <el-button
             class="action-button"
-            type="primary"
+            plain
             :icon="Refresh"
             :disabled="!sessionId"
             @click="fetchFileList"

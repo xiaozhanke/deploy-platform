@@ -378,7 +378,7 @@ onActivated(async () => {
         <el-tooltip content="启动服务">
           <el-button
             class="action-button"
-            type="success"
+            plain
             :icon="SwitchButton"
             :disabled="!sessionId"
             @click="handleRedisStart"
@@ -396,7 +396,7 @@ onActivated(async () => {
         <el-tooltip content="刷新文件列表">
           <el-button
             class="action-button"
-            type="primary"
+            plain
             :icon="Refresh"
             :disabled="!sessionId"
             @click="fetchFileList"
