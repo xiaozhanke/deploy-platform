@@ -135,7 +135,7 @@ onMounted(async () => {
 
     <!-- 卡片视图 -->
     <div v-if="viewMode === 'card'">
-      <el-empty v-if="serverList.length === 0" style="height: 600px" />
+      <empty-state v-if="serverList.length === 0" description="暂无服务器，点击右上角「添加服务器」新增" />
       <div class="app-card-grid">
         <server-card
           v-for="server in serverList"

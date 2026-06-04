@@ -162,7 +162,27 @@ const handleClosed = () => {
 
 <template>
   <app-drawer v-model="visible" :title="dialogTitle" width="md" @close="handleClosed">
-    <el-form ref="formRef" :model="form" :rules="formRules" label-width="140px" :disabled="type === 'view'">
+    <!-- 只读详情用 el-descriptions 键值展示，不复用编辑表单灰掉冒充详情；敏感字段（密码/私钥密码）不回显明文 -->
+    <el-descriptions v-if="type === 'view'" :column="2" border>
+      <el-descriptions-item label="服务器名称">{{ server?.name }}</el-descriptions-item>
+      <el-descriptions-item label="主机地址">{{ server?.host }}</el-descriptions-item>
+      <el-descriptions-item label="端口">{{ server?.port }}</el-descriptions-item>
+      <el-descriptions-item label="用户名">{{ server?.username }}</el-descriptions-item>
+      <el-descriptions-item label="认证方式">{{ SshAuthTypeEnum.getLabel(server?.authType) }}</el-descriptions-item>
+      <el-descriptions-item label="主目录">{{ server?.homeDir }}</el-descriptions-item>
+      <el-descriptions-item label="私钥路径">{{ server?.privateKeyPath }}</el-descriptions-item>
+      <el-descriptions-item label="密钥交换算法">{{ server?.kexAlgorithms }}</el-descriptions-item>
+      <el-descriptions-item label="加密算法">{{ server?.cipherAlgorithms }}</el-descriptions-item>
+      <el-descriptions-item label="MAC算法">{{ server?.macAlgorithms }}</el-descriptions-item>
+      <el-descriptions-item label="主机密钥算法">{{ server?.serverHostKeyAlgorithms }}</el-descriptions-item>
+      <el-descriptions-item label="连接超时时间(毫秒)">{{ server?.connectionTimeout }}</el-descriptions-item>
+      <el-descriptions-item label="启用压缩">{{ server?.compressionEnabled ? '是' : '否' }}</el-descriptions-item>
+      <el-descriptions-item label="严格主机密钥检查">{{ server?.strictHostKeyChecking ? '是' : '否' }}</el-descriptions-item>
+      <el-descriptions-item label="启用X11转发">{{ server?.x11ForwardingEnabled ? '是' : '否' }}</el-descriptions-item>
+      <el-descriptions-item label="启用端口转发">{{ server?.portForwardingEnabled ? '是' : '否' }}</el-descriptions-item>
+      <el-descriptions-item label="服务器描述" :span="2">{{ server?.description }}</el-descriptions-item>
+    </el-descriptions>
+    <el-form v-else ref="formRef" :model="form" :rules="formRules" label-width="140px">
       <el-collapse v-model="activeCollapseNames">
         <el-collapse-item title="基础信息" name="base">
           <el-form-item label="主机地址" prop="host">
