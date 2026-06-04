@@ -1,0 +1,23 @@
+@use 'sass:map';
+
+// Element Plus 对齐的响应式断点下沿（单一刻度，CSS 侧）。
+// 同一刻度的 JS 侧见 @/composables/useBreakpoint.ts；两层共用，避免各立标度。
+// 命名避开 Element Plus 自带的 $breakpoints，防止全局命名空间（@use ... as *）冲突。
+$app-breakpoints: (
+  'sm': 768px,
+  'md': 992px,
+  'lg': 1200px,
+  'xl': 1920px,
+);
+
+// 桌面优先下的 min-width 媒体查询：respond-to('lg') → @media (min-width: 1200px)。
+// 取下沿，与 file 页既有 el-col :sm/:md/:lg/:xl 同向。
+@mixin respond-to($breakpoint) {
+  @if map.has-key($app-breakpoints, $breakpoint) {
+    @media (min-width: map.get($app-breakpoints, $breakpoint)) {
+      @content;
+    }
+  } @else {
+    @error "未知断点 `#{$breakpoint}`，可用值：#{map.keys($app-breakpoints)}。";
+  }
+}

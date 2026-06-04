@@ -1,17 +1,69 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth'
+import { useWebSocketStore } from '@/stores/websocket'
 import { useRoute, useRouter } from 'vue-router'
-import { Key, SwitchButton, User } from '@element-plus/icons-vue'
+import { Fold, Key, Moon, RefreshRight, Sunny, SwitchButton, User, WarnTriangleFilled } from '@element-plus/icons-vue'
+import { useTheme } from '@/composables/useTheme'
+import { useBreakpoint } from '@/composables/useBreakpoint'
+import StatusDot from '@/components/status-dot/index.vue'
+import SidebarMenu from './SidebarMenu.vue'
 
 defineOptions({
   name: 'CommonLayout',
 })
 
-const isCollapse = ref(false)
+const route = useRoute()
+const router = useRouter()
 
+const { isDark, toggleTheme } = useTheme()
+
+// 传输健康指示：仅 reconnecting / offline 出指示，健康全静默；零 toast
+const websocketStore = useWebSocketStore()
+const handleReconnect = () => {
+  void websocketStore.reconnect()
+}
+
+// 侧栏三态（断点驱动）：≥1200 展开(200px) / 768–1199 图标条(64px) / <768 抽屉浮出
+const { isMobile, isTablet, isDesktop } = useBreakpoint()
+
+// 折叠态（仅非手机的固定侧栏用）：图标条(true,64px) vs 展开(false,200px)
+const isCollapse = ref(false)
 const toggleCollapse = () => {
   isCollapse.value = !isCollapse.value
 }
+
+// 手机抽屉式侧栏开关，由顶栏汉堡触发
+const mobileMenuVisible = ref(false)
+
+// 断点驱动折叠默认：进平板自动收成图标条、进宽桌面自动展开。
+// 取代原 `window.innerWidth < 1080` 的 resize 监听 —— matchMedia 跨阈值才触发，消除抖动。
+watch(
+  [isTablet, isDesktop],
+  () => {
+    if (isTablet.value) {
+      isCollapse.value = true
+    } else if (isDesktop.value) {
+      isCollapse.value = false
+    }
+  },
+  { immediate: true },
+)
+
+// 路由切换后自动收起手机抽屉，避免导航后浮层残留
+watch(
+  () => route.fullPath,
+  () => {
+    mobileMenuVisible.value = false
+  },
+)
+
+// 固定侧栏宽度（手机走抽屉、固定侧栏不占位 → 0）
+const asideWidth = computed(() => {
+  if (isMobile.value) {
+    return '0px'
+  }
+  return isCollapse.value ? '64px' : '200px'
+})
 
 const menuList = ref([
   {
@@ -100,9 +152,6 @@ const menuList = ref([
   // }
 ])
 
-const route = useRoute()
-const router = useRouter()
-
 const breadcrumbs = computed(() => {
   return route.matched.map((item) => ({
     path: item.path,
@@ -128,24 +177,6 @@ watch(
   { immediate: true },
 )
 
-// 监听窗口大小变化
-const watchWindowSize = () => {
-  const handleResize = () => {
-    isCollapse.value = window.innerWidth < 1080
-  }
-
-  // 初始化时检查一次窗口大小
-  handleResize()
-
-  // 监听窗口大小变化
-  window.addEventListener('resize', handleResize)
-
-  // 在组件销毁时移除监听器
-  onUnmounted(() => {
-    window.removeEventListener('resize', handleResize)
-  })
-}
-
 const authStore = useAuthStore()
 const handleLogout = async () => {
   await authStore.logout()
@@ -166,20 +197,43 @@ const handleUserCommand = async (command: string | number | object) => {
       break
   }
 }
-
-// 在组件挂载时调用
-onMounted(() => {
-  watchWindowSize()
-})
 </script>
 
 <template>
   <el-container class="common-layout">
     <el-header class="layout-header">
       <div class="header-left">
+        <el-button
+          v-if="isMobile"
+          class="hamburger"
+          text
+          :icon="Fold"
+          aria-label="打开菜单"
+          @click="mobileMenuVisible = true"
+        />
         <div class="title">运维部署平台</div>
       </div>
       <div class="header-right">
+        <el-tooltip
+          v-if="websocketStore.status === 'reconnecting'"
+          content="连接断开，正在重连…"
+          placement="bottom"
+        >
+          <status-dot class="ws-indicator" intent="warning" pulse />
+        </el-tooltip>
+        <el-tooltip v-else-if="websocketStore.status === 'offline'" content="实时连接已断开" placement="bottom">
+          <status-dot class="ws-indicator" intent="danger" />
+        </el-tooltip>
+        <el-tooltip :content="isDark ? '切换为浅色' : '切换为深色'" placement="bottom">
+          <el-button
+            class="theme-toggle"
+            text
+            circle
+            :icon="isDark ? Sunny : Moon"
+            :aria-label="isDark ? '切换为浅色' : '切换为深色'"
+            @click="toggleTheme"
+          />
+        </el-tooltip>
         <el-dropdown trigger="click" @command="handleUserCommand">
           <span class="user-dropdown-link">
             <el-avatar
@@ -203,28 +257,16 @@ onMounted(() => {
       </div>
     </el-header>
     <el-container>
-      <el-aside class="layout-aside" :width="isCollapse ? '64px' : '200px'">
+      <el-aside v-if="!isMobile" class="layout-aside" :width="asideWidth">
         <el-scrollbar>
-          <el-menu class="aside-menu" :collapse="isCollapse" router :default-active="route.path">
-            <template v-for="menu in menuList" :key="menu.index">
-              <el-sub-menu v-if="menu.children && menu.children.length > 0" :index="menu.index">
-                <template #title>
-                  <el-icon><component :is="menu.icon" /></el-icon>
-                  <span>{{ menu.title }}</span>
-                </template>
-                <el-menu-item v-for="child in menu.children" :key="child.index" :index="child.index">
-                  <el-icon><component :is="child.icon" /></el-icon>
-                  <span>{{ child.title }}</span>
-                </el-menu-item>
-              </el-sub-menu>
-              <el-menu-item v-else :index="menu.index">
-                <el-icon><component :is="menu.icon" /></el-icon>
-                <template #title>{{ menu.title }}</template>
-              </el-menu-item>
-            </template>
-          </el-menu>
+          <sidebar-menu
+            class="aside-menu"
+            :menu-list="menuList"
+            :collapse="isCollapse"
+            :active-index="route.path"
+          />
         </el-scrollbar>
-        <div class="toggle-collapse-button" :style="{ width: isCollapse ? '64px' : '200px' }" @click="toggleCollapse">
+        <div class="toggle-collapse-button" :style="{ width: asideWidth }" @click="toggleCollapse">
           <el-icon>
             <DArrowLeft v-show="!isCollapse" />
             <DArrowRight v-show="isCollapse" />
@@ -234,13 +276,21 @@ onMounted(() => {
           </el-collapse-transition>
         </div>
       </el-aside>
-      <el-main class="layout-main" :style="{ paddingLeft: isCollapse ? '64px' : '200px' }">
-        <el-breadcrumb class="layout-breadcrumb" separator="/" :style="{ left: isCollapse ? '64px' : '200px' }">
+      <el-main class="layout-main" :style="{ paddingLeft: asideWidth }">
+        <el-breadcrumb class="layout-breadcrumb" separator="/" :style="{ left: asideWidth }">
           <el-breadcrumb-item v-for="breadcrumb in breadcrumbs" :key="breadcrumb.path" :to="breadcrumb.path">
             {{ breadcrumb.name }}
           </el-breadcrumb-item>
         </el-breadcrumb>
         <div class="main-wrapper">
+          <!-- offline 非阻塞细横幅：常驻直到恢复；零 toast -->
+          <transition name="ws-banner">
+            <div v-if="websocketStore.status === 'offline'" class="ws-offline-banner" role="status">
+              <el-icon class="ws-offline-banner__icon"><WarnTriangleFilled /></el-icon>
+              <span class="ws-offline-banner__text">实时连接已断开，数据可能不是最新</span>
+              <el-button link type="primary" :icon="RefreshRight" @click="handleReconnect">重连</el-button>
+            </div>
+          </transition>
           <router-view v-slot="{ Component }">
             <keep-alive :include="cachedViews">
               <component :is="Component" :key="route.fullPath" class="main-container" />
@@ -249,6 +299,16 @@ onMounted(() => {
         </div>
       </el-main>
     </el-container>
+    <!-- 手机（<768）抽屉式侧栏：汉堡触发，菜单常展开；导航后自动收起 -->
+    <el-drawer
+      v-model="mobileMenuVisible"
+      class="mobile-menu-drawer"
+      direction="ltr"
+      :with-header="false"
+      size="220px"
+    >
+      <sidebar-menu :menu-list="menuList" :collapse="false" :active-index="route.path" />
+    </el-drawer>
   </el-container>
 </template>
 
@@ -258,8 +318,9 @@ onMounted(() => {
   min-height: 100vh;
   .layout-header {
     height: var(--system-header-height);
-    background-color: #324057;
-    color: #ffffff;
+    background-color: var(--app-surface);
+    color: var(--el-text-color-primary);
+    border-bottom: 1px solid var(--app-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -268,21 +329,31 @@ onMounted(() => {
     right: 0;
     left: 0;
     z-index: 1000;
+    padding: 0 var(--layout-common-padding);
     .header-left {
       display: flex;
       align-items: center;
+      .hamburger {
+        margin-right: var(--app-space-2);
+        font-size: 20px;
+      }
       .title {
-        font-size: var(--el-font-size-extra-large);
-        font-weight: bolder;
+        // 手机基线略小，给汉堡留位；≥768 恢复大标题
+        font-size: var(--el-font-size-large);
+        font-weight: 600;
+        @include respond-to('sm') {
+          font-size: var(--el-font-size-extra-large);
+        }
       }
     }
     .header-right {
       display: flex;
       align-items: center;
+      gap: var(--app-space-3);
 
       .user-dropdown-link {
         cursor: pointer;
-        color: #ffffff;
+        color: var(--el-text-color-primary);
         display: flex;
         align-items: center;
         font-size: var(--el-font-size-base);
@@ -294,16 +365,17 @@ onMounted(() => {
     }
   }
   .layout-aside {
-    background-color: #ffffff;
+    background-color: var(--app-surface);
     position: fixed;
-    top: 60px;
+    top: var(--system-header-height);
     left: 0;
     bottom: 0;
-    border-right: var(--el-border);
+    border-right: 1px solid var(--app-border);
     transition: width var(--el-transition-duration);
+    // 菜单视觉（pill / hover / 选中）收进 SidebarMenu.vue；这里只留容器间距：
+    // 底部留白避开固定的「收起侧边栏」按钮
     .aside-menu {
       margin-bottom: 48px;
-      border-right: none;
     }
     .toggle-collapse-button {
       position: fixed;
@@ -312,13 +384,14 @@ onMounted(() => {
       align-items: center;
       padding: 0 var(--el-menu-base-level-padding);
       cursor: pointer;
-      transition: width 0.2s;
       width: 200px;
       height: 48px;
-      color: #333238;
+      color: var(--el-text-color-regular);
+      background-color: var(--app-surface);
+      border-top: 1px solid var(--app-border);
       transition: width var(--el-transition-duration);
       &:hover {
-        background-color: #dcdcde;
+        background-color: var(--el-fill-color-light);
       }
       .collapse-text {
         margin-left: 0.5rem;
@@ -332,8 +405,8 @@ onMounted(() => {
     .layout-breadcrumb {
       padding: var(--layout-common-padding);
       font-size: var(--el-font-size-medium);
-      background-color: var(--el-fill-color-light);
-      border-bottom: var(--el-border);
+      background-color: var(--app-surface);
+      border-bottom: 1px solid var(--app-border);
       position: fixed;
       top: var(--system-header-height);
       right: 0;
@@ -342,11 +415,51 @@ onMounted(() => {
     }
     .main-wrapper {
       position: relative;
-      background-color: white;
+      background-color: var(--app-canvas);
+      // offline 非阻塞细横幅：danger 语义，常驻直到恢复
+      .ws-offline-banner {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        gap: var(--app-space-2);
+        padding: var(--app-space-2) var(--layout-common-padding);
+        background-color: var(--el-color-danger-light-9);
+        color: var(--el-color-danger);
+        border-bottom: 1px solid var(--el-color-danger-light-7);
+        font-size: var(--el-font-size-base);
+        &__icon {
+          font-size: 16px;
+        }
+        &__text {
+          flex: 1;
+        }
+      }
       .main-container {
         padding: var(--layout-common-padding);
       }
     }
   }
+}
+
+// offline 横幅出现 / 消失的轻过渡
+.ws-banner-enter-active,
+.ws-banner-leave-active {
+  transition:
+    opacity var(--app-transition) var(--app-ease),
+    transform var(--app-transition) var(--app-ease);
+}
+.ws-banner-enter-from,
+.ws-banner-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+</style>
+
+<style lang="scss">
+// el-drawer 经 Teleport 渲染到 body，scoped 触达不到，用 class 精确命中本抽屉的 body 去内边距
+.mobile-menu-drawer .el-drawer__body {
+  padding: 0;
 }
 </style>
