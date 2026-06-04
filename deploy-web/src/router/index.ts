@@ -1,3 +1,4 @@
+import { h } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import NProgress from '@/utils/nprogress'
 import { useAuthStore } from '@/stores/auth'
@@ -107,24 +108,6 @@ const router = createRouter({
           },
         },
         {
-          path: 'source-code',
-          name: 'SourceCodeIndex',
-          component: () => import('@/views/source-code/index.vue'),
-          meta: {
-            title: '代码管理',
-            keepAlive: true,
-          },
-        },
-        {
-          path: 'log',
-          name: 'LogIndex',
-          component: () => import('@/views/log/index.vue'),
-          meta: {
-            title: '日志管理',
-            keepAlive: true,
-          },
-        },
-        {
           path: 'user',
           redirect: '/user/profile',
           component: () => import('@/views/user/index.vue'),
@@ -151,29 +134,13 @@ const router = createRouter({
           ],
         },
         {
-          path: 'setting',
-          redirect: '/setting/general',
+          // 404 壳内子路由：未知路径在外壳内渲染错误态，用户可直接走开
+          path: ':pathMatch(.*)*',
+          name: 'NotFound',
+          component: () => import('@/views/error/NotFound.vue'),
           meta: {
-            title: '设置',
+            title: '页面不存在',
           },
-          children: [
-            {
-              path: 'general',
-              name: 'GeneralSetting',
-              component: () => import('@/views/setting/GeneralSetting.vue'),
-              meta: {
-                title: '通用设置',
-              },
-            },
-            {
-              path: 'notification',
-              name: 'NotificationSetting',
-              component: () => import('@/views/setting/NotificationSetting.vue'),
-              meta: {
-                title: '通知设置',
-              },
-            },
-          ],
         },
       ],
     },
@@ -201,7 +168,6 @@ const router = createRouter({
         },
       ],
     },
-    { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })
 
@@ -241,8 +207,35 @@ router.afterEach(() => {
   NProgress.done()
 })
 
-router.onError(() => {
+router.onError((error) => {
   NProgress.done()
+  // chunk 懒加载失败（发版后旧 chunk 已失效 / 网络抖动）：持久提示、由用户手动刷新，
+  // 不静默 reload —— 以免吞掉配置编辑器 / 部署向导 / 半填表单里未保存的编辑
+  const message = error instanceof Error ? error.message : String(error)
+  const isChunkLoadError =
+    /Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed/i.test(
+      message,
+    )
+  if (isChunkLoadError) {
+    ElNotification({
+      title: '页面资源已更新',
+      message: h('div', [
+        h('span', '检测到新版本，请刷新页面以加载最新资源。'),
+        h('br'),
+        h(
+          'a',
+          {
+            style: 'color: var(--el-color-primary); cursor: pointer;',
+            onClick: () => window.location.reload(),
+          },
+          '立即刷新',
+        ),
+      ]),
+      type: 'warning',
+      duration: 0,
+      showClose: true,
+    })
+  }
 })
 
 export default router
