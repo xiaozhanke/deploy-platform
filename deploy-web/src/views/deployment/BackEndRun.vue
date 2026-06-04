@@ -14,9 +14,8 @@ const props = defineProps<{
   fileRecord: FileRecord
 }>()
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-}>()
+// 可见性由父级 v-model 显式接管：AppDrawer 底层非单根，必须 defineModel 才能开合
+const visible = defineModel<boolean>()
 
 const sessionId = inject('sessionId') as Ref<string>
 const currentServer = inject('currentServer') as Ref<ServerRecord>
@@ -355,7 +354,7 @@ const handleNextStep = async () => {
 
 const handleClose = () => {
   uploadFormRef.value?.resetFields()
-  emit('update:modelValue', false)
+  visible.value = false
 }
 
 onMounted(async () => {
@@ -364,7 +363,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <el-dialog title="部署后端应用" width="1000px" draggable :close-on-click-modal="false" :before-close="handleClose">
+  <app-drawer v-model="visible" title="部署后端应用" width="lg">
     <el-steps :active="activeStep" align-center>
       <el-step v-for="(step, index) in steps" :key="index" :title="step.title" :status="step.status" />
     </el-steps>
@@ -458,6 +457,9 @@ onMounted(async () => {
         </template>
       </el-result>
     </section>
+    <!-- 命令式查看/编辑器与日志浮层随抽屉迁入主体末尾，行为不变 -->
+    <code-editor ref="codeEditorRef" @close="fetchFileList" />
+    <log-view v-if="logVisible" v-model="logVisible" :server-id="currentServer.id" :log-path="logPath" />
     <template #footer>
       <div class="actions-container">
         <el-button :disabled="activeStep === 0 || stepLoading" @click="handlePrevStep">上一步</el-button>
@@ -466,9 +468,7 @@ onMounted(async () => {
         >
       </div>
     </template>
-    <code-editor ref="codeEditorRef" @close="fetchFileList" />
-    <log-view v-if="logVisible" v-model="logVisible" :server-id="currentServer.id" :log-path="logPath" />
-  </el-dialog>
+  </app-drawer>
 </template>
 
 <style lang="scss" scoped>
@@ -477,7 +477,7 @@ onMounted(async () => {
 }
 .actions-container {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
 }
 .upload-config-step {
