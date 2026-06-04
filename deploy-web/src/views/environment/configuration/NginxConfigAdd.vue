@@ -5,9 +5,11 @@ import { generateRandomNumber } from '@/utils/common'
 import type { FormRules, FormInstance } from 'element-plus'
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
   (e: 'submit', fileName: string, fileContent: string, edit: boolean): void
 }>()
+
+// 抽屉可见性由父级 v-model 显式接管：AppDrawer 非单根，属性穿透无法触达内部 el-drawer，须 defineModel 才能开合
+const visible = defineModel<boolean>()
 
 const formRef = ref<FormInstance>()
 const form = reactive<NginxConfigParams>({
@@ -59,18 +61,12 @@ const handleSubmit = async () => {
 
 const handleClose = () => {
   formRef.value?.resetFields()
-  emit('update:modelValue', false)
+  visible.value = false
 }
 </script>
 
 <template>
-  <el-dialog
-    title="新增 Nginx 配置文件"
-    width="600px"
-    draggable
-    :close-on-click-modal="false"
-    :before-close="handleClose"
-  >
+  <app-drawer v-model="visible" title="新增 Nginx 配置文件" width="md">
     <el-form ref="formRef" :model="form" :rules="formRules" label-width="140px">
       <el-form-item label="配置名" prop="configName">
         <el-input v-model="form.configName" placeholder="配置名" clearable />
@@ -95,5 +91,5 @@ const handleClose = () => {
       <el-button @click="handleClose">取消</el-button>
       <el-button type="primary" @click="handleSubmit">确定</el-button>
     </template>
-  </el-dialog>
+  </app-drawer>
 </template>
