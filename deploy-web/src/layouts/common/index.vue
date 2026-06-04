@@ -152,12 +152,19 @@ const menuList = ref([
   // }
 ])
 
+// 面包屑只取根布局壳（path '/'）以下的有意义层级，丢掉壳本身（它只是布局容器，重定向到 dashboard）
 const breadcrumbs = computed(() => {
-  return route.matched.map((item) => ({
-    path: item.path,
-    name: item.meta.title || item.name,
-  }))
+  return route.matched
+    .filter((item) => item.path !== '/')
+    .map((item) => ({
+      path: item.path,
+      name: item.meta.title || item.name,
+    }))
 })
+
+// 仅嵌套 >1 层才显示面包屑：顶层页（/server、/dashboard）只剩 1 段 → 隐藏，
+// 消除「面包屑 + 页头标题」重复；多层页（/user/profile、/environment/configuration）仍显示
+const hasNestedBreadcrumb = computed(() => breadcrumbs.value.length > 1)
 
 // 缓存视图管理
 const cachedViews = ref<string[]>([])
@@ -277,7 +284,7 @@ const handleUserCommand = async (command: string | number | object) => {
         </div>
       </el-aside>
       <el-main class="layout-main" :style="{ paddingLeft: asideWidth }">
-        <el-breadcrumb class="layout-breadcrumb" separator="/" :style="{ left: asideWidth }">
+        <el-breadcrumb v-if="hasNestedBreadcrumb" class="layout-breadcrumb" separator="/" :style="{ left: asideWidth }">
           <el-breadcrumb-item v-for="breadcrumb in breadcrumbs" :key="breadcrumb.path" :to="breadcrumb.path">
             {{ breadcrumb.name }}
           </el-breadcrumb-item>

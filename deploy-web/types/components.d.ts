@@ -68,6 +68,7 @@ declare module 'vue' {
     ElUpload: typeof import('element-plus/es')['ElUpload']
     EmptyState: typeof import('./../src/components/empty-state/index.vue')['default']
     ErrorState: typeof import('./../src/components/error-state/index.vue')['default']
+    PageHeader: typeof import('./../src/components/page-header/index.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SoftLabel: typeof import('./../src/components/soft-label/index.vue')['default']

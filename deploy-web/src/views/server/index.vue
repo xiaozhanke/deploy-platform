@@ -109,26 +109,29 @@ onMounted(async () => {
 
 <template>
   <section class="server-index-section">
-    <div class="page-header-container">
-      <div class="action-wrapper">
+    <!-- 标题取 route.meta.title（服务器管理），无筛选 → 只出标题行 -->
+    <page-header>
+      <template #actions>
+        <!-- 页面主操作：唯一实色 primary -->
         <el-button type="primary" @click="handleAdd">
           <el-icon><Plus /></el-icon>
           添加服务器
         </el-button>
-        <el-button type="primary" @click="loadServerList">
+        <!-- 次要动作：中性按钮，避免与主操作争抢视觉层级 -->
+        <el-button @click="loadServerList">
           <el-icon><Refresh /></el-icon>
           刷新
         </el-button>
-      </div>
-      <el-radio-group v-model="viewMode">
-        <el-radio-button value="card">
-          <el-icon><Grid /></el-icon>
-        </el-radio-button>
-        <el-radio-button value="list">
-          <el-icon><List /></el-icon>
-        </el-radio-button>
-      </el-radio-group>
-    </div>
+        <el-radio-group v-model="viewMode">
+          <el-radio-button value="card">
+            <el-icon><Grid /></el-icon>
+          </el-radio-button>
+          <el-radio-button value="list">
+            <el-icon><List /></el-icon>
+          </el-radio-button>
+        </el-radio-group>
+      </template>
+    </page-header>
 
     <!-- 卡片视图 -->
     <div v-if="viewMode === 'card'">
@@ -195,20 +198,6 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: var(--layout-common-gap);
-  .page-header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    .action-wrapper {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-
-      .el-button + .el-button {
-        margin-left: 0;
-      }
-    }
-  }
 
   .server-grid {
     display: grid;
