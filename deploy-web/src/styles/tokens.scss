@@ -42,6 +42,36 @@
     'HarmonyOS Sans SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
   --app-font-mono:
     ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, 'Liberation Mono', monospace;
+
+  /**
+   * 终端（xterm）专用配色。终端只读控制台输出、恒暗——长时间看日志/SSH
+   * 翻白底刺眼，故这组令牌只放 :root、html.dark 下不重映射（两主题同值）。
+   * xterm 主题是构造时传入的 JS 对象、不吃 CSS 变量，组件侧用
+   * getComputedStyle 读这组令牌填 theme，避免在组件里写死颜色。
+   * 调色板：近黑面层 + 中性浅灰前景；选区/光标用主色染（干掉旧 Vue 绿）。
+   */
+  --term-bg: #0d1117;
+  --term-fg: #c9d1d9;
+  --term-cursor: var(--el-color-primary);
+  --term-selection: var(--el-color-primary);
+
+  /* ANSI 16 色（标准 8 色 + 亮色 8 色），与近黑面层搭配的中性偏冷一档 */
+  --term-ansi-black: #484f58;
+  --term-ansi-red: #ff7b72;
+  --term-ansi-green: #3fb950;
+  --term-ansi-yellow: #d29922;
+  --term-ansi-blue: #58a6ff;
+  --term-ansi-magenta: #bc8cff;
+  --term-ansi-cyan: #39c5cf;
+  --term-ansi-white: #b1bac4;
+  --term-ansi-bright-black: #6e7681;
+  --term-ansi-bright-red: #ffa198;
+  --term-ansi-bright-green: #56d364;
+  --term-ansi-bright-yellow: #e3b341;
+  --term-ansi-bright-blue: #79c0ff;
+  --term-ansi-bright-magenta: #d2a8ff;
+  --term-ansi-bright-cyan: #56d4dd;
+  --term-ansi-bright-white: #f0f6fc;
 }
 
 /**

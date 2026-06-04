@@ -15,13 +15,36 @@ let fitAddon: FitAddon | null = null
 // 渲染终端显示
 const renderTerminal = () => {
   if (terminalRef.value) {
+    // 终端恒暗、两主题同值，配色从 :root 的 --term-* 令牌读取。
+    // xterm 主题是构造时的 JS 对象、不吃 CSS 变量，故构造时读一次令牌即可。
+    // getPropertyValue 返回值常带前导空格，填进 theme 前必须 trim。
+    const styles = getComputedStyle(document.documentElement)
+    const term = (name: string) => styles.getPropertyValue(name).trim()
     terminal = new Terminal({
       // 禁用输入
       disableStdin: false,
       // 显示主题颜色
       theme: {
-        background: 'black',
-        foreground: '#42b883',
+        background: term('--term-bg'),
+        foreground: term('--term-fg'),
+        cursor: term('--term-cursor'),
+        selectionBackground: term('--term-selection'),
+        black: term('--term-ansi-black'),
+        red: term('--term-ansi-red'),
+        green: term('--term-ansi-green'),
+        yellow: term('--term-ansi-yellow'),
+        blue: term('--term-ansi-blue'),
+        magenta: term('--term-ansi-magenta'),
+        cyan: term('--term-ansi-cyan'),
+        white: term('--term-ansi-white'),
+        brightBlack: term('--term-ansi-bright-black'),
+        brightRed: term('--term-ansi-bright-red'),
+        brightGreen: term('--term-ansi-bright-green'),
+        brightYellow: term('--term-ansi-bright-yellow'),
+        brightBlue: term('--term-ansi-bright-blue'),
+        brightMagenta: term('--term-ansi-bright-magenta'),
+        brightCyan: term('--term-ansi-bright-cyan'),
+        brightWhite: term('--term-ansi-bright-white'),
       },
     })
     // 加载终端插件
@@ -84,7 +107,7 @@ defineExpose({
 
 <style lang="scss" scoped>
 .terminal-container {
-  background-color: black;
+  background-color: var(--term-bg);
   height: 600px;
   border-radius: var(--layout-common-border-radius);
   padding: 10px;
