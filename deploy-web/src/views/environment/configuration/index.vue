@@ -49,11 +49,9 @@ provide('environmentStatus', environmentStatus)
 </script>
 
 <template>
-  <section class="environment-configuration-section">
+  <section class="environment-configuration-section common-page-container">
     <div class="content-container">
       <div class="content-wrapper">
-        <!-- 无筛选项，仅渲染标题行；标题取自 route.meta.title -->
-        <page-header />
         <el-tabs v-model="activeTabName" @tab-change="handleTabChange">
           <el-tab-pane name="nginx">
             <template #label>
@@ -78,7 +76,9 @@ provide('environmentStatus', environmentStatus)
       </div>
     </div>
 
-    <server-sidebar @connect="handleConnect" />
+    <aside class="server-panel">
+      <server-sidebar @connect="handleConnect" />
+    </aside>
   </section>
 </template>
 
@@ -86,14 +86,52 @@ provide('environmentStatus', environmentStatus)
 .environment-configuration-section {
   position: relative;
   display: flex;
-  padding-right: calc(var(--layout-right-sidebar-width) + var(--layout-common-padding)) !important;
+  flex-direction: row;
+  gap: var(--layout-common-gap);
+  min-height: 0;
+
+  // 选择服务器面板：右侧定宽、文档流内吸顶（与部署发布一致）
+  .server-panel {
+    flex: 0 0 var(--layout-right-sidebar-width);
+    align-self: flex-start;
+    position: sticky;
+    top: var(--layout-common-padding);
+  }
 
   .content-container {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+
     .content-wrapper {
       display: flex;
       flex-direction: column;
+      flex: 1;
       gap: var(--layout-common-gap);
+      min-height: 0;
+
+      :deep(.el-tabs) {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      :deep(.el-tabs__content) {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      :deep(.el-tab-pane) {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
 
       .tabs-label {
         display: flex;

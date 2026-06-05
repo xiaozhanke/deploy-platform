@@ -198,15 +198,15 @@ onBeforeUnmount(async () => {
 
 <style lang="scss" scoped>
 .server-sidebar {
-  width: var(--layout-right-sidebar-width);
-  height: calc(100vh - var(--system-header-height));
-  border-left: var(--el-border);
+  // 文档流内的吸顶卡片（定位 / 吸顶由各页 .server-panel 容器负责）：
+  // 宽度铺满容器、高度随内容、以视口为上限并内部独立滚动，避免长环境列表撑破页面。
+  // 不再固定右栏、也不带左描边线（卡片靠面层底色 + 圆角与画布区分）
+  width: 100%;
+  max-height: calc(100vh - var(--system-header-height) - 2 * var(--layout-common-padding));
+  overflow-y: auto;
   padding: 0 var(--layout-common-padding);
   background-color: var(--app-surface);
-  position: fixed;
-  top: var(--system-header-height);
-  right: 0;
-  z-index: 12;
+  border-radius: var(--layout-common-border-radius);
   .block {
     &:not(:last-child) {
       border-bottom: var(--el-border);

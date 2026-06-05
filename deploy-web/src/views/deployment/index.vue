@@ -110,28 +110,14 @@ onMounted(async () => {
   <section class="deployment-index-section">
     <div class="content-container">
       <div class="content-wrapper">
-        <!-- 页头：标题取 route.meta.title（应用部署），筛选行放搜索框 + 中性刷新；本页部署动作在表格行内，页头无实色主操作 -->
-        <page-header>
-          <template #filter>
-            <div class="deployment-filter">
-              <el-input
-                v-model="fileFilter"
-                :prefix-icon="Search"
-                placeholder="搜索"
-                clearable
-              />
-              <!-- 刷新为中性次操作（plain，非实色），loading 时图标旋转 -->
-              <el-tooltip content="刷新" placement="top">
-                <el-button
-                  plain
-                  :icon="RefreshRight"
-                  :loading="fileLoading"
-                  @click="handleQuery"
-                />
-              </el-tooltip>
-            </div>
-          </template>
-        </page-header>
+        <!-- 筛选行：搜索框 + 中性刷新；本页部署动作在表格行内，筛选区无实色主操作 -->
+        <div class="deployment-filter">
+          <el-input v-model="fileFilter" :prefix-icon="Search" placeholder="搜索" clearable />
+          <!-- 刷新为中性次操作（plain，非实色），loading 时图标旋转 -->
+          <el-tooltip content="刷新" placement="top">
+            <el-button plain :icon="RefreshRight" :loading="fileLoading" @click="handleQuery" />
+          </el-tooltip>
+        </div>
 
         <!-- 前后端切换：页内内容切换，保留在页头下方 -->
         <el-tabs v-model="activeTabName" @tab-change="handleTabChange">
@@ -194,7 +180,7 @@ onMounted(async () => {
                 <span>{{ $formatFileSize(row.fileSize) }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="updateTime" label="更新时间" width="172px" sortable />
+            <el-table-column prop="updateTime" label="更新时间" width="174px" sortable />
             <el-table-column label="操作" width="76px" fixed="right">
               <template #default="{ row }">
                 <!-- 行内操作纯文字链（克制、不带图标）；tooltip 与点击行为保持不变 -->
@@ -207,8 +193,7 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-    <!-- 部署页专属容器：把复用组件 ServerSidebar 在本页表现为页面内面板 -->
-    <!-- （正常文档流、不再固定浮在右侧），样式由本页 :deep(.server-sidebar) 覆盖 -->
+    <!-- 选择服务器面板：ServerSidebar 放进右侧文档流、吸顶常驻 -->
     <aside class="server-panel">
       <server-sidebar />
     </aside>
@@ -242,7 +227,7 @@ onMounted(async () => {
         }
       }
 
-      // 页头筛选行：搜索框 + 中性刷新按钮横向排布
+      // 筛选行：搜索框 + 中性刷新按钮横向排布
       .deployment-filter {
         display: flex;
         align-items: center;
@@ -262,31 +247,13 @@ onMounted(async () => {
     }
   }
 
-  // 复用组件 ServerSidebar 默认是「固定右栏浮层」（position: fixed + top/right/z-index）。
-  // 本页只需在文档流内把它当面板用，故在此用页面级样式覆盖其定位，不改组件本身，
-  // 也不影响 environment 两页对同一组件的固定右栏复用。
+  // ServerSidebar 现默认即「文档流内吸顶卡片」（card 样式在组件内），本页只负责把它放右侧、定宽并吸顶
   .server-panel {
     flex: 0 0 var(--layout-right-sidebar-width);
     // 跟随文件列表滚动时面板常驻可见，吸顶定位在页头内边距之下
     align-self: flex-start;
     position: sticky;
     top: var(--layout-common-padding);
-
-    :deep(.server-sidebar) {
-      // 解除固定定位，回到正常文档流（宽度由本面板容器决定，铺满即可）
-      position: static;
-      top: auto;
-      right: auto;
-      z-index: auto;
-      width: 100%;
-      // 面板高度随内容自适应，并以视口为上限、内部独立滚动，避免长环境列表撑破页面
-      height: auto;
-      max-height: calc(
-        100vh - var(--system-header-height) - 2 * var(--layout-common-padding)
-      );
-      overflow-y: auto;
-      border-radius: var(--layout-common-border-radius);
-    }
   }
 }
 </style>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { View, Plus, Edit, EditPen, Delete, Refresh, Odometer, Loading, SwitchButton, MagicStick } from '@element-plus/icons-vue'
+import { Plus, EditPen, Refresh, Odometer, Loading, SwitchButton, MagicStick } from '@element-plus/icons-vue'
 import { sshExecCommand, sshWriteFile } from '@/api/api'
 import CodeEditor from '@/components/code-editor/index.vue'
 import type { File, NginxConfigParams } from '@/types/environment'
@@ -424,7 +424,7 @@ onActivated(async () => {
 
     <div class="config-path">
       <span class="config-path-label">配置目录:&nbsp;</span>
-      <code v-if="configDir">{{ configDir }}</code>
+      <code v-if="configDir" :title="configDir">{{ configDir }}</code>
       <span v-else class="config-path-empty">（未探测）</span>
       <div class="config-path-actions">
         <el-tooltip content="重新探测">
@@ -448,8 +448,12 @@ onActivated(async () => {
     </div>
 
     <div class="file-list-container">
-      <el-empty v-if="fileList.length === 0" :description="sessionId ? '当前目录为空' : '未选择服务器'" />
-      <el-table v-else :data="fileList" highlight-current-row show-overflow-tooltip>
+      <el-empty
+        v-if="fileList.length === 0"
+        class="file-list-empty"
+        :description="sessionId ? '当前目录为空' : '未选择服务器'"
+      />
+      <el-table v-else height="100%" :data="fileList" highlight-current-row show-overflow-tooltip>
         <el-table-column prop="name" label="文件名" min-width="130px" />
         <el-table-column prop="size" label="文件大小" min-width="104px">
           <template #default="{ row }">
@@ -463,15 +467,11 @@ onActivated(async () => {
         </el-table-column>
         <el-table-column label="操作" width="366px" fixed="right" header-align="center" class-name="file-actions">
           <template #default="scope">
-            <el-button type="primary" link :icon="View" @click="handleFileView(scope.row.path)">查看</el-button>
-            <el-button type="primary" link :icon="Edit" @click="handleFileEditSimple(scope.row.path)"
-              >简化编辑</el-button
-            >
-            <el-button type="primary" link :icon="Edit" @click="handleFileEditManual(scope.row.path)"
-              >手动编辑</el-button
-            >
-            <el-button type="primary" link :icon="EditPen" @click="handleFileRename(scope.row.name)">重命名</el-button>
-            <el-button type="primary" link :icon="Delete" @click="handleFileDelete(scope.row.path)">删除</el-button>
+            <el-button type="primary" link @click="handleFileView(scope.row.path)">查看</el-button>
+            <el-button link @click="handleFileEditSimple(scope.row.path)">简化编辑</el-button>
+            <el-button link @click="handleFileEditManual(scope.row.path)">手动编辑</el-button>
+            <el-button link @click="handleFileRename(scope.row.name)">重命名</el-button>
+            <el-button type="danger" link @click="handleFileDelete(scope.row.path)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -494,7 +494,9 @@ onActivated(async () => {
 .config-section {
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: var(--layout-common-gap);
+  min-height: 0;
   padding: var(--layout-common-padding);
   background-color: var(--el-fill-color);
   border-radius: var(--layout-common-border-radius);
@@ -521,15 +523,30 @@ onActivated(async () => {
     display: flex;
     align-items: center;
     gap: 8px;
+    height: 32px;
     font-size: 14px;
-    background-color: var(--el-bg-color);
-    padding: 4px 8px;
-    border-radius: var(--el-border-radius-base);
-    border: var(--el-border);
+    background-color: var(--app-surface);
+    padding: 0 var(--app-space-2);
+    border-radius: var(--app-radius-control);
+    border: 1px solid var(--app-border);
     .config-path-label {
+      flex: 0 0 auto;
       user-select: none;
     }
+    code {
+      flex: 1;
+      min-width: 0;
+      display: block;
+      overflow: hidden;
+      color: var(--el-text-color-primary);
+      font-family: var(--app-font-mono);
+      line-height: 20px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .config-path-empty {
+      flex: 1;
+      min-width: 0;
       color: var(--el-text-color-secondary);
     }
     .config-path-actions {
@@ -537,16 +554,40 @@ onActivated(async () => {
       display: flex;
       gap: 4px;
       .config-path-action {
-        padding: 4px 8px;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+      }
+      .config-path-action + .config-path-action {
+        margin-left: 0;
       }
     }
   }
 
   .file-list-container {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
     background-color: var(--el-bg-color);
     padding: var(--layout-common-padding);
     border-radius: var(--el-border-radius-base);
     border: var(--el-border);
+
+    .file-list-empty {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    :deep(.el-table) {
+      flex: 1;
+      min-height: 0;
+    }
+
     .file-actions {
       .el-button + .el-button {
         margin-left: 0;

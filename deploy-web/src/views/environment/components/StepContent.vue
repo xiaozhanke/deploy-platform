@@ -32,19 +32,21 @@ const sftpProcessing = computed(() => {
       <div class="file-path">
         <div class="path-item">
           <span class="path-label">本地文件路径:</span>
-          <span class="path-value">{{ localPath }}</span>
+          <span class="path-value" :title="localPath || ''">{{ localPath }}</span>
         </div>
         <div class="path-item">
           <span class="path-label">远程目录路径:</span>
-          <span class="path-value">{{ remoteDir }}</span>
+          <span class="path-value" :title="remoteDir || ''">{{ remoteDir }}</span>
         </div>
       </div>
       <div class="progress-container">
         <p class="progress-label">传输进度:</p>
         <el-progress
           class="progress-bar"
+          :class="{ 'progress-bar--completed': !sftpProcessing }"
           :percentage="percentage"
-          :stroke-width="12"
+          :stroke-width="14"
+          :show-text="false"
           striped
           :striped-flow="sftpProcessing"
           :duration="10"
@@ -58,21 +60,23 @@ const sftpProcessing = computed(() => {
       <div class="file-path">
         <div class="path-item">
           <span class="path-label">远程文件路径:</span>
-          <span class="path-value">{{ remotePath }}</span>
+          <span class="path-value" :title="remotePath || ''">{{ remotePath }}</span>
         </div>
         <div class="path-item">
           <span class="path-label">本地目录路径:</span>
-          <span class="path-value">{{ localDir }}</span>
+          <span class="path-value" :title="localDir || ''">{{ localDir }}</span>
         </div>
       </div>
       <div class="progress-container">
         <p class="progress-label">传输进度:</p>
         <el-progress
           class="progress-bar"
+          :class="{ 'progress-bar--completed': !sftpProcessing }"
           :percentage="percentage"
-          :stroke-width="12"
+          :stroke-width="14"
+          :show-text="false"
           striped
-          striped-flow
+          :striped-flow="sftpProcessing"
           :duration="10"
         />
       </div>
@@ -82,6 +86,8 @@ const sftpProcessing = computed(() => {
 
 <style lang="scss" scoped>
 .step-content {
+  --step-content-label-width: 112px;
+
   padding: 10px;
   background-color: var(--el-fill-color);
   border-radius: var(--layout-common-border-radius);
@@ -114,32 +120,59 @@ const sftpProcessing = computed(() => {
     margin: 10px 0;
     .path-item {
       display: flex;
+      align-items: center;
+      gap: var(--app-space-4);
       margin-bottom: 8px;
       .path-label {
+        flex: 0 0 var(--step-content-label-width);
         font-weight: bold;
         color: var(--el-text-color-regular);
-        margin-right: 1rem;
       }
       .path-value {
         flex: 1;
-        word-break: break-all;
-        background: var(--el-bg-color);
-        padding: 4px 8px;
-        border-radius: var(--el-border-radius-base);
-        border: var(--el-border);
+        min-width: 0;
+        height: 32px;
+        display: block;
+        overflow: hidden;
+        border: 1px solid var(--app-border);
+        border-radius: var(--app-radius-control);
+        background: var(--app-surface);
+        padding: 0 var(--app-space-2);
+        color: var(--el-text-color-primary);
+        font-family: var(--app-font-mono);
+        line-height: 30px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     }
   }
 
   .progress-container {
     display: flex;
+    align-items: center;
+    gap: var(--app-space-4);
     .progress-label {
+      flex: 0 0 var(--step-content-label-width);
       font-weight: bold;
       color: var(--el-text-color-regular);
-      margin-right: 1rem;
     }
     .progress-bar {
+      --step-progress-fill: var(--el-color-primary-light-5);
+
       flex: 1;
+      min-width: 0;
+
+      :deep(.el-progress-bar__outer) {
+        background-color: var(--app-surface);
+      }
+
+      :deep(.el-progress-bar__inner) {
+        background-color: var(--step-progress-fill);
+      }
+
+      &.progress-bar--completed {
+        --step-progress-fill: var(--el-color-primary-light-3);
+      }
     }
   }
 }

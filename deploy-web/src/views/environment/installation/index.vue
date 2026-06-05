@@ -430,7 +430,9 @@ const redisSteps = (): SetupStep[] => {
       </div>
     </div>
 
-    <server-sidebar @connect="handleShellConnect" />
+    <aside class="server-panel">
+      <server-sidebar @connect="handleShellConnect" />
+    </aside>
   </section>
 </template>
 
@@ -438,10 +440,19 @@ const redisSteps = (): SetupStep[] => {
 .environment-installation-section {
   position: relative;
   display: flex;
-  padding-right: calc(var(--layout-right-sidebar-width) + var(--layout-common-padding)) !important;
+  gap: var(--layout-common-gap);
+
+  // 选择服务器面板：右侧定宽、文档流内吸顶（与部署发布一致）
+  .server-panel {
+    flex: 0 0 var(--layout-right-sidebar-width);
+    align-self: flex-start;
+    position: sticky;
+    top: var(--layout-common-padding);
+  }
 
   .content-container {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     .content-wrapper {
       display: flex;
       flex-direction: column;
