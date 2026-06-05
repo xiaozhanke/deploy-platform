@@ -29,10 +29,8 @@ const handleQuery = () => {
   tablePaginationRef.value?.queryPage()
 }
 
-const resetFilters = () => {
-  filters.operator = ''
-  filters.operationType = ''
-  filters.outcome = ''
+// 重置：FilterBar 已 resetFields 复位筛选字段，这里重新查询
+const handleReset = () => {
   handleQuery()
 }
 
@@ -43,46 +41,31 @@ onActivated(() => {
 
 <template>
   <section class="audit-log-index-section common-page-container">
-    <page-header>
-      <template #filter>
-        <div class="audit-filter">
-          <el-input
-            v-model="filters.operator"
-            placeholder="操作人"
-            clearable
-            style="width: 160px"
+    <filter-bar :model="filters" @query="handleQuery" @reset="handleReset">
+      <filter-field label="操作人" prop="operator">
+        <el-input v-model="filters.operator" placeholder="请输入操作人" clearable />
+      </filter-field>
+      <filter-field label="操作类型" prop="operationType">
+        <el-select v-model="filters.operationType" placeholder="全部" clearable>
+          <el-option
+            v-for="item in AuditOperationTypeEnum.options"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
           />
-          <el-select
-            v-model="filters.operationType"
-            placeholder="操作类型"
-            clearable
-            style="width: 180px"
-          >
-            <el-option
-              v-for="item in AuditOperationTypeEnum.options"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-          <el-select
-            v-model="filters.outcome"
-            placeholder="操作结果"
-            clearable
-            style="width: 120px"
-          >
-            <el-option
-              v-for="item in AuditOutcomeEnum.options"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-          <el-button plain @click="handleQuery">查询</el-button>
-          <el-button @click="resetFilters">重置</el-button>
-        </div>
-      </template>
-    </page-header>
+        </el-select>
+      </filter-field>
+      <filter-field label="操作结果" prop="outcome">
+        <el-select v-model="filters.outcome" placeholder="全部" clearable>
+          <el-option
+            v-for="item in AuditOutcomeEnum.options"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
+      </filter-field>
+    </filter-bar>
 
     <table-pagination
       ref="tablePaginationRef"
@@ -111,13 +94,3 @@ onActivated(() => {
     </table-pagination>
   </section>
 </template>
-
-<style lang="scss" scoped>
-// 筛选项横向排布、窄屏换行；标题行与筛选行的纵向间距由 page-header 负责
-.audit-filter {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-</style>

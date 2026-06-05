@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { View, Edit, Delete, Connection } from '@element-plus/icons-vue'
+import { Connection } from '@element-plus/icons-vue'
 import type { ServerRecord } from '@/types/server'
 import { SshAuthTypeEnum } from '@/enums/platform'
 
@@ -26,18 +26,10 @@ const emit = defineEmits<{
         <div class="server-title">
           <h3 class="server-name">{{ server.name }}</h3>
         </div>
-        <div>
-          <el-button-group>
-            <el-button size="small" @click="emit('view', server)">
-              <el-icon><View /></el-icon>
-            </el-button>
-            <el-button size="small" type="warning" @click="emit('edit', server)">
-              <el-icon><Edit /></el-icon>
-            </el-button>
-            <el-button size="small" type="danger" @click="emit('delete', server)">
-              <el-icon><Delete /></el-icon>
-            </el-button>
-          </el-button-group>
+        <div class="card-actions">
+          <el-button link type="primary" @click="emit('view', server)">详情</el-button>
+          <el-button link @click="emit('edit', server)">编辑</el-button>
+          <el-button link type="danger" @click="emit('delete', server)">删除</el-button>
         </div>
       </div>
     </template>

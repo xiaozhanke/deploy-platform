@@ -24,12 +24,19 @@ const props = defineProps<{
   defaultSort?: Sort
 }>()
 
+const emit = defineEmits<{
+  /** 选中行变化：组件内部跟踪后再转发，使视图拿到选中的同时、组件能据此渲染选中条 */
+  (e: 'selection-change', selection: T[]): void
+}>()
+
 // 组件参数
 const attrs = useAttrs()
 // el-table 引用
 const tableRef = ref<TableInstance>()
 // 表格数据
 const tableData = ref<T[]>([])
+// 选中行内部跟踪：驱动选中条的显隐与「已选 N 项」，并向外转发给视图
+const selectedRows = ref<T[]>([])
 // 加载状态
 const isLoading = ref(false)
 // 首屏判断中心化：firstLoadDone 仅在首次成功加载后置真
@@ -135,9 +142,22 @@ async function handlePageSizeUpdate() {
   await queryPage()
 }
 
+// 选中行变化：内部记录后再向外转发（已声明 selection-change emit，故 onSelectionChange
+// 不在 $attrs 里，不会与视图自身的 @selection-change 监听双绑）
+const onSelectionChange = (selection: T[]) => {
+  selectedRows.value = selection
+  emit('selection-change', selection)
+}
+
+// 取消选择：清空 el-table 选中，选中条随之消失；也经 defineExpose 暴露给视图按需调用
+const clearSelection = () => {
+  tableRef.value?.clearSelection()
+}
+
 defineExpose({
   queryPage,
   tableRef,
+  clearSelection,
 })
 </script>
 
@@ -159,6 +179,16 @@ defineExpose({
     </div>
     <!-- 正常 / 二次加载：保留旧内容 + 浅遮罩；空数据走 EmptyState -->
     <template v-else>
+      <!-- 选中条：勾选才浮现，左「已选 N 项 · 取消选择」、右 #selection-actions 槽放批量 / 依赖选中的动作 -->
+      <div v-if="selectedRows.length > 0" class="selection-bar">
+        <div class="selection-bar__info">
+          <span>已选 {{ selectedRows.length }} 项</span>
+          <el-button link type="primary" @click="clearSelection">取消选择</el-button>
+        </div>
+        <div class="selection-bar__actions">
+          <slot name="selection-actions" :selection="selectedRows" />
+        </div>
+      </div>
       <el-table
         ref="tableRef"
         v-loading="isLoading"
@@ -168,6 +198,7 @@ defineExpose({
         :data="tableData"
         :default-sort="defaultSort"
         @sort-change="handleSortChange"
+        @selection-change="onSelectionChange"
       >
         <slot></slot>
         <template #empty>
@@ -193,6 +224,28 @@ defineExpose({
   gap: 10px;
   flex: 1;
   overflow: hidden;
+  // 选中条：勾选才浮现，淡主色底呼应「选中」语义（同侧栏选中项的淡主色 pill）
+  .selection-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--app-space-3);
+    padding: var(--app-space-2) var(--app-space-3);
+    background: var(--el-color-primary-light-9);
+    border: 1px solid var(--el-color-primary-light-7);
+    border-radius: var(--app-radius-control);
+    &__info {
+      display: flex;
+      align-items: center;
+      gap: var(--app-space-2);
+      color: var(--el-text-color-regular);
+    }
+    &__actions {
+      display: flex;
+      align-items: center;
+      gap: var(--app-space-3);
+    }
+  }
   .table-container {
     flex: 1;
   }

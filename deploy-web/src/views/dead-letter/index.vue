@@ -8,7 +8,6 @@ import TablePagination from '@/components/table-pagination/index.vue'
 import { JobTypeEnum } from '@/enums/platform'
 import type { PageParams } from '@/types/api'
 import type { DeadLetterMessage } from '@/types/deployment'
-import { Refresh, RefreshRight, Search, View } from '@element-plus/icons-vue'
 
 const tablePaginationRef = ref()
 const form = reactive<{ retried?: boolean }>({})
@@ -20,8 +19,8 @@ const queryMethod = async (queryParams: Record<string, unknown>, pageParams: Pag
 
 const handleQuery = () => tablePaginationRef.value?.queryPage(form)
 
+// 重置：FilterBar 已 resetFields 复位重试状态，这里重新查询
 const handleReset = () => {
-  form.retried = undefined
   handleQuery()
 }
 
@@ -68,28 +67,18 @@ onActivated(() => {
 
 <template>
   <section class="dead-letter-index-section common-page-container">
-    <page-header>
-      <template #filter>
-        <el-form :model="form" inline>
-          <el-form-item label="重试状态">
-            <el-select v-model="form.retried" placeholder="重试状态" clearable>
-              <el-option
-                v-for="item in retriedOptions"
-                :key="String(item.value)"
-                :value="item.value"
-                :label="item.label"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item>
-            <el-button :icon="Search" plain @click="handleQuery">查询</el-button>
-            <el-tooltip content="重置查询条件" placement="top">
-              <el-button :icon="Refresh" @click="handleReset">重置</el-button>
-            </el-tooltip>
-          </el-form-item>
-        </el-form>
-      </template>
-    </page-header>
+    <filter-bar :model="form" @query="handleQuery" @reset="handleReset">
+      <filter-field label="重试状态" prop="retried">
+        <el-select v-model="form.retried" placeholder="全部" clearable>
+          <el-option
+            v-for="item in retriedOptions"
+            :key="String(item.value)"
+            :value="item.value"
+            :label="item.label"
+          />
+        </el-select>
+      </filter-field>
+    </filter-bar>
     <table-pagination ref="tablePaginationRef" show-overflow-tooltip :query-method="queryMethod">
       <el-table-column type="index" label="序号" width="54" fixed="left" />
       <el-table-column label="状态" width="84">
@@ -106,20 +95,15 @@ onActivated(() => {
       <el-table-column prop="deadLetteredAt" label="进入死信时间" min-width="160" />
       <el-table-column prop="retried" label="是否已重试" width="100">
         <template #default="{ row }">
-          <el-tag :type="row.retried ? 'success' : 'info'">{{ row.retried ? '已重试' : '未重试' }}</el-tag>
+          <status-dot :intent="row.retried ? 'success' : 'info'" :hollow="!row.retried">{{
+            row.retried ? '已重试' : '未重试'
+          }}</status-dot>
         </template>
       </el-table-column>
       <el-table-column label="操作" width="160" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link :icon="View" @click="handleView(row)">详情</el-button>
-          <el-button
-            type="warning"
-            link
-            :icon="RefreshRight"
-            :disabled="row.retried"
-            @click="handleRetry(row)"
-            >重试</el-button
-          >
+          <el-button type="primary" link @click="handleView(row)">详情</el-button>
+          <el-button link :disabled="row.retried" @click="handleRetry(row)">重试</el-button>
         </template>
       </el-table-column>
     </table-pagination>

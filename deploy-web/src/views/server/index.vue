@@ -109,29 +109,27 @@ onMounted(async () => {
 
 <template>
   <section class="server-index-section">
-    <!-- 标题取 route.meta.title（服务器管理），无筛选 → 只出标题行 -->
-    <page-header>
-      <template #actions>
-        <!-- 页面主操作：唯一实色 primary -->
-        <el-button type="primary" @click="handleAdd">
-          <el-icon><Plus /></el-icon>
-          添加服务器
-        </el-button>
-        <!-- 次要动作：中性按钮，避免与主操作争抢视觉层级 -->
-        <el-button @click="loadServerList">
-          <el-icon><Refresh /></el-icon>
-          刷新
-        </el-button>
-        <el-radio-group v-model="viewMode">
-          <el-radio-button value="card">
-            <el-icon><Grid /></el-icon>
-          </el-radio-button>
-          <el-radio-button value="list">
-            <el-icon><List /></el-icon>
-          </el-radio-button>
-        </el-radio-group>
-      </template>
-    </page-header>
+    <!-- 工具栏：添加 / 刷新左对齐，视图切换推到最右；本页无筛选 -->
+    <div class="page-toolbar">
+      <!-- 页面主操作：唯一实色 primary -->
+      <el-button type="primary" @click="handleAdd">
+        <el-icon><Plus /></el-icon>
+        添加服务器
+      </el-button>
+      <!-- 次要动作：中性按钮，避免与主操作争抢视觉层级 -->
+      <el-button @click="loadServerList">
+        <el-icon><Refresh /></el-icon>
+        刷新
+      </el-button>
+      <el-radio-group v-model="viewMode" class="view-mode-switch">
+        <el-radio-button value="card">
+          <el-icon><Grid /></el-icon>
+        </el-radio-button>
+        <el-radio-button value="list">
+          <el-icon><List /></el-icon>
+        </el-radio-button>
+      </el-radio-group>
+    </div>
 
     <!-- 卡片视图 -->
     <div v-if="viewMode === 'card'">
@@ -162,22 +160,12 @@ onMounted(async () => {
       </el-table-column>
       <el-table-column prop="homeDir" label="主目录" min-width="130" />
       <el-table-column prop="description" label="服务器描述" min-width="130" />
-      <el-table-column label="操作" width="180" fixed="right">
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
-          <el-button-group>
-            <el-button size="small" @click="handleView(row)">
-              <el-icon><View /></el-icon>
-            </el-button>
-            <el-button size="small" type="warning" @click="handleEdit(row)">
-              <el-icon><Edit /></el-icon>
-            </el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">
-              <el-icon><Delete /></el-icon>
-            </el-button>
-            <el-button size="small" type="primary" @click="handleTestConnection(row)">
-              <el-icon><Connection /></el-icon>
-            </el-button>
-          </el-button-group>
+          <el-button link type="primary" @click="handleView(row)">详情</el-button>
+          <el-button link @click="handleEdit(row)">编辑</el-button>
+          <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+          <el-button link @click="handleTestConnection(row)">测试连接</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -198,5 +186,10 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: var(--layout-common-gap);
+
+  // 视图切换（卡片 / 列表）推到操作行最右，与左侧的添加 / 刷新分立两端
+  .view-mode-switch {
+    margin-left: auto;
+  }
 }
 </style>

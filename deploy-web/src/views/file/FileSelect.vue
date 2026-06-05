@@ -2,9 +2,9 @@
 import { fileQueryPage } from '@/api/api'
 import { ArchitectureEnum, FileScopeEnum } from '@/enums/platform'
 import type { FileParams, FileRecord } from '@/types/file'
-import type { FormInstance, Sort } from 'element-plus'
+import type { Sort } from 'element-plus'
 import FileDetail from './FileDetail.vue'
-import { Refresh, Search, Select, View } from '@element-plus/icons-vue'
+import { Select } from '@element-plus/icons-vue'
 import TablePagination from '@/components/table-pagination/index.vue'
 import type { PageParams } from '@/types/api'
 
@@ -17,7 +17,6 @@ const currentFile = ref<FileRecord>({} as FileRecord)
 const fileSelection = ref<Array<FileRecord>>([])
 const fileDetailVisible = ref<boolean>(false)
 const fileEditable = ref<boolean>(false)
-const formRef = ref<FormInstance>()
 const form = reactive<FileParams>({} as FileParams)
 
 // 文件排序
@@ -48,9 +47,9 @@ const handleQuery = () => {
   }
 }
 
-// 重置查询条件
+// 重置：FilterBar 已 resetFields 复位字段，这里重新查询
 const handleReset = () => {
-  formRef.value?.resetFields()
+  handleQuery()
 }
 
 // 选择文件
@@ -98,69 +97,48 @@ onMounted(async () => {
 <template>
   <el-dialog title="选择文件" width="1000px" top="5vh" draggable :close-on-click-modal="false" @close="handleClose">
     <section class="file-select-section">
-      <div class="search-panel">
-        <el-form ref="formRef" :model="form" class="search-panel-form" label-width="68px" inline>
-          <el-row :gutter="16">
-            <el-col :span="6">
-              <el-form-item label="文件名" prop="fileName">
-                <el-input v-model="form.fileName" placeholder="文件名" clearable />
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item label="使用范围" prop="scope">
-                <el-select v-model="form.scope" placeholder="使用范围" clearable>
-                  <el-option
-                    v-for="item in FileScopeEnum.options"
-                    :key="item.value"
-                    :value="item.value"
-                    :label="item.label"
-                  />
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item label="分组 Id" prop="groupId">
-                <el-input v-model="form.groupId" placeholder="分组 Id" clearable />
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item label="构件 Id" prop="artifactId">
-                <el-input v-model="form.artifactId" placeholder="构件 Id" clearable />
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item label="版本" prop="version">
-                <el-input v-model="form.version" placeholder="版本" clearable />
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item label="芯片架构" prop="architecture">
-                <el-select v-model="form.architecture" placeholder="芯片架构" clearable>
-                  <el-option
-                    v-for="item in ArchitectureEnum.options"
-                    :key="item.value"
-                    :value="item.value"
-                    :label="item.label"
-                  />
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="文件描述" prop="description">
-                <el-input v-model="form.description" placeholder="文件描述" clearable />
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </el-form>
-
-        <div class="search-panel-action">
-          <el-button type="primary" :icon="Search" plain @click="handleQuery">查询</el-button>
-          <el-tooltip content="重置查询条件" placement="top">
-            <el-button type="info" :icon="Refresh" @click="handleReset">重置</el-button>
-          </el-tooltip>
+      <filter-bar layout="grid" :model="form" @query="handleQuery" @reset="handleReset">
+        <filter-field label="文件名" prop="fileName">
+          <el-input v-model="form.fileName" placeholder="文件名" clearable />
+        </filter-field>
+        <filter-field label="使用范围" prop="scope">
+          <el-select v-model="form.scope" placeholder="使用范围" clearable>
+            <el-option
+              v-for="item in FileScopeEnum.options"
+              :key="item.value"
+              :value="item.value"
+              :label="item.label"
+            />
+          </el-select>
+        </filter-field>
+        <filter-field label="分组 Id" prop="groupId">
+          <el-input v-model="form.groupId" placeholder="分组 Id" clearable />
+        </filter-field>
+        <filter-field label="构件 Id" prop="artifactId">
+          <el-input v-model="form.artifactId" placeholder="构件 Id" clearable />
+        </filter-field>
+        <filter-field label="版本" prop="version">
+          <el-input v-model="form.version" placeholder="版本" clearable />
+        </filter-field>
+        <filter-field label="芯片架构" prop="architecture">
+          <el-select v-model="form.architecture" placeholder="芯片架构" clearable>
+            <el-option
+              v-for="item in ArchitectureEnum.options"
+              :key="item.value"
+              :value="item.value"
+              :label="item.label"
+            />
+          </el-select>
+        </filter-field>
+        <!-- 文件描述是宽字段：覆盖默认 span -->
+        <filter-field label="文件描述" prop="description" :sm="24" :md="24" :lg="12" :xl="8">
+          <el-input v-model="form.description" placeholder="文件描述" clearable />
+        </filter-field>
+        <!-- 选择器弹窗唯一主操作：选择 primary -->
+        <template #extra-actions>
           <el-button type="primary" :icon="Select" @click="handleSelect">选择</el-button>
-        </div>
-      </div>
+        </template>
+      </filter-bar>
 
       <table-pagination
         ref="tablePaginationRef"
@@ -186,7 +164,7 @@ onMounted(async () => {
         <el-table-column prop="version" label="版本" width="100px"></el-table-column>
         <el-table-column prop="scope" label="使用范围" width="82px">
           <template #default="{ row }">
-            <el-tag v-if="row.scope" :type="fileScopeTagTypeMap[row.scope]" effect="dark">{{
+            <el-tag v-if="row.scope" :type="fileScopeTagTypeMap[row.scope]" effect="light">{{
               FileScopeEnum.getLabel(row.scope)
             }}</el-tag>
           </template>
@@ -196,11 +174,11 @@ onMounted(async () => {
             <span>{{ $formatFileSize(row.fileSize) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="172px" sortable />
-        <el-table-column prop="updateTime" label="更新时间" width="172px" sortable />
+        <el-table-column prop="createTime" label="创建时间" width="174px" sortable />
+        <el-table-column prop="updateTime" label="更新时间" width="174px" sortable />
         <el-table-column label="操作" width="80px" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link :icon="View" @click="handleView(row)">详情</el-button>
+            <el-button type="primary" link @click="handleView(row)">详情</el-button>
           </template>
         </el-table-column>
       </table-pagination>
@@ -220,20 +198,7 @@ onMounted(async () => {
   height: calc(100vh - var(--el-dialog-margin-top) - 2 * var(--el-dialog-padding-primary) - 42px - 50px);
   display: flex;
   flex-direction: column;
-  .search-panel {
-    .search-panel-form {
-      .el-form-item {
-        width: 100%;
-        margin-right: 0;
-        margin-bottom: var(--layout-common-padding);
-      }
-    }
-    .search-panel-action {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: var(--layout-common-padding);
-    }
-  }
+  gap: var(--app-space-4);
   .file-name {
     display: flex;
     align-items: center;
