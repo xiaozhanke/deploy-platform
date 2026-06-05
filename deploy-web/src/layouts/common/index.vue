@@ -2,7 +2,27 @@
 import { useAuthStore } from '@/stores/auth'
 import { useWebSocketStore } from '@/stores/websocket'
 import { useRoute, useRouter } from 'vue-router'
-import { Fold, Key, Moon, RefreshRight, Sunny, SwitchButton, User, WarnTriangleFilled } from '@element-plus/icons-vue'
+import {
+  Compass,
+  Cpu,
+  DocumentChecked,
+  Fold,
+  Folder,
+  House,
+  Key,
+  Monitor,
+  Moon,
+  Operation,
+  RefreshRight,
+  Star,
+  Sunny,
+  SwitchButton,
+  UploadFilled,
+  User,
+  Warning,
+  WarnTriangleFilled,
+} from '@element-plus/icons-vue'
+import type { Component } from 'vue'
 import { useTheme } from '@/composables/useTheme'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import StatusDot from '@/components/status-dot/index.vue'
@@ -65,94 +85,86 @@ const asideWidth = computed(() => {
   return isCollapse.value ? '64px' : '200px'
 })
 
-const menuList = ref([
+// 左侧栏导航配置（ADR-0012）：只管分组 / 顺序 / 图标。
+// 标题不在此硬编码——由 navGroups 从 route.meta.title 解析（§15 R1 单一真源），消除「首页 vs 仪表盘」漂移；
+// 图标用 markRaw 组件引用而非字符串（§20）。个人中心已移出左栏，仅保留右上角头像下拉入口。
+interface NavItem {
+  index: string
+  icon: Component
+  children?: NavItem[]
+}
+interface NavGroup {
+  title: string
+  items: NavItem[]
+}
+const navConfig: NavGroup[] = [
+  // 仪表盘置顶、不挂分组标题
   {
-    index: '/dashboard',
-    title: '首页',
-    icon: 'house',
+    title: '',
+    items: [{ index: '/dashboard', icon: markRaw(House) }],
   },
   {
-    index: '/server',
-    title: '服务器管理',
-    icon: 'monitor',
-  },
-  {
-    index: '/environment',
-    title: '环境管理',
-    icon: 'cpu',
-    children: [
+    title: '基础设施',
+    items: [
+      { index: '/server', icon: markRaw(Monitor) },
       {
-        index: '/environment/installation',
-        title: '环境安装',
-        icon: 'upload-filled',
+        index: '/environment',
+        icon: markRaw(Cpu),
+        children: [
+          { index: '/environment/installation', icon: markRaw(UploadFilled) },
+          { index: '/environment/configuration', icon: markRaw(Operation) },
+        ],
       },
-      {
-        index: '/environment/configuration',
-        title: '环境配置',
-        icon: 'operation',
-      },
+      { index: '/file', icon: markRaw(Folder) },
     ],
   },
   {
-    index: '/deployment',
-    title: '应用部署',
-    icon: 'compass',
+    title: '应用与部署',
+    items: [
+      { index: '/deployment', icon: markRaw(Compass) },
+      { index: '/application', icon: markRaw(Star) },
+    ],
   },
   {
-    index: '/application',
-    title: '应用管理',
-    icon: 'star',
+    title: '监控与审计',
+    items: [
+      { index: '/dead-letter', icon: markRaw(Warning) },
+      { index: '/audit-log', icon: markRaw(DocumentChecked) },
+    ],
   },
-  {
-    index: '/dead-letter',
-    title: '死信队列',
-    icon: 'warning',
-  },
-  {
-    index: '/audit-log',
-    title: '操作审计',
-    icon: 'document-checked',
-  },
-  {
-    index: '/file',
-    title: '文件资源',
-    icon: 'folder',
-  },
-  // {
-  //   index: '/source-code',
-  //   title: '源码管理',
-  //   icon: 'files'
-  // },
-  // {
-  //   index: '/log',
-  //   title: '日志管理',
-  //   icon: 'document'
-  // },
-  {
-    index: '/user',
-    title: '个人中心',
-    icon: 'user',
-  },
-  // {
-  //   index: '/setting',
-  //   title: '设置',
-  //   icon: 'setting',
-  //   children: [
-  //     {
-  //       index: '/setting/general',
-  //       title: '通用设置',
-  //       icon: 'help'
-  //     },
-  //     {
-  //       index: '/setting/notification',
-  //       title: '通知设置',
-  //       icon: 'notification'
-  //     }
-  //   ]
-  // }
-])
+]
 
-// 面包屑只取根布局壳（path '/'）以下的有意义层级，丢掉壳本身（它只是布局容器，重定向到 dashboard）
+// 菜单标题单一真源 = route.meta.title：用路由表建 path→title 映射，nav 配置不再硬编码标题
+const routeTitleMap = computed(() => {
+  const map: Record<string, string> = {}
+  router.getRoutes().forEach((record) => {
+    const title = record.meta?.title as string | undefined
+    if (title) {
+      map[record.path] = title
+    }
+  })
+  return map
+})
+
+// 组装最终菜单：把 nav 配置每个路径解析成 route.meta.title 后交 SidebarMenu 渲染
+const navGroups = computed(() =>
+  navConfig.map((group) => ({
+    title: group.title,
+    items: group.items.map((item) => ({
+      index: item.index,
+      title: routeTitleMap.value[item.index] ?? '',
+      icon: item.icon,
+      children: item.children?.map((child) => ({
+        index: child.index,
+        title: routeTitleMap.value[child.index] ?? '',
+        icon: child.icon,
+      })),
+    })),
+  })),
+)
+
+// 面包屑承载页面身份、渲染在顶栏：取根布局壳（path '/'）以下的有意义层级，
+// 丢掉壳本身（它只是布局容器、重定向到 dashboard）。顶层页 1 段、嵌套页多段，所有页都显示。
 const breadcrumbs = computed(() => {
   return route.matched
     .filter((item) => item.path !== '/')
@@ -161,10 +173,6 @@ const breadcrumbs = computed(() => {
       name: item.meta.title || item.name,
     }))
 })
-
-// 仅嵌套 >1 层才显示面包屑：顶层页（/server、/dashboard）只剩 1 段 → 隐藏，
-// 消除「面包屑 + 页头标题」重复；多层页（/user/profile、/environment/configuration）仍显示
-const hasNestedBreadcrumb = computed(() => breadcrumbs.value.length > 1)
 
 // 缓存视图管理
 const cachedViews = ref<string[]>([])
@@ -218,7 +226,21 @@ const handleUserCommand = async (command: string | number | object) => {
           aria-label="打开菜单"
           @click="mobileMenuVisible = true"
         />
-        <div class="title">运维部署平台</div>
+        <!-- 品牌仅桌面（≥1200）显示，平板 / 手机隐藏，把顶栏左侧让给面包屑 -->
+        <template v-if="isDesktop">
+          <span class="brand">运维部署平台</span>
+          <el-divider direction="vertical" class="brand-divider" />
+        </template>
+        <!-- 页面身份：面包屑读 route.matched，所有页都显示；末段（当前页）不可点、父段可点 -->
+        <el-breadcrumb class="header-breadcrumb" separator="/">
+          <el-breadcrumb-item
+            v-for="(breadcrumb, index) in breadcrumbs"
+            :key="breadcrumb.path"
+            :to="index < breadcrumbs.length - 1 ? breadcrumb.path : ''"
+          >
+            {{ breadcrumb.name }}
+          </el-breadcrumb-item>
+        </el-breadcrumb>
       </div>
       <div class="header-right">
         <el-tooltip
@@ -268,7 +290,7 @@ const handleUserCommand = async (command: string | number | object) => {
         <el-scrollbar>
           <sidebar-menu
             class="aside-menu"
-            :menu-list="menuList"
+            :groups="navGroups"
             :collapse="isCollapse"
             :active-index="route.path"
           />
@@ -284,11 +306,6 @@ const handleUserCommand = async (command: string | number | object) => {
         </div>
       </el-aside>
       <el-main class="layout-main" :style="{ paddingLeft: asideWidth }">
-        <el-breadcrumb v-if="hasNestedBreadcrumb" class="layout-breadcrumb" separator="/" :style="{ left: asideWidth }">
-          <el-breadcrumb-item v-for="breadcrumb in breadcrumbs" :key="breadcrumb.path" :to="breadcrumb.path">
-            {{ breadcrumb.name }}
-          </el-breadcrumb-item>
-        </el-breadcrumb>
         <div class="main-wrapper">
           <!-- offline 非阻塞细横幅：常驻直到恢复；零 toast -->
           <transition name="ws-banner">
@@ -314,7 +331,7 @@ const handleUserCommand = async (command: string | number | object) => {
       :with-header="false"
       size="220px"
     >
-      <sidebar-menu :menu-list="menuList" :collapse="false" :active-index="route.path" />
+      <sidebar-menu :groups="navGroups" :collapse="false" :active-index="route.path" />
     </el-drawer>
   </el-container>
 </template>
@@ -322,12 +339,14 @@ const handleUserCommand = async (command: string | number | object) => {
 <style lang="scss" scoped>
 .common-layout {
   width: 100%;
-  min-height: 100vh;
+  // 外壳锁定视口高、自身不滚动：页面滚动收进主视口卡片内部，顶栏 / 侧栏保持物理静止
+  height: 100vh;
+  overflow: hidden;
   .layout-header {
     height: var(--system-header-height);
-    background-color: var(--app-surface);
+    // 无界：顶栏背景透明、去底部硬描边，与画布融为一体，内容浮于其上
+    background-color: transparent;
     color: var(--el-text-color-primary);
-    border-bottom: 1px solid var(--app-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -340,16 +359,35 @@ const handleUserCommand = async (command: string | number | object) => {
     .header-left {
       display: flex;
       align-items: center;
+      min-width: 0;
       .hamburger {
         margin-right: var(--app-space-2);
         font-size: 20px;
       }
-      .title {
-        // 手机基线略小，给汉堡留位；≥768 恢复大标题
-        font-size: var(--el-font-size-large);
+      .brand {
+        // 品牌仅桌面显示，字号走大标题令牌
+        font-size: var(--el-font-size-extra-large);
         font-weight: 600;
-        @include respond-to('sm') {
-          font-size: var(--el-font-size-extra-large);
+        white-space: nowrap;
+      }
+      .brand-divider {
+        height: 1.2em;
+        margin: 0 var(--app-space-3);
+      }
+      .header-breadcrumb {
+        // 顶栏面包屑：父段（可点）常规字重、hover 主色；当前页（末段、不可点）主色强调
+        font-size: var(--el-font-size-base);
+        white-space: nowrap;
+        :deep(.el-breadcrumb__inner.is-link) {
+          font-weight: 400;
+          color: var(--el-text-color-regular);
+          &:hover {
+            color: var(--el-color-primary);
+          }
+        }
+        :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
+          color: var(--el-text-color-primary);
+          font-weight: 500;
         }
       }
     }
@@ -372,17 +410,18 @@ const handleUserCommand = async (command: string | number | object) => {
     }
   }
   .layout-aside {
-    background-color: var(--app-surface);
+    // 无界：侧栏背景透明、去右缘硬描边，菜单 pill 直接浮于画布之上
+    background-color: transparent;
     position: fixed;
     top: var(--system-header-height);
     left: 0;
     bottom: 0;
-    border-right: 1px solid var(--app-border);
     transition: width var(--el-transition-duration);
     // 菜单视觉（pill / hover / 选中）收进 SidebarMenu.vue；这里只留容器间距：
     // 底部留白避开固定的「收起侧边栏」按钮
     .aside-menu {
-      margin-bottom: 48px;
+      // 底部留白避开固定的「收起侧边栏」按钮；用 padding 确保滚动到底部时仍有间距
+      padding-bottom: 48px;
     }
     .toggle-collapse-button {
       position: fixed;
@@ -394,8 +433,8 @@ const handleUserCommand = async (command: string | number | object) => {
       width: 200px;
       height: 48px;
       color: var(--el-text-color-regular);
-      background-color: var(--app-surface);
-      border-top: 1px solid var(--app-border);
+      // 无界：按钮背景透明融入画布、去描边；仅 hover 时以填充色给出可点反馈
+      background-color: transparent;
       transition: width var(--el-transition-duration);
       &:hover {
         background-color: var(--el-fill-color-light);
@@ -406,23 +445,22 @@ const handleUserCommand = async (command: string | number | object) => {
     }
   }
   .layout-main {
-    padding: calc(var(--system-header-height) + 2 * var(--layout-common-padding) + var(--el-font-size-medium) + 1px) 0 0
-      0;
+    // 让开固定顶栏（padding-top）与固定侧栏（padding-left 由 asideWidth 内联控制）；
+    // 自身不滚动，滚动交给内部的主视口卡片，避免双滚动条
+    padding: var(--system-header-height) 0 0 0;
+    overflow: hidden;
     transition: padding-left var(--el-transition-duration);
-    .layout-breadcrumb {
-      padding: var(--layout-common-padding);
-      font-size: var(--el-font-size-medium);
-      background-color: var(--app-surface);
-      border-bottom: 1px solid var(--app-border);
-      position: fixed;
-      top: var(--system-header-height);
-      right: 0;
-      z-index: 10;
-      transition: left 0.3s ease;
-    }
+    // 主视口悬浮卡片：唯一的白色面层容器，浮于无界画布之上，承载并裁剪所有页面内容
     .main-wrapper {
       position: relative;
-      background-color: var(--app-canvas);
+      // 定高 = 视口高 − 顶栏 − 上下各 16px 留白；配合等值 margin 形成四周内嵌留白
+      height: calc(100vh - var(--system-header-height) - 2 * var(--app-space-4));
+      margin: var(--app-space-4);
+      background-color: var(--app-surface);
+      border: 1px solid var(--app-border);
+      border-radius: var(--app-radius-overlay);
+      // 滚动锁进卡片内部：顶栏 / 侧栏不随内容滚动；圆角自动裁剪溢出内容
+      overflow-y: auto;
       // offline 非阻塞细横幅：danger 语义，常驻直到恢复
       .ws-offline-banner {
         position: sticky;

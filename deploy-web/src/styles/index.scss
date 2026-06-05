@@ -7,11 +7,11 @@
   --layout-right-sidebar-width: 260px;
 }
 
-// 一个通用主要页面容器样式, 占满 main-container 不出现滚动条
+// 通用主页面容器：填满主视口卡片，自身不出现滚动条（内部区域如表格各自滚动）。
+// 该元素即 .main-container（border-box，自带 16px 内边距），其父级是主视口悬浮卡片
+// （.main-wrapper —— 已是定高 + 内部滚动的有界容器），故取 height:100% 填满卡片即可。
 .common-page-container {
-  height: calc(
-    100vh - var(--system-header-height) - 2 * var(--layout-common-padding) - var(--el-font-size-medium) - 1px
-  );
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -24,4 +24,14 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: var(--app-space-4);
+}
+
+// 共享列表页工具栏：常驻操作行。主操作（添加 / 上传 / 启动）左对齐、最先被扫到；
+// 视图切换 / 刷新等次级控件用 margin-left:auto 推到最右。
+// 每个容器至多一个实色 primary 主操作、其余中性，杜绝「彩虹按钮」。
+// 先以工具类落地（循 .app-card-grid 之例），将来有交互逻辑再升组件。
+.page-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--app-space-3);
 }

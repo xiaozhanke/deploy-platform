@@ -10,17 +10,13 @@
   font-weight: normal;
 }
 
-html {
-  overflow-y: scroll;
-}
-
 body {
   min-height: 100vh;
   color: var(--el-text-color-primary);
   background: var(--app-canvas);
   font-family: var(--app-font-sans);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.6;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
