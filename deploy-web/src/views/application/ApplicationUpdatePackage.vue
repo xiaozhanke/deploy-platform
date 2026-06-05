@@ -261,9 +261,9 @@ const handleClose = () => {
               @click="handleViewLog(record)"
               >查看日志</el-button
             >
-            <el-tag v-if="updateStatusMap[record.id] === 'pending'" type="info">处理中</el-tag>
-            <el-tag v-else-if="updateStatusMap[record.id] === 'success'" type="success">更新成功</el-tag>
-            <el-tag v-else-if="updateStatusMap[record.id] === 'error'" type="danger">更新失败</el-tag>
+            <soft-label v-if="updateStatusMap[record.id] === 'pending'" intent="info">处理中</soft-label>
+            <soft-label v-else-if="updateStatusMap[record.id] === 'success'" intent="success">更新成功</soft-label>
+            <soft-label v-else-if="updateStatusMap[record.id] === 'error'" intent="danger">更新失败</soft-label>
           </div>
         </div>
       </div>

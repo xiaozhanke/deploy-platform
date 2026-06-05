@@ -44,9 +44,9 @@ const titleIcon = computed(() => {
           <img class="title-icon" :src="titleIcon" />
           {{ record.fileRecord.fileName }}
         </span>
-        <el-tag v-if="record.applicationType === ApplicationTypeEnum.BACKEND.value" :type="statusTagType">{{
+        <soft-label v-if="record.applicationType === ApplicationTypeEnum.BACKEND.value" :intent="statusTagType">{{
           statusText
-        }}</el-tag>
+        }}</soft-label>
       </div>
     </template>
 
