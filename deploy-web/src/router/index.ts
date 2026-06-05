@@ -14,7 +14,7 @@ const router = createRouter({
       component: CommonLayout,
       redirect: '/dashboard',
       meta: {
-        title: '首页',
+        title: '仪表盘',
         requiresAuth: true, // 默认所有页面都需要认证
       },
       children: [
@@ -67,7 +67,7 @@ const router = createRouter({
           name: 'DeploymentIndex',
           component: () => import('@/views/deployment/index.vue'),
           meta: {
-            title: '应用部署',
+            title: '部署发布',
             keepAlive: true,
           },
         },
@@ -76,7 +76,7 @@ const router = createRouter({
           name: 'ApplicationIndex',
           component: () => import('@/views/application/index.vue'),
           meta: {
-            title: '应用管理',
+            title: '应用实例',
             keepAlive: true,
           },
         },
