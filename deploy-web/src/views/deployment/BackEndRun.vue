@@ -5,7 +5,6 @@ import type { FileRecord } from '@/types/file'
 import type { ServerRecord } from '@/types/server'
 import { generateRandomNumber } from '@/utils/common'
 import type { FormInstance, FormRules, UploadInstance, UploadUserFile } from 'element-plus'
-import { Delete, Edit, EditPen, View } from '@element-plus/icons-vue'
 import CodeEditor from '@/components/code-editor/index.vue'
 import LogView from '@/views/log/components/LogView.vue'
 import { ApplicationTypeEnum, DeploymentStatusEnum, FileScopeEnum } from '@/enums/platform'
@@ -425,12 +424,10 @@ onMounted(async () => {
           </el-table-column>
           <el-table-column label="操作" width="256px" fixed="right" header-align="center" class-name="file-actions">
             <template #default="scope">
-              <el-button type="primary" link :icon="View" @click="handleFileView(scope.row.path)">查看</el-button>
-              <el-button type="primary" link :icon="Edit" @click="handleFileEditManual(scope.row.path)">编辑</el-button>
-              <el-button type="primary" link :icon="EditPen" @click="handleFileRename(scope.row.name)"
-                >重命名</el-button
-              >
-              <el-button type="primary" link :icon="Delete" @click="handleFileDelete(scope.row.path)">删除</el-button>
+              <el-button type="primary" link @click="handleFileView(scope.row.path)">查看</el-button>
+              <el-button link @click="handleFileEditManual(scope.row.path)">编辑</el-button>
+              <el-button link @click="handleFileRename(scope.row.name)">重命名</el-button>
+              <el-button type="danger" link @click="handleFileDelete(scope.row.path)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>

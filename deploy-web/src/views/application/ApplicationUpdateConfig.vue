@@ -6,7 +6,7 @@ import { sshConnect, sshDisconnect, sshExecCommand } from '@/api/api'
 import type { DeploymentRecord } from '@/types/deployment'
 import type { File } from '@/types/environment'
 import CodeEditor from '@/components/code-editor/index.vue'
-import { View, Edit, Delete, EditPen, Document, Plus, RefreshRight } from '@element-plus/icons-vue'
+import { Document, Plus, RefreshRight } from '@element-plus/icons-vue'
 
 // 定义组件接收的 props
 const props = defineProps<{
@@ -179,7 +179,7 @@ const handleFileRename = (filePath: string) => {
           <el-button :icon="Plus" circle type="primary" :disabled="!sessionId" @click="handleFileCreate" />
         </el-tooltip>
         <el-tooltip content="刷新文件列表" placement="top">
-          <el-button :icon="RefreshRight" circle plain type="primary" :disabled="!sessionId" @click="fetchFileList" />
+          <el-button :icon="RefreshRight" circle plain :disabled="!sessionId" @click="fetchFileList" />
         </el-tooltip>
       </div>
     </div>
@@ -212,10 +212,10 @@ const handleFileRename = (filePath: string) => {
         </el-table-column>
         <el-table-column label="操作" width="292" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link :icon="View" @click="handleFileView(row.path)">查看</el-button>
-            <el-button type="primary" link :icon="Edit" @click="handleFileEdit(row.path)">编辑</el-button>
-            <el-button type="primary" link :icon="EditPen" @click="handleFileRename(row.path)">重命名</el-button>
-            <el-button type="danger" link :icon="Delete" @click="handleFileDelete(row.path)">删除</el-button>
+            <el-button type="primary" link @click="handleFileView(row.path)">查看</el-button>
+            <el-button link @click="handleFileEdit(row.path)">编辑</el-button>
+            <el-button link @click="handleFileRename(row.path)">重命名</el-button>
+            <el-button type="danger" link @click="handleFileDelete(row.path)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
