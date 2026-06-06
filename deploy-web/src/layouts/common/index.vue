@@ -443,11 +443,19 @@ const handleUserCommand = async (command: string | number | object) => {
       background-color var(--el-transition-duration),
       box-shadow var(--el-transition-duration);
     // 折叠态「悬停滑出」浮层：物理占位仍 64px、不挤压主卡片，此处只在视觉上撑宽并浮起。
-    // 实底面层 + 投影让浮层文字在主卡片之上清晰可读
     &.is-floating {
+      // 兜底：不支持 backdrop-filter 的浏览器用实底面层，保证浮层文字在主卡片之上始终清晰可读
       background-color: var(--app-surface);
       border-radius: 0 var(--app-radius-overlay) var(--app-radius-overlay) 0;
       box-shadow: var(--app-shadow-lg);
+      // 压克力毛玻璃：支持背景模糊时升级为半透明面层 + 背景模糊，主卡片内容在侧栏背后柔化透出。
+      // 半透明色复用 --app-surface-rgb（浅 / 深各自取值），alpha 走 --app-acrylic-alpha（浅更透、深略实），
+      // 兼顾玻璃透视感与菜单文字、图标对比度
+      @supports ((-webkit-backdrop-filter: blur(12px)) or (backdrop-filter: blur(12px))) {
+        background-color: rgba(var(--app-surface-rgb), var(--app-acrylic-alpha));
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+      }
     }
     // 菜单视觉（pill / hover / 选中）收进 SidebarMenu.vue；这里只留容器间距：
     // 底部留白避开固定的「收起侧边栏」按钮

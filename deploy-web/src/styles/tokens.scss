@@ -13,6 +13,9 @@
   --app-surface: #ffffff;
   /* 面层 RGB 分量：供毛玻璃半透明混色 rgba(var(--app-surface-rgb), α) —— 悬浮侧栏 Acrylic 用 */
   --app-surface-rgb: 255, 255, 255;
+  /* 压克力玻璃面层 alpha：偏低使背后主卡片内容经模糊朦胧透出（毛玻璃质感来源）。
+     浅色画布本就浅、需更透才看得出玻璃感，故比深色低一档 */
+  --app-acrylic-alpha: 0.6;
   --app-border: #e8eaed;
 
   /* 圆角标度：控件 6 / 卡片 8 / 弹窗 12 / 标签 4 */
@@ -86,6 +89,8 @@ html.dark {
   --app-surface: var(--el-bg-color);
   /* 深色面层 RGB：对应 EP 深色 --el-bg-color (#141414)；CSS 无法从 hex 变量提取分量，故并列硬编一份 */
   --app-surface-rgb: 20, 20, 20;
+  /* 深色背景本就深、透出的是亮色内容块，过透会压低菜单亮字对比，故保持略实 */
+  --app-acrylic-alpha: 0.72;
   --app-border: var(--el-border-color-lighter);
 
   --app-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.4);
