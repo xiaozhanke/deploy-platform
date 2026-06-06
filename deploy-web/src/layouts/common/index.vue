@@ -52,6 +52,11 @@ const toggleCollapse = () => {
   isCollapse.value = !isCollapse.value
 }
 
+// 折叠态「悬停滑出」：鼠标悬停在收起的侧栏上时临时以浮层形式滑出展开。
+// 物理占位宽度保持不变（见 asideWidth）—— 浮层只在视觉上变宽，不挤压右侧主卡片、无排版抖动
+const sidebarHovered = ref(false)
+const isSidebarFloating = computed(() => isCollapse.value && sidebarHovered.value)
+
 // 手机抽屉式侧栏开关，由顶栏汉堡触发
 const mobileMenuVisible = ref(false)
 
@@ -77,13 +82,20 @@ watch(
   },
 )
 
-// 固定侧栏宽度（手机走抽屉、固定侧栏不占位 → 0）
+// 物理占位宽度：驱动主区 padding-left 给固定侧栏让位（手机走抽屉、固定侧栏不占位 → 0）。
+// 悬停滑出时此值保持不变 —— 浮层只在视觉上撑宽，不推动右侧主卡片，避免排版抖动
 const asideWidth = computed(() => {
   if (isMobile.value) {
     return '0px'
   }
   return isCollapse.value ? '64px' : '200px'
 })
+
+// 视觉显示宽度：驱动侧栏自身与底部收起按钮。悬停滑出时临时撑到 200px，其余等于物理占位
+const asideVisualWidth = computed(() => (isSidebarFloating.value ? '200px' : asideWidth.value))
+
+// 菜单文字显隐：折叠态平时只剩图标条；悬停滑出时恢复文字标签，与浮层撑开同步
+const isMenuCollapsed = computed(() => isCollapse.value && !sidebarHovered.value)
 
 // 左侧栏导航配置（ADR-0012）：只管分组 / 顺序 / 图标。
 // 标题不在此硬编码——由 navGroups 从 route.meta.title 解析（§15 R1 单一真源），消除「首页 vs 仪表盘」漂移；
@@ -286,16 +298,23 @@ const handleUserCommand = async (command: string | number | object) => {
       </div>
     </el-header>
     <el-container>
-      <el-aside v-if="!isMobile" class="layout-aside" :width="asideWidth">
+      <el-aside
+        v-if="!isMobile"
+        class="layout-aside"
+        :class="{ 'is-floating': isSidebarFloating }"
+        :width="asideVisualWidth"
+        @mouseenter="sidebarHovered = true"
+        @mouseleave="sidebarHovered = false"
+      >
         <el-scrollbar>
           <sidebar-menu
             class="aside-menu"
             :groups="navGroups"
-            :collapse="isCollapse"
+            :collapse="isMenuCollapsed"
             :active-index="route.path"
           />
         </el-scrollbar>
-        <div class="toggle-collapse-button" :style="{ width: asideWidth }" @click="toggleCollapse">
+        <div class="toggle-collapse-button" :style="{ width: asideVisualWidth }" @click="toggleCollapse">
           <el-icon>
             <DArrowLeft v-show="!isCollapse" />
             <DArrowRight v-show="isCollapse" />
@@ -416,7 +435,20 @@ const handleUserCommand = async (command: string | number | object) => {
     top: var(--system-header-height);
     left: 0;
     bottom: 0;
-    transition: width var(--el-transition-duration);
+    // 浮于主卡片之上：折叠态悬停滑出时侧栏视觉变宽，需盖在卡片上层（低于固定顶栏 z-index:1000）
+    z-index: 900;
+    // 宽度过渡承载「悬停滑出」；底色 / 投影同步过渡，使浮层滑入滑出时柔和淡显、避免回缩时文字穿透
+    transition:
+      width var(--el-transition-duration),
+      background-color var(--el-transition-duration),
+      box-shadow var(--el-transition-duration);
+    // 折叠态「悬停滑出」浮层：物理占位仍 64px、不挤压主卡片，此处只在视觉上撑宽并浮起。
+    // 实底面层 + 投影让浮层文字在主卡片之上清晰可读
+    &.is-floating {
+      background-color: var(--app-surface);
+      border-radius: 0 var(--app-radius-overlay) var(--app-radius-overlay) 0;
+      box-shadow: var(--app-shadow-lg);
+    }
     // 菜单视觉（pill / hover / 选中）收进 SidebarMenu.vue；这里只留容器间距：
     // 底部留白避开固定的「收起侧边栏」按钮
     .aside-menu {
