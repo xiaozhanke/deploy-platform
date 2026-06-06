@@ -95,7 +95,16 @@ onMounted(async () => {
 </script>
 
 <template>
-  <el-dialog title="选择文件" width="1000px" top="5vh" draggable :close-on-click-modal="false" @close="handleClose">
+  <!-- 挂到 body 渲染：避免被外层 sticky 卡片创建的层叠上下文困住，导致全屏遮罩盖不住背景 -->
+  <el-dialog
+    title="选择文件"
+    width="1000px"
+    top="5vh"
+    draggable
+    :append-to-body="true"
+    :close-on-click-modal="false"
+    @close="handleClose"
+  >
     <section class="file-select-section">
       <filter-bar layout="grid" :model="form" @query="handleQuery" @reset="handleReset">
         <filter-field label="文件名" prop="fileName">

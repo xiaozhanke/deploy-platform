@@ -50,7 +50,15 @@ onActivated(async () => {
 </script>
 
 <template>
-  <el-dialog title="选择服务器" width="880px" draggable :close-on-click-modal="false" @close="handleClose">
+  <!-- 挂到 body 渲染：避免被外层 sticky 卡片创建的层叠上下文困住，导致全屏遮罩盖不住背景 -->
+  <el-dialog
+    title="选择服务器"
+    width="880px"
+    draggable
+    :append-to-body="true"
+    :close-on-click-modal="false"
+    @close="handleClose"
+  >
     <el-table
       :data="serverList"
       highlight-current-row
