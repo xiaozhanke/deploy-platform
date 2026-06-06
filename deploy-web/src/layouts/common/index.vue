@@ -314,14 +314,16 @@ const handleUserCommand = async (command: string | number | object) => {
             :active-index="route.path"
           />
         </el-scrollbar>
-        <div class="toggle-collapse-button" :style="{ width: asideVisualWidth }" @click="toggleCollapse">
+        <div
+          class="toggle-collapse-button"
+          :class="{ 'is-collapsed': isCollapse }"
+          @click="toggleCollapse"
+        >
           <el-icon>
             <DArrowLeft v-show="!isCollapse" />
             <DArrowRight v-show="isCollapse" />
           </el-icon>
-          <el-collapse-transition>
-            <span v-show="!isCollapse" class="collapse-text">收起侧边栏</span>
-          </el-collapse-transition>
+          <span class="collapse-text">收起侧边栏</span>
         </div>
       </el-aside>
       <el-main class="layout-main" :style="{ paddingLeft: asideWidth }">
@@ -361,6 +363,15 @@ const handleUserCommand = async (command: string | number | object) => {
   // 外壳锁定视口高、自身不滚动：页面滚动收进主视口卡片内部，顶栏 / 侧栏保持物理静止
   height: 100vh;
   overflow: hidden;
+  // 四周内嵌留白量随断点收敛（手机基线 0 → 平板 12 → 宽桌面 16）。上提到外壳层作单一真源，
+  // 同时驱动悬浮侧栏的四向定位与主视口卡片的 margin / height，三者恒定同源、不会各算各的而错位
+  --main-inset: 0px;
+  @include respond-to('sm') {
+    --main-inset: var(--app-space-3);
+  }
+  @include respond-to('lg') {
+    --main-inset: var(--app-space-4);
+  }
   .layout-header {
     height: var(--system-header-height);
     // 无界：顶栏背景透明、去底部硬描边，与画布融为一体，内容浮于其上
@@ -429,24 +440,32 @@ const handleUserCommand = async (command: string | number | object) => {
     }
   }
   .layout-aside {
-    // 无界：侧栏背景透明、去右缘硬描边，菜单 pill 直接浮于画布之上
+    // 无界：展开态与常规折叠态（未悬停）背景透明、无可见边框、无投影；
+    // 菜单 pill 与底部收起按钮作为独立圆角矩形直接浮于画布之上，维持轻盈视觉
     background-color: transparent;
+    // 悬浮卡片定位：废除贴边，四向用响应式 --main-inset 内嵌（与主卡片同源），
+    // 形成距视口左 / 上 / 下三边等距的浮岛
     position: fixed;
-    top: var(--system-header-height);
-    left: 0;
-    bottom: 0;
+    top: calc(var(--system-header-height) + var(--main-inset));
+    left: var(--main-inset);
+    bottom: var(--main-inset);
+    // 预留 1px 透明边框：常态不可见（等同无边框），仅为悬停滑出时让边框淡显而不挤动内容
+    border: 1px solid transparent;
     // 浮于主卡片之上：折叠态悬停滑出时侧栏视觉变宽，需盖在卡片上层（低于固定顶栏 z-index:1000）
     z-index: 900;
-    // 宽度过渡承载「悬停滑出」；底色 / 投影同步过渡，使浮层滑入滑出时柔和淡显、避免回缩时文字穿透
+    // 宽度过渡承载「悬停滑出」；底色 / 边框 / 投影同步过渡，使浮层滑入滑出时柔和淡显、避免回缩时文字穿透
     transition:
       width var(--el-transition-duration),
       background-color var(--el-transition-duration),
+      border-color var(--el-transition-duration),
       box-shadow var(--el-transition-duration);
-    // 折叠态「悬停滑出」浮层：物理占位仍 64px、不挤压主卡片，此处只在视觉上撑宽并浮起。
+    // 折叠态「悬停滑出」浮层：物理占位仍 64px、不挤压主卡片，此处只在视觉上撑宽并浮起为「微悬浮」卡片
     &.is-floating {
       // 兜底：不支持 backdrop-filter 的浏览器用实底面层，保证浮层文字在主卡片之上始终清晰可读
       background-color: var(--app-surface);
-      border-radius: 0 var(--app-radius-overlay) var(--app-radius-overlay) 0;
+      // 边框淡显（宽度已由常态透明边框预留，仅过渡颜色、不挤动内容）；四角圆角对齐主卡片
+      border-color: var(--app-border);
+      border-radius: var(--app-radius-overlay);
       box-shadow: var(--app-shadow-lg);
       // 压克力毛玻璃：支持背景模糊时升级为半透明面层 + 背景模糊，主卡片内容在侧栏背后柔化透出。
       // 半透明色复用 --app-surface-rgb（浅 / 深各自取值），alpha 走 --app-acrylic-alpha（浅更透、深略实），
@@ -458,29 +477,54 @@ const handleUserCommand = async (command: string | number | object) => {
       }
     }
     // 菜单视觉（pill / hover / 选中）收进 SidebarMenu.vue；这里只留容器间距：
-    // 底部留白避开固定的「收起侧边栏」按钮
+    // 底部留白避开绝对定位的「收起侧边栏」按钮
     .aside-menu {
-      // 底部留白避开固定的「收起侧边栏」按钮；用 padding 确保滚动到底部时仍有间距
-      padding-bottom: 48px;
+      // 底部留白避开绝对定位的「收起侧边栏」按钮（按钮 8px 底距 + 48px 高 + 2px 上外边距≈58px）；
+      // 用 padding 确保滚动到底部时末项不被按钮遮挡、仍留余量
+      padding-bottom: 64px;
     }
+    // 收起按钮拟菜单项：绝对定位贴容器底部，左右 8px 外边距 + 6px 圆角与菜单 pill 同源对齐；
+    // 常态背景透明融入画布，hover 时显现圆角矩形填充背景给出可点反馈
     .toggle-collapse-button {
-      position: fixed;
-      bottom: 0;
+      position: absolute;
+      bottom: var(--app-space-2);
+      left: 0;
+      right: 0;
+      width: auto;
+      // 与 SidebarMenu 菜单项 margin: 2px 8px 一致，使按钮与图标列、左右边距精确对齐
+      margin: 2px var(--app-space-2);
       display: flex;
       align-items: center;
+      // 左内边距对齐菜单图标列，使收起箭头与上方菜单图标同列
       padding: 0 var(--el-menu-base-level-padding);
       cursor: pointer;
-      width: 200px;
       height: 48px;
       color: var(--el-text-color-regular);
-      // 无界：按钮背景透明融入画布、去描边；仅 hover 时以填充色给出可点反馈
+      border-radius: var(--app-radius-control);
+      // 无界：常态背景透明融入画布；仅 hover 时以填充色给出圆角矩形可点反馈
       background-color: transparent;
-      transition: width var(--el-transition-duration);
+      // 宽度由 left / right 自适应撑满，无需过渡 width，仅过渡 hover 背景色
+      transition: background-color var(--el-transition-duration);
       &:hover {
         background-color: var(--el-fill-color-light);
       }
+      // 文字纯 CSS 擦除：随窄态收成 0 宽并淡出，与菜单 .menu-label 的收缩节奏一致，
+      // 替代 el-collapse-transition，规避其高度撑开 / 回缩时的纵向抖动
       .collapse-text {
         margin-left: 0.5rem;
+        overflow: hidden;
+        white-space: nowrap;
+        max-width: 100px;
+        opacity: 1;
+        transition:
+          max-width var(--el-transition-duration),
+          opacity var(--el-transition-duration),
+          margin-left var(--el-transition-duration);
+      }
+      &.is-collapsed .collapse-text {
+        max-width: 0;
+        margin-left: 0;
+        opacity: 0;
       }
     }
   }
@@ -493,9 +537,7 @@ const handleUserCommand = async (command: string | number | object) => {
     // 主视口悬浮卡片：唯一的白色面层容器，浮于无界画布之上，承载并裁剪所有页面内容
     .main-wrapper {
       position: relative;
-      // 内嵌留白量随断点收敛（手机基线 0 → 平板 12 → 宽桌面 16）。同一变量同时驱动
-      // margin 与下方 height 计算，二者恒定同步——改一处即可，不会各改各的而错位
-      --main-inset: 0px;
+      // --main-inset 已上提到 .common-layout 作单一真源（与悬浮侧栏共用）；此处仅消费：
       // 定高 = 视口高 − 顶栏 − 上下各一份内嵌留白；配合等值 margin 形成四周内嵌留白
       height: calc(100vh - var(--system-header-height) - 2 * var(--main-inset));
       margin: var(--main-inset);
@@ -507,14 +549,12 @@ const handleUserCommand = async (command: string | number | object) => {
       overflow-y: auto;
       // 常驻预留滚动槽：内容增减令滚动条出现 / 消失时，卡片宽度恒定、不左右抖动
       scrollbar-gutter: stable;
-      // 平板（≥768，与侧栏收成图标条同阈值）：小幅内嵌 + 卡片级圆角
+      // 平板（≥768，与侧栏收成图标条同阈值）：卡片级圆角（内嵌量随外壳 --main-inset 同步收敛）
       @include respond-to('sm') {
-        --main-inset: var(--app-space-3);
         border-radius: var(--app-radius-card);
       }
-      // 宽桌面（≥1200，与侧栏完全展开同阈值）：完整内嵌 + 弹窗级大圆角
+      // 宽桌面（≥1200，与侧栏完全展开同阈值）：弹窗级大圆角
       @include respond-to('lg') {
-        --main-inset: var(--app-space-4);
         border-radius: var(--app-radius-overlay);
       }
       // offline 非阻塞细横幅：danger 语义，常驻直到恢复
