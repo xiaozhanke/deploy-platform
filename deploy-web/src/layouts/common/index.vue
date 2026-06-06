@@ -505,6 +505,8 @@ const handleUserCommand = async (command: string | number | object) => {
       border-radius: 0;
       // 滚动锁进卡片内部：顶栏 / 侧栏不随内容滚动；圆角自动裁剪溢出内容
       overflow-y: auto;
+      // 常驻预留滚动槽：内容增减令滚动条出现 / 消失时，卡片宽度恒定、不左右抖动
+      scrollbar-gutter: stable;
       // 平板（≥768，与侧栏收成图标条同阈值）：小幅内嵌 + 卡片级圆角
       @include respond-to('sm') {
         --main-inset: var(--app-space-3);
