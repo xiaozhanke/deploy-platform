@@ -493,14 +493,28 @@ const handleUserCommand = async (command: string | number | object) => {
     // 主视口悬浮卡片：唯一的白色面层容器，浮于无界画布之上，承载并裁剪所有页面内容
     .main-wrapper {
       position: relative;
-      // 定高 = 视口高 − 顶栏 − 上下各 16px 留白；配合等值 margin 形成四周内嵌留白
-      height: calc(100vh - var(--system-header-height) - 2 * var(--app-space-4));
-      margin: var(--app-space-4);
+      // 内嵌留白量随断点收敛（手机基线 0 → 平板 12 → 宽桌面 16）。同一变量同时驱动
+      // margin 与下方 height 计算，二者恒定同步——改一处即可，不会各改各的而错位
+      --main-inset: 0px;
+      // 定高 = 视口高 − 顶栏 − 上下各一份内嵌留白；配合等值 margin 形成四周内嵌留白
+      height: calc(100vh - var(--system-header-height) - 2 * var(--main-inset));
+      margin: var(--main-inset);
       background-color: var(--app-surface);
       border: 1px solid var(--app-border);
-      border-radius: var(--app-radius-overlay);
+      // 手机基线：直角、零内嵌、铺满全屏无缝平铺；平板 / 宽桌面逐级放大留白与圆角
+      border-radius: 0;
       // 滚动锁进卡片内部：顶栏 / 侧栏不随内容滚动；圆角自动裁剪溢出内容
       overflow-y: auto;
+      // 平板（≥768，与侧栏收成图标条同阈值）：小幅内嵌 + 卡片级圆角
+      @include respond-to('sm') {
+        --main-inset: var(--app-space-3);
+        border-radius: var(--app-radius-card);
+      }
+      // 宽桌面（≥1200，与侧栏完全展开同阈值）：完整内嵌 + 弹窗级大圆角
+      @include respond-to('lg') {
+        --main-inset: var(--app-space-4);
+        border-radius: var(--app-radius-overlay);
+      }
       // offline 非阻塞细横幅：danger 语义，常驻直到恢复
       .ws-offline-banner {
         position: sticky;
