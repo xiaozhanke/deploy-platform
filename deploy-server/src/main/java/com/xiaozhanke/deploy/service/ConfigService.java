@@ -29,7 +29,7 @@ public class ConfigService {
     private final AuthenticationHelper authenticationHelper;
 
     public ConfigService(FreeMarkerConfigurer freeMarkerConfigurer, ConfigChangeProducer configChangeProducer,
-                        AuthenticationHelper authenticationHelper) {
+                         AuthenticationHelper authenticationHelper) {
         this.freeMarkerConfigurer = freeMarkerConfigurer;
         this.configChangeProducer = configChangeProducer;
         this.authenticationHelper = authenticationHelper;

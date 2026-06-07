@@ -1,9 +1,4 @@
-import type {
-  ApplicationTypeEnum,
-  DeploymentStatusEnum,
-  JobStatusEnum,
-  JobTypeEnum,
-} from '@/enums/platform'
+import type { ApplicationTypeEnum, DeploymentStatusEnum, JobStatusEnum, JobTypeEnum } from '@/enums/platform'
 import type { ServerRecord } from './server'
 import type { FileRecord } from './file'
 

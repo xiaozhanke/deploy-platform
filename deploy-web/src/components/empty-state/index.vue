@@ -23,7 +23,9 @@ withDefaults(
 <template>
   <div class="empty-state">
     <el-icon class="empty-state__icon"><component :is="icon" /></el-icon>
-    <p class="empty-state__desc"><slot>{{ description }}</slot></p>
+    <p class="empty-state__desc">
+      <slot>{{ description }}</slot>
+    </p>
     <div v-if="$slots.action" class="empty-state__action">
       <slot name="action" />
     </div>

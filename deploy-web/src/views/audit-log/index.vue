@@ -67,11 +67,7 @@ onActivated(() => {
       </filter-field>
     </filter-bar>
 
-    <table-pagination
-      ref="tablePaginationRef"
-      show-overflow-tooltip
-      :query-method="queryMethod"
-    >
+    <table-pagination ref="tablePaginationRef" show-overflow-tooltip :query-method="queryMethod">
       <el-table-column type="index" label="序号" width="54" fixed="left" />
       <el-table-column prop="operator" label="操作人" width="120" />
       <el-table-column prop="operationType" label="操作类型" width="140">

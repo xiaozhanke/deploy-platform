@@ -177,9 +177,13 @@ const handleClosed = () => {
       <el-descriptions-item label="主机密钥算法">{{ server?.serverHostKeyAlgorithms }}</el-descriptions-item>
       <el-descriptions-item label="连接超时时间(毫秒)">{{ server?.connectionTimeout }}</el-descriptions-item>
       <el-descriptions-item label="启用压缩">{{ server?.compressionEnabled ? '是' : '否' }}</el-descriptions-item>
-      <el-descriptions-item label="严格主机密钥检查">{{ server?.strictHostKeyChecking ? '是' : '否' }}</el-descriptions-item>
+      <el-descriptions-item label="严格主机密钥检查">
+        {{ server?.strictHostKeyChecking ? '是' : '否' }}
+      </el-descriptions-item>
       <el-descriptions-item label="启用X11转发">{{ server?.x11ForwardingEnabled ? '是' : '否' }}</el-descriptions-item>
-      <el-descriptions-item label="启用端口转发">{{ server?.portForwardingEnabled ? '是' : '否' }}</el-descriptions-item>
+      <el-descriptions-item label="启用端口转发">
+        {{ server?.portForwardingEnabled ? '是' : '否' }}
+      </el-descriptions-item>
       <el-descriptions-item label="服务器描述" :span="2">{{ server?.description }}</el-descriptions-item>
     </el-descriptions>
     <el-form v-else ref="formRef" :model="form" :rules="formRules" label-width="140px">

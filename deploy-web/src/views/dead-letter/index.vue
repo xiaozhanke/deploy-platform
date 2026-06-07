@@ -70,12 +70,7 @@ onActivated(() => {
     <filter-bar :model="form" @query="handleQuery" @reset="handleReset">
       <filter-field label="重试状态" prop="retried">
         <el-select v-model="form.retried" placeholder="全部" clearable>
-          <el-option
-            v-for="item in retriedOptions"
-            :key="String(item.value)"
-            :value="item.value"
-            :label="item.label"
-          />
+          <el-option v-for="item in retriedOptions" :key="String(item.value)" :value="item.value" :label="item.label" />
         </el-select>
       </filter-field>
     </filter-bar>

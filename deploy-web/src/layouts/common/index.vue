@@ -9,7 +9,6 @@ import {
   DataBoard,
   DocumentChecked,
   Files,
-  Fold,
   Grid,
   Key,
   Monitor,
@@ -238,11 +237,7 @@ const handleUserCommand = async (command: string | number | object) => {
       <el-scrollbar>
         <sidebar-menu class="aside-menu" :groups="navGroups" :collapse="isMenuCollapsed" :active-index="route.path" />
       </el-scrollbar>
-      <div
-        class="toggle-collapse-button"
-        :class="{ 'is-collapsed-btn': isMenuCollapsed }"
-        @click="toggleCollapse"
-      >
+      <div class="toggle-collapse-button" :class="{ 'is-collapsed-btn': isMenuCollapsed }" @click="toggleCollapse">
         <el-icon>
           <DArrowLeft v-show="!isCollapse" />
           <DArrowRight v-show="isCollapse" />

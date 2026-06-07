@@ -33,13 +33,7 @@ defineProps<{
 
 <template>
   <!-- collapse="false" 恒不启用：窄态由 is-rail + CSS 实现，规避 EP 折叠重渲染卡顿 -->
-  <el-menu
-    class="sidebar-menu"
-    :class="{ 'is-rail': collapse }"
-    :collapse="false"
-    router
-    :default-active="activeIndex"
-  >
+  <el-menu class="sidebar-menu" :class="{ 'is-rail': collapse }" :collapse="false" router :default-active="activeIndex">
     <template v-for="(group, groupIndex) in groups" :key="group.title || groupIndex">
       <!-- 分组小标题（不可点，窄态 CSS 收起） -->
       <div v-if="group.title" class="sidebar-group-title">{{ group.title }}</div>

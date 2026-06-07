@@ -387,10 +387,7 @@ export const deploymentRecordUpdatePackage = (id: string, fileRecordId: string):
  * @param params 作业类型与客户端请求 Id（用于幂等）
  * @returns 新建的部署作业
  */
-export const deploymentJobCreate = (
-  deploymentRecordId: string,
-  params: CreateJobRequest,
-): Promise<DeploymentJob> => {
+export const deploymentJobCreate = (deploymentRecordId: string, params: CreateJobRequest): Promise<DeploymentJob> => {
   return request.post(`/deployments/${deploymentRecordId}/jobs`, params)
 }
 

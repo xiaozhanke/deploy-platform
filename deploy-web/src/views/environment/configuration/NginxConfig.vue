@@ -375,13 +375,7 @@ onActivated(async () => {
           <el-button class="action-button" :icon="Plus" :disabled="!sessionId" @click="handleNginxConfigAdd" />
         </el-tooltip>
         <el-tooltip content="测试配置">
-          <el-button
-            class="action-button"
-            plain
-            :icon="Odometer"
-            :disabled="!sessionId"
-            @click="handleNginxTest"
-          />
+          <el-button class="action-button" plain :icon="Odometer" :disabled="!sessionId" @click="handleNginxTest" />
         </el-tooltip>
         <el-tooltip content="重载配置">
           <el-button
@@ -411,13 +405,7 @@ onActivated(async () => {
           />
         </el-tooltip>
         <el-tooltip content="刷新文件列表">
-          <el-button
-            class="action-button"
-            plain
-            :icon="Refresh"
-            :disabled="!sessionId"
-            @click="fetchFileList"
-          />
+          <el-button class="action-button" plain :icon="Refresh" :disabled="!sessionId" @click="fetchFileList" />
         </el-tooltip>
       </div>
     </div>
@@ -437,12 +425,7 @@ onActivated(async () => {
           />
         </el-tooltip>
         <el-tooltip content="手动设置">
-          <el-button
-            class="config-path-action"
-            :icon="EditPen"
-            :disabled="!sessionId"
-            @click="handleEditConfigDir"
-          />
+          <el-button class="config-path-action" :icon="EditPen" :disabled="!sessionId" @click="handleEditConfigDir" />
         </el-tooltip>
       </div>
     </div>

@@ -191,7 +191,11 @@ defineExpose({
     <!-- 当前步骤状态：补充语义指示（步骤条连线仍由上方 el-steps 的 :status 驱动） -->
     <div class="step-status">
       <span class="step-status__label">当前步骤：</span>
-      <status-dot :intent="currentStepStatus.intent" :hollow="currentStepStatus.hollow" :pulse="currentStepStatus.pulse">
+      <status-dot
+        :intent="currentStepStatus.intent"
+        :hollow="currentStepStatus.hollow"
+        :pulse="currentStepStatus.pulse"
+      >
         {{ currentStepStatus.text }}
       </status-dot>
     </div>

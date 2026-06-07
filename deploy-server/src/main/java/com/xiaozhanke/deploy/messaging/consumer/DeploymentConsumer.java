@@ -51,7 +51,9 @@ public class DeploymentConsumer implements RocketMQListener<DeploymentJobMessage
 
         AcquireResult acquireResult = jobAcquisitionService.acquire(msg.jobId(), msg.deploymentRecordId());
         switch (acquireResult) {
-            case ALREADY_HANDLED -> { return; }
+            case ALREADY_HANDLED -> {
+                return;
+            }
             case RECORD_BUSY -> throw new RecordBusyException(String.format(
                     "记录 [%s] 有在途作业,作业 [%s] 稍后重试", msg.deploymentRecordId(), msg.jobId()));
             case ACQUIRED -> { /* 占据成功,继续执行 */ }

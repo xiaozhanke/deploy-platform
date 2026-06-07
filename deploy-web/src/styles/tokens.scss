@@ -43,10 +43,9 @@
 
   /* 字体：系统字体栈优先，含 CJK 回退；mono 单立一组 */
   --app-font-sans:
-    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC',
-    'HarmonyOS Sans SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
-  --app-font-mono:
-    ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, 'Liberation Mono', monospace;
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'HarmonyOS Sans SC',
+    'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --app-font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, 'Liberation Mono', monospace;
 
   /**
    * 终端（xterm）专用配色。终端只读控制台输出、恒暗——长时间看日志/SSH

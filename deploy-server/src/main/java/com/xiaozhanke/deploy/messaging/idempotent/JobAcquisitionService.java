@@ -32,8 +32,8 @@ public class JobAcquisitionService {
      * @param jobId              作业 Id
      * @param deploymentRecordId 所属部署记录 Id(记录串行的互斥维度)
      * @return 占据结果:{@link AcquireResult#ACQUIRED} 可执行 SSH;
-     *         {@link AcquireResult#ALREADY_HANDLED} 重复投递(或已取消),直接 ACK;
-     *         {@link AcquireResult#RECORD_BUSY} 记录被占,需稍后重投
+     * {@link AcquireResult#ALREADY_HANDLED} 重复投递(或已取消),直接 ACK;
+     * {@link AcquireResult#RECORD_BUSY} 记录被占,需稍后重投
      */
     @Transactional
     public AcquireResult acquire(String jobId, String deploymentRecordId) {

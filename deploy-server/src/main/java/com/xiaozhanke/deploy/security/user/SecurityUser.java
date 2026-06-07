@@ -78,8 +78,8 @@ public class SecurityUser implements UserDetails, CredentialsContainer {
         this(username, displayName, password, phone, email, authorities, true, true, true, true);
     }
 
-    public SecurityUser(String username, String displayName, String password, String phone, String email, Collection<
-            ? extends GrantedAuthority> authorities, boolean enabled, boolean accountNonExpired,
+    public SecurityUser(String username, String displayName, String password, String phone, String email,
+                        Collection<? extends GrantedAuthority> authorities, boolean enabled, boolean accountNonExpired,
                         boolean accountNonLocked, boolean credentialsNonExpired) {
         this.username = username;
         this.displayName = displayName;

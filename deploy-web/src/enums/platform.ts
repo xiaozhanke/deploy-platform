@@ -102,9 +102,8 @@ const JOB_STATUS_TAG_TYPE: Record<string, 'success' | 'warning' | 'info' | 'prim
 /**
  * 取作业状态对应的 el-tag 类型,未知状态回退到 info。
  */
-export const jobStatusTagType = (
-  status?: string,
-): 'success' | 'warning' | 'info' | 'primary' | 'danger' => (status && JOB_STATUS_TAG_TYPE[status]) || 'info'
+export const jobStatusTagType = (status?: string): 'success' | 'warning' | 'info' | 'primary' | 'danger' =>
+  (status && JOB_STATUS_TAG_TYPE[status]) || 'info'
 
 /**
  * 审计操作类型枚举(对应后端 AuditOperationTypeEnum,场景 4)

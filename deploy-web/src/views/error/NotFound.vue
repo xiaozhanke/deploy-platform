@@ -12,7 +12,12 @@ const goHome = () => router.push('/')
 
 <template>
   <div class="not-found">
-    <error-state title="页面不存在" description="您访问的页面不存在或已被移除" action-text="返回首页" @action="goHome" />
+    <error-state
+      title="页面不存在"
+      description="您访问的页面不存在或已被移除"
+      action-text="返回首页"
+      @action="goHome"
+    />
   </div>
 </template>
 

@@ -394,13 +394,7 @@ onActivated(async () => {
           />
         </el-tooltip>
         <el-tooltip content="刷新文件列表">
-          <el-button
-            class="action-button"
-            plain
-            :icon="Refresh"
-            :disabled="!sessionId"
-            @click="fetchFileList"
-          />
+          <el-button class="action-button" plain :icon="Refresh" :disabled="!sessionId" @click="fetchFileList" />
         </el-tooltip>
       </div>
     </div>

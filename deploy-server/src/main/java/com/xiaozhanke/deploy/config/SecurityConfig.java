@@ -55,6 +55,12 @@ public class SecurityConfig {
     private final AuthenticationEntryPoint authenticationEntryPoint;
     private final AccessDeniedHandler accessDeniedHandler;
     private final CorsProperties corsProperties;
+    /**
+     * OIDC 登出校验失败时的优雅降级跳转地址（固定可信路径，避免开放重定向）。
+     * 默认指向前端 SPA 落地路由；relative 路径由浏览器按当前 origin 解析，dev / prod 通用。
+     */
+    @Value("${app.logout.error-redirect-uri:/ui/login/landing}")
+    private String logoutErrorRedirectUri;
 
     public SecurityConfig(AuthenticationEntryPoint authenticationEntryPoint,
                           AccessDeniedHandler accessDeniedHandler,
@@ -63,13 +69,6 @@ public class SecurityConfig {
         this.accessDeniedHandler = accessDeniedHandler;
         this.corsProperties = corsProperties;
     }
-
-    /**
-     * OIDC 登出校验失败时的优雅降级跳转地址（固定可信路径，避免开放重定向）。
-     * 默认指向前端 SPA 落地路由；relative 路径由浏览器按当前 origin 解析，dev / prod 通用。
-     */
-    @Value("${app.logout.error-redirect-uri:/ui/login/landing}")
-    private String logoutErrorRedirectUri;
 
     /**
      * 配置 OAuth2 授权服务器的安全过滤链

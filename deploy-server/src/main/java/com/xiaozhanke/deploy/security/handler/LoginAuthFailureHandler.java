@@ -7,6 +7,7 @@ import com.xiaozhanke.deploy.messaging.producer.AuditLogProducer;
 import com.xiaozhanke.deploy.repository.PlatformUserRepository;
 import com.xiaozhanke.deploy.security.exception.AuthenticationErrorCode;
 import com.xiaozhanke.deploy.util.ClientIpResolver;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.Setter;
@@ -16,8 +17,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
-
-import jakarta.servlet.ServletException;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -40,14 +39,11 @@ import java.time.LocalDateTime;
 public class LoginAuthFailureHandler implements AuthenticationFailureHandler {
 
     private static final String FAILURE_URL_TEMPLATE = "/login?error=%s";
-
+    private final SimpleUrlAuthenticationFailureHandler delegate = new SimpleUrlAuthenticationFailureHandler();
     @Setter(onMethod_ = @Autowired)
     private PlatformUserRepository platformUserRepository;
-
     @Setter(onMethod_ = @Autowired)
     private AuditLogProducer auditLogProducer;
-
-    private final SimpleUrlAuthenticationFailureHandler delegate = new SimpleUrlAuthenticationFailureHandler();
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request,

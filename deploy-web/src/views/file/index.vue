@@ -156,12 +156,7 @@ onActivated(() => {
       </filter-field>
       <filter-field label="使用范围" prop="scope">
         <el-select v-model="form.scope" placeholder="使用范围" clearable>
-          <el-option
-            v-for="item in FileScopeEnum.options"
-            :key="item.value"
-            :value="item.value"
-            :label="item.label"
-          />
+          <el-option v-for="item in FileScopeEnum.options" :key="item.value" :value="item.value" :label="item.label" />
         </el-select>
       </filter-field>
       <filter-field label="分组 Id" prop="groupId">

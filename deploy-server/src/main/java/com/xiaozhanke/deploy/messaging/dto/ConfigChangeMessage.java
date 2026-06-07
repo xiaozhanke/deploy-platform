@@ -24,11 +24,17 @@ public record ConfigChangeMessage(
         LocalDateTime changeTime
 ) {
     public enum ChangeType {
-        /** 新增配置项 */
+        /**
+         * 新增配置项
+         */
         CREATED,
-        /** 更新已有配置项 */
+        /**
+         * 更新已有配置项
+         */
         UPDATED,
-        /** 删除配置项 */
+        /**
+         * 删除配置项
+         */
         DELETED
     }
 }

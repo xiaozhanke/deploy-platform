@@ -37,7 +37,8 @@ public class DeploymentMQProducer {
     /**
      * 发送部署作业事务消息。
      *
-     * <p>本地事务(单行 INSERT)在 {@link com.xiaozhanke.deploy.messaging.transaction.DeploymentTransactionListener#executeLocalTransaction}
+     * <p>本地事务(单行 INSERT)在
+     * {@link com.xiaozhanke.deploy.messaging.transaction.DeploymentTransactionListener#executeLocalTransaction}
      * 内完成;commit 后由 consumer 拿到消息再执行 SSH。
      *
      * @param pendingJob 待入库作业(由 listener 在本地事务内 save)

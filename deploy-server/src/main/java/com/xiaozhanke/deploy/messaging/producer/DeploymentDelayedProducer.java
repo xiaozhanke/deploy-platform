@@ -32,13 +32,33 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class DeploymentDelayedProducer {
 
-    /** 单段接力链最大持续时间(秒):2 小时,对应 RocketMQ 内置最大 delayLevel */
+    /**
+     * 单段接力链最大持续时间(秒):2 小时,对应 RocketMQ 内置最大 delayLevel
+     */
     public static final long MAX_SINGLE_HOP_SECONDS = 2 * 60 * 60L;
-
+    // RocketMQ 18 级延迟秒数映射表(delayLevel 1~18,索引 0 占位)
+    private static final long[] LEVEL_SECONDS = {
+            0, 1, 5, 10, 30, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600, 1200, 1800, 3600, 7200};
     private final RocketMQTemplate rocketMQTemplate;
-
     @Value("${deploy-tool.mq.delayed-topic:deploy-job-delayed}")
     private String delayedTopic;
+
+    /**
+     * 把延迟秒数映射到 RocketMQ delayLevel(1~18)。
+     *
+     * <p>18 级延迟:1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h。
+     * 算法:找到 ≤ targetSeconds 的最大级别(不超发——延迟可以稍短,但不能比用户要求的晚)。
+     */
+    static int toDelayLevel(long targetSeconds) {
+        int bestLevel = 1;
+        for (int level = 18; level >= 1; level--) {
+            if (LEVEL_SECONDS[level] <= targetSeconds) {
+                bestLevel = level;
+                break;
+            }
+        }
+        return bestLevel;
+    }
 
     /**
      * 发送延迟作业消息(首段链节)。
@@ -117,26 +137,5 @@ public class DeploymentDelayedProducer {
                 .build();
         return rocketMQTemplate.syncSend(delayedTopic, message,
                 rocketMQTemplate.getProducer().getSendMsgTimeout(), delayLevel);
-    }
-
-    // RocketMQ 18 级延迟秒数映射表(delayLevel 1~18,索引 0 占位)
-    private static final long[] LEVEL_SECONDS = {
-            0, 1, 5, 10, 30, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600, 1200, 1800, 3600, 7200};
-
-    /**
-     * 把延迟秒数映射到 RocketMQ delayLevel(1~18)。
-     *
-     * <p>18 级延迟:1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h。
-     * 算法:找到 ≤ targetSeconds 的最大级别(不超发——延迟可以稍短,但不能比用户要求的晚)。
-     */
-    static int toDelayLevel(long targetSeconds) {
-        int bestLevel = 1;
-        for (int level = 18; level >= 1; level--) {
-            if (LEVEL_SECONDS[level] <= targetSeconds) {
-                bestLevel = level;
-                break;
-            }
-        }
-        return bestLevel;
     }
 }

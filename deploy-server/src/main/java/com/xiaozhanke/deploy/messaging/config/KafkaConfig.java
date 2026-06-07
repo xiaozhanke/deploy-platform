@@ -2,6 +2,7 @@ package com.xiaozhanke.deploy.messaging.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xiaozhanke.deploy.messaging.dto.AuditLogMessage;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -19,7 +20,6 @@ import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
-import org.apache.kafka.clients.admin.NewTopic;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -48,7 +48,7 @@ public class KafkaConfig {
      */
     @Bean
     public ProducerFactory<String, AuditLogMessage> auditProducerFactory(KafkaAuditProperties properties,
-                                                                          ObjectMapper objectMapper) {
+                                                                         ObjectMapper objectMapper) {
         Map<String, Object> configs = new HashMap<>();
         configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, properties.bootstrapServers());
         configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -80,7 +80,8 @@ public class KafkaConfig {
         configs.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         // 关闭自动提交,改由容器在每条记录处理成功后提交(AckMode.RECORD)——At-Least-Once
         configs.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
-        JsonDeserializer<AuditLogMessage> valueDeserializer = new JsonDeserializer<>(AuditLogMessage.class, objectMapper);
+        JsonDeserializer<AuditLogMessage> valueDeserializer = new JsonDeserializer<>(AuditLogMessage.class,
+                objectMapper);
         valueDeserializer.addTrustedPackages("com.xiaozhanke.deploy.messaging.dto");
         return new DefaultKafkaConsumerFactory<>(configs, new StringDeserializer(), valueDeserializer);
     }

@@ -40,7 +40,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DeploymentDelayedConsumer implements RocketMQListener<DelayedJobMessage> {
 
-    /** 接力链最大跳数(防御性保护,24h/2h=12 跳,上限 200 足够覆盖 16 天延迟) */
+    /**
+     * 接力链最大跳数(防御性保护,24h/2h=12 跳,上限 200 足够覆盖 16 天延迟)
+     */
     private static final int MAX_RELAY_HOPS = 200;
 
     private final JobAcquisitionService jobAcquisitionService;
@@ -77,7 +79,9 @@ public class DeploymentDelayedConsumer implements RocketMQListener<DelayedJobMes
         // 第三步:到期执行——委托给共享执行组件
         AcquireResult acquireResult = jobAcquisitionService.acquire(msg.jobId(), msg.deploymentRecordId());
         switch (acquireResult) {
-            case ALREADY_HANDLED -> { return; }
+            case ALREADY_HANDLED -> {
+                return;
+            }
             case RECORD_BUSY -> throw new RecordBusyException(String.format(
                     "记录 [%s] 有在途作业,延迟作业 [%s] 稍后重试",
                     msg.deploymentRecordId(), msg.jobId()));

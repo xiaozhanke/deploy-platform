@@ -118,8 +118,8 @@ public class SecurityUserService implements UserDetailsService {
      *   <li>已达阈值但冷却已到 → 自动放行一次（固定冷却，非滑动）</li>
      * </ol>
      *
-     * @param status             账户状态
-     * @param failedLoginCount   当前连续失败次数
+     * @param status              账户状态
+     * @param failedLoginCount    当前连续失败次数
      * @param lastFailedLoginTime 最后一次登录失败时间，可能为 null
      * @return true 表示账户未被锁定
      */

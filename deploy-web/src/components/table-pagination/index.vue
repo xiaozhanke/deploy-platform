@@ -165,7 +165,12 @@ defineExpose({
   <section class="table-pagination-section">
     <!-- 首屏加载失败：错误态取代骨架，不落空态 -->
     <div v-if="loadError" class="table-pagination-state">
-      <error-state title="加载失败" description="数据加载出错，请稍后重试" action-text="重试" @action="() => queryPage()" />
+      <error-state
+        title="加载失败"
+        description="数据加载出错，请稍后重试"
+        action-text="重试"
+        @action="() => queryPage()"
+      />
     </div>
     <!-- 首屏加载中：与布局同构的骨架行 -->
     <div v-else-if="showSkeleton" class="table-pagination-skeleton">

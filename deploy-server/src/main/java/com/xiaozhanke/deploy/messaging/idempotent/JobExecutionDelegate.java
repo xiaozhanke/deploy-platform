@@ -136,7 +136,7 @@ public class JobExecutionDelegate {
     }
 
     private void deadLetter(String jobId, String deploymentRecordId, JobTypeEnum jobType,
-                           String originalPayload, int retryCount, String reason) {
+                            String originalPayload, int retryCount, String reason) {
         log.error("作业 [{}] 进入死信: {}", jobId, reason);
         executionService.markDead(jobId, reason, retryCount);
         try {

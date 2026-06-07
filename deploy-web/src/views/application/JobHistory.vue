@@ -24,7 +24,9 @@ type StatusIntent = 'primary' | 'success' | 'warning' | 'danger' | 'info'
 // 作业状态 → StatusDot 形态：颜色走 --el-color-*，再叠形状/文字明暗作第二通道
 // PENDING 空心环（未开始）；IN_PROGRESS 蓝点脉冲（进行中）；SUCCESS 绿；
 // FAILED 橙（可重试）；DEAD 红（耗尽重试的终态）；CANCELLED 灰 + 文字弱化（已结束）
-const jobStatusDot = (status?: string): { intent: StatusIntent; hollow?: boolean; pulse?: boolean; muted?: boolean } => {
+const jobStatusDot = (
+  status?: string,
+): { intent: StatusIntent; hollow?: boolean; pulse?: boolean; muted?: boolean } => {
   switch (status) {
     case JobStatusEnum.PENDING.value:
       return { intent: 'info', hollow: true }
@@ -90,11 +92,11 @@ onMounted(() => {
 
 const handleCancel = async (row: DeploymentJob) => {
   try {
-    await ElMessageBox.confirm(
-      `确定要撤销作业 [${row.id.slice(0, 8)}...] 吗？撤销后无法恢复。`,
-      '撤销确认',
-      { confirmButtonText: '确定撤销', cancelButtonText: '取消', type: 'warning' },
-    )
+    await ElMessageBox.confirm(`确定要撤销作业 [${row.id.slice(0, 8)}...] 吗？撤销后无法恢复。`, '撤销确认', {
+      confirmButtonText: '确定撤销',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
     await deploymentJobCancel(row.id)
     ElMessage.success('作业已撤销')
     refresh()
