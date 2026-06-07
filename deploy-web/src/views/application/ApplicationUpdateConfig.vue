@@ -191,7 +191,7 @@ const handleFileRename = (filePath: string) => {
     <div v-else class="file-list-container">
       <el-empty v-if="fileList.length === 0" description="配置目录为空或不存在" />
       <el-table v-else :data="fileList" highlight-current-row show-overflow-tooltip>
-        <el-table-column prop="name" label="文件名" min-width="160" sortable>
+        <el-table-column prop="name" label="文件名" min-width="160px" sortable>
           <template #default="{ row }">
             <div class="file-name">
               <el-icon><Document /></el-icon>
@@ -199,18 +199,18 @@ const handleFileRename = (filePath: string) => {
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="permissions" label="读写权限" width="120" />
-        <el-table-column prop="size" label="文件大小" width="104" sortable>
+        <el-table-column prop="permissions" label="读写权限" width="120px" />
+        <el-table-column prop="size" label="文件大小" width="104px" sortable>
           <template #default="{ row }">
             <span>{{ $formatFileSize(row.size) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="updateTime" label="更新时间" width="172" sortable>
+        <el-table-column prop="updateTime" label="更新时间" width="182px" sortable>
           <template #default="{ row }">
             {{ $formatDateTime(row.updateTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="292" fixed="right">
+        <el-table-column label="操作" width="292px" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link @click="handleFileView(row.path)">查看</el-button>
             <el-button link @click="handleFileEdit(row.path)">编辑</el-button>

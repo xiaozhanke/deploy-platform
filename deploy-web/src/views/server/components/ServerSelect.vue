@@ -66,18 +66,18 @@ onActivated(async () => {
       @selection-change="handleSelectionChange"
       @row-dblclick="handleRowDoubleClick"
     >
-      <el-table-column type="selection" width="42" />
-      <el-table-column prop="name" label="服务器名称" min-width="160" />
-      <el-table-column prop="host" label="主机地址" min-width="120" />
-      <el-table-column prop="port" label="端口" min-width="60" />
-      <el-table-column prop="username" label="用户名" min-width="100" />
-      <el-table-column prop="authType" label="认证方式" min-width="100">
+      <el-table-column type="selection" width="42px" />
+      <el-table-column prop="name" label="服务器名称" min-width="160px" />
+      <el-table-column prop="host" label="主机地址" min-width="120px" />
+      <el-table-column prop="port" label="端口" min-width="60px" />
+      <el-table-column prop="username" label="用户名" min-width="100px" />
+      <el-table-column prop="authType" label="认证方式" min-width="100px">
         <template #default="{ row }">
           {{ SshAuthTypeEnum.getLabel(row.authType) }}
         </template>
       </el-table-column>
-      <el-table-column prop="homeDir" label="主目录" min-width="130" />
-      <el-table-column prop="description" label="服务器描述" min-width="130" />
+      <el-table-column prop="homeDir" label="主目录" min-width="130px" />
+      <el-table-column prop="description" label="服务器描述" min-width="130px" />
     </el-table>
     <template #footer>
       <el-button @click="handleClose">关闭</el-button>

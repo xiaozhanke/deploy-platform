@@ -50,7 +50,7 @@ const titleIcon = computed(() => {
       </div>
     </template>
 
-    <el-descriptions :column="1" :label-width="80">
+    <el-descriptions :column="1" label-width="80px">
       <el-descriptions-item label-class-name="description-label" class-name="description-content">
         <template #label>
           <el-icon><monitor /></el-icon>

@@ -75,27 +75,27 @@ onActivated(() => {
       </filter-field>
     </filter-bar>
     <table-pagination ref="tablePaginationRef" show-overflow-tooltip :query-method="queryMethod">
-      <el-table-column type="index" label="序号" width="54" fixed="left" />
-      <el-table-column label="状态" width="84">
+      <el-table-column type="index" label="序号" width="54px" fixed="left" />
+      <el-table-column label="状态" width="84px">
         <!-- 每条记录均为 DEAD 终态（耗尽重试），统一红实心点标识 -->
         <template #default>
           <status-dot intent="danger">死信</status-dot>
         </template>
       </el-table-column>
-      <el-table-column prop="jobId" label="原作业 Id" min-width="180" />
-      <el-table-column prop="jobType" label="类型" width="80">
+      <el-table-column prop="jobId" label="原作业 Id" min-width="180px" />
+      <el-table-column prop="jobType" label="类型" width="80px">
         <template #default="{ row }">{{ JobTypeEnum.getLabel(row.jobType) }}</template>
       </el-table-column>
-      <el-table-column prop="errorMessage" label="失败原因" min-width="240" />
-      <el-table-column prop="deadLetteredAt" label="进入死信时间" min-width="160" />
-      <el-table-column prop="retried" label="是否已重试" width="100">
+      <el-table-column prop="errorMessage" label="失败原因" min-width="240px" />
+      <el-table-column prop="deadLetteredAt" label="进入死信时间" min-width="160px" />
+      <el-table-column prop="retried" label="是否已重试" width="100px">
         <template #default="{ row }">
           <status-dot :intent="row.retried ? 'success' : 'info'" :hollow="!row.retried">{{
             row.retried ? '已重试' : '未重试'
           }}</status-dot>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="160" fixed="right">
+      <el-table-column label="操作" width="160px" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="handleView(row)">详情</el-button>
           <el-button link :disabled="row.retried" @click="handleRetry(row)">重试</el-button>

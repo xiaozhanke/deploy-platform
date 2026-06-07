@@ -149,18 +149,18 @@ onMounted(async () => {
 
     <!-- 列表视图 -->
     <el-table v-else :data="serverList" highlight-current-row show-overflow-tooltip>
-      <el-table-column prop="name" label="服务器名称" min-width="150" />
-      <el-table-column prop="host" label="主机地址" min-width="120" />
-      <el-table-column prop="port" label="端口" min-width="60" />
-      <el-table-column prop="username" label="用户名" min-width="100" />
-      <el-table-column prop="authType" label="认证方式" min-width="100">
+      <el-table-column prop="name" label="服务器名称" min-width="150px" />
+      <el-table-column prop="host" label="主机地址" min-width="120px" />
+      <el-table-column prop="port" label="端口" min-width="60px" />
+      <el-table-column prop="username" label="用户名" min-width="100px" />
+      <el-table-column prop="authType" label="认证方式" min-width="100px">
         <template #default="{ row }">
           {{ SshAuthTypeEnum.getLabel(row.authType) }}
         </template>
       </el-table-column>
-      <el-table-column prop="homeDir" label="主目录" min-width="130" />
-      <el-table-column prop="description" label="服务器描述" min-width="130" />
-      <el-table-column label="操作" width="200" fixed="right">
+      <el-table-column prop="homeDir" label="主目录" min-width="130px" />
+      <el-table-column prop="description" label="服务器描述" min-width="130px" />
+      <el-table-column label="操作" width="200px" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="handleView(row)">详情</el-button>
           <el-button link @click="handleEdit(row)">编辑</el-button>

@@ -117,22 +117,30 @@ onUnmounted(() => {
   <app-drawer v-model="visible" title="作业历史" width="lg">
     <div class="drawer-table-wrapper">
       <table-pagination ref="tablePaginationRef" show-overflow-tooltip :query-method="queryMethod">
-        <el-table-column type="index" label="序号" width="54" fixed="left" />
-        <el-table-column prop="jobType" label="类型" width="80">
+        <el-table-column type="index" label="序号" width="54px" fixed="left" />
+        <el-table-column prop="jobType" label="类型" width="80px">
           <template #default="{ row }">
             {{ JobTypeEnum.getLabel(row.jobType) }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="90">
+        <el-table-column prop="status" label="状态" width="90px">
           <template #default="{ row }">
             <status-dot v-bind="jobStatusDot(row.status)">{{ JobStatusEnum.getLabel(row.status) }}</status-dot>
           </template>
         </el-table-column>
-        <el-table-column prop="retryCount" label="重试次数" width="90" />
-        <el-table-column prop="startTime" label="开始时间" min-width="160" />
-        <el-table-column prop="endTime" label="结束时间" min-width="160" />
-        <el-table-column prop="errorMessage" label="错误信息" min-width="200" />
-        <el-table-column label="操作" width="80" fixed="right">
+        <el-table-column prop="retryCount" label="重试次数" width="90px" />
+        <el-table-column prop="startTime" label="开始时间" min-width="182px">
+          <template #default="{ row }">
+            {{ $formatDateTime(row.startTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="endTime" label="结束时间" min-width="182px">
+          <template #default="{ row }">
+            {{ $formatDateTime(row.endTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="errorMessage" label="错误信息" min-width="200px" />
+        <el-table-column label="操作" width="80px" fixed="right">
           <template #default="{ row }">
             <el-button
               v-if="row.status === JobStatusEnum.PENDING.value"

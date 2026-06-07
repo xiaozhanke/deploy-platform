@@ -197,8 +197,8 @@ onActivated(() => {
         <el-button :icon="Download" :disabled="fileSelection.length !== 1" @click="handleDownload">下载文件</el-button>
         <el-button :icon="Switch" :disabled="fileSelection.length !== 1" @click="handleUpdate">更新文件</el-button>
       </template>
-      <el-table-column type="selection" width="42" fixed="left" />
-      <el-table-column type="index" label="序号" width="54" fixed="left"></el-table-column>
+      <el-table-column type="selection" width="42px" fixed="left" />
+      <el-table-column type="index" label="序号" width="54px" fixed="left"></el-table-column>
       <el-table-column prop="fileName" label="文件名" min-width="220px" sortable>
         <template #default="{ row }">
           <div class="file-name">
@@ -222,8 +222,16 @@ onActivated(() => {
           <span>{{ $formatFileSize(row.fileSize) }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="createTime" label="创建时间" width="174px" sortable />
-      <el-table-column prop="updateTime" label="更新时间" width="174px" sortable />
+      <el-table-column prop="createTime" label="创建时间" width="182px" sortable>
+        <template #default="{ row }">
+          {{ $formatDateTime(row.createTime) }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="updateTime" label="更新时间" width="182px" sortable>
+        <template #default="{ row }">
+          {{ $formatDateTime(row.updateTime) }}
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="212px" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="handleView(row)">详情</el-button>

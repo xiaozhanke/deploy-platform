@@ -418,25 +418,25 @@ onActivated(async () => {
         show-overflow-tooltip
         @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="42" fixed="left"></el-table-column>
+        <el-table-column type="selection" width="42px" fixed="left"></el-table-column>
         <el-table-column prop="name" label="文件名" min-width="136px" />
         <el-table-column prop="size" label="文件大小" min-width="104px">
           <template #default="{ row }">
             <span>{{ $formatFileSize(row.size) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="updateTime" label="更新时间" min-width="172px">
-          <template #default="scope">
-            {{ $formatDateTime(scope.row.updateTime) }}
+        <el-table-column prop="updateTime" label="更新时间" min-width="182px">
+          <template #default="{ row }">
+            {{ $formatDateTime(row.updateTime) }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="366px" fixed="right" header-align="center" class-name="file-actions">
-          <template #default="scope">
-            <el-button type="primary" link @click="handleFileView(scope.row.path)">查看</el-button>
-            <el-button link @click="handleFileEditSimple(scope.row.path)">简化编辑</el-button>
-            <el-button link @click="handleFileEditManual(scope.row.path)">手动编辑</el-button>
-            <el-button link @click="handleFileRename(scope.row.path)">重命名</el-button>
-            <el-button type="danger" link @click="handleFileDelete(scope.row.path)">删除</el-button>
+          <template #default="{ row }">
+            <el-button type="primary" link @click="handleFileView(row.path)">查看</el-button>
+            <el-button link @click="handleFileEditSimple(row.path)">简化编辑</el-button>
+            <el-button link @click="handleFileEditManual(row.path)">手动编辑</el-button>
+            <el-button link @click="handleFileRename(row.path)">重命名</el-button>
+            <el-button type="danger" link @click="handleFileDelete(row.path)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>

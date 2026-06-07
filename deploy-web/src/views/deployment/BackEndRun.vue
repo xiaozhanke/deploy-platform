@@ -403,7 +403,7 @@ onMounted(async () => {
           <span class="config-path-label">文件夹路径:&nbsp;</span>
           <code>{{ configDir }}</code>
         </span>
-        <el-icon :class="['refresh-button', { 'is-loading': fileLoading }]" size="26" @click="fetchFileList">
+        <el-icon :class="['refresh-button', { 'is-loading': fileLoading }]" :size="26" @click="fetchFileList">
           <RefreshRight />
         </el-icon>
       </div>
@@ -417,17 +417,17 @@ onMounted(async () => {
               <span>{{ $formatFileSize(row.size) }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="updateTime" label="更新时间" width="172px">
-            <template #default="scope">
-              {{ $formatDateTime(scope.row.updateTime) }}
+          <el-table-column prop="updateTime" label="更新时间" width="182px">
+            <template #default="{ row }">
+              {{ $formatDateTime(row.updateTime) }}
             </template>
           </el-table-column>
           <el-table-column label="操作" width="256px" fixed="right" header-align="center" class-name="file-actions">
-            <template #default="scope">
-              <el-button type="primary" link @click="handleFileView(scope.row.path)">查看</el-button>
-              <el-button link @click="handleFileEditManual(scope.row.path)">编辑</el-button>
-              <el-button link @click="handleFileRename(scope.row.name)">重命名</el-button>
-              <el-button type="danger" link @click="handleFileDelete(scope.row.path)">删除</el-button>
+            <template #default="{ row }">
+              <el-button type="primary" link @click="handleFileView(row.path)">查看</el-button>
+              <el-button link @click="handleFileEditManual(row.path)">编辑</el-button>
+              <el-button link @click="handleFileRename(row.name)">重命名</el-button>
+              <el-button type="danger" link @click="handleFileDelete(row.path)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>

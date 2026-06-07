@@ -180,7 +180,11 @@ onMounted(async () => {
                 <span>{{ $formatFileSize(row.fileSize) }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="updateTime" label="更新时间" width="174px" sortable />
+            <el-table-column prop="updateTime" label="更新时间" width="182px" sortable>
+              <template #default="{ row }">
+                {{ $formatDateTime(row.updateTime) }}
+              </template>
+            </el-table-column>
             <el-table-column label="操作" width="76px" fixed="right">
               <template #default="{ row }">
                 <!-- 行内操作纯文字链（克制、不带图标）；tooltip 与点击行为保持不变 -->

@@ -383,29 +383,29 @@ onUnmounted(() => {
         <el-button :icon="Loading" @click="handleApplicationRestart">重启应用</el-button>
         <el-button :icon="Switch" @click="handleApplicationUpdate">更新应用</el-button>
       </template>
-      <el-table-column type="selection" width="42" fixed="left"></el-table-column>
+      <el-table-column type="selection" width="42px" fixed="left"></el-table-column>
       <el-table-column type="expand" fixed="left">
         <template #default="{ row }">
           <application-update-config v-if="row.applicationType === ApplicationTypeEnum.BACKEND.value" :record="row" />
           <el-alert v-else title="只有后端应用才支持在线配置文件管理" type="info" :closable="false" show-icon />
         </template>
       </el-table-column>
-      <el-table-column type="index" label="序号" width="54" fixed="left"></el-table-column>
-      <el-table-column prop="serverRecord.name" label="服务器" min-width="100"></el-table-column>
-      <el-table-column prop="fileRecord.fileName" label="应用包名称" min-width="100"></el-table-column>
-      <el-table-column prop="fileRecord.version" label="应用版本" width="80"></el-table-column>
-      <el-table-column prop="deploymentPath" label="部署路径" min-width="130"></el-table-column>
-      <el-table-column prop="applicationType" label="应用类型" width="82">
+      <el-table-column type="index" label="序号" width="54px" fixed="left"></el-table-column>
+      <el-table-column prop="serverRecord.name" label="服务器" min-width="100px"></el-table-column>
+      <el-table-column prop="fileRecord.fileName" label="应用包名称" min-width="100px"></el-table-column>
+      <el-table-column prop="fileRecord.version" label="应用版本" width="80px"></el-table-column>
+      <el-table-column prop="deploymentPath" label="部署路径" min-width="130px"></el-table-column>
+      <el-table-column prop="applicationType" label="应用类型" width="82px">
         <template #default="{ row }">
           {{ ApplicationTypeEnum.getLabel(row.applicationType) }}
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="部署状态" width="82">
+      <el-table-column prop="status" label="部署状态" width="82px">
         <template #default="{ row }">
           {{ DeploymentStatusEnum.getLabel(row.status) }}
         </template>
       </el-table-column>
-      <el-table-column prop="running" label="是否运行中" width="94">
+      <el-table-column prop="running" label="是否运行中" width="94px">
         <template #default="{ row }">
           <el-switch
             v-if="row.applicationType === ApplicationTypeEnum.BACKEND.value"
@@ -414,7 +414,7 @@ onUnmounted(() => {
           />
         </template>
       </el-table-column>
-      <el-table-column label="最近作业" width="150">
+      <el-table-column label="最近作业" width="150px">
         <template #default="{ row }">
           <status-dot v-if="latestJobMap[row.id]" v-bind="jobStatusDot(latestJobMap[row.id]?.status)">
             {{ JobTypeEnum.getLabel(latestJobMap[row.id]?.jobType) }}·{{

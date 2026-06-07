@@ -68,25 +68,29 @@ onActivated(() => {
     </filter-bar>
 
     <table-pagination ref="tablePaginationRef" show-overflow-tooltip :query-method="queryMethod">
-      <el-table-column type="index" label="序号" width="54" fixed="left" />
-      <el-table-column prop="operator" label="操作人" width="120" />
-      <el-table-column prop="operationType" label="操作类型" width="140">
+      <el-table-column type="index" label="序号" width="54px" fixed="left" />
+      <el-table-column prop="operator" label="操作人" width="120px" />
+      <el-table-column prop="operationType" label="操作类型" width="140px">
         <template #default="{ row }">
           {{ AuditOperationTypeEnum.getLabel(row.operationType) || row.operationType }}
         </template>
       </el-table-column>
-      <el-table-column prop="target" label="操作目标" min-width="160" />
-      <el-table-column prop="description" label="描述" min-width="140" show-overflow-tooltip />
-      <el-table-column prop="outcome" label="结果" width="80">
+      <el-table-column prop="target" label="操作目标" min-width="160px" />
+      <el-table-column prop="description" label="描述" min-width="140px" show-overflow-tooltip />
+      <el-table-column prop="outcome" label="结果" width="80px">
         <template #default="{ row }">
           <status-dot :intent="auditOutcomeTagType(row.outcome)">
             {{ AuditOutcomeEnum.getLabel(row.outcome) || row.outcome }}
           </status-dot>
         </template>
       </el-table-column>
-      <el-table-column prop="errorMessage" label="失败原因" min-width="180" show-overflow-tooltip />
-      <el-table-column prop="clientIp" label="客户端 IP" width="140" />
-      <el-table-column prop="operationTime" label="操作时间" width="170" />
+      <el-table-column prop="errorMessage" label="失败原因" min-width="180px" show-overflow-tooltip />
+      <el-table-column prop="clientIp" label="客户端 IP" width="140px" />
+      <el-table-column prop="operationTime" label="操作时间" width="182px">
+        <template #default="{ row }">
+          {{ $formatDateTime(row.operationTime) }}
+        </template>
+      </el-table-column>
     </table-pagination>
   </section>
 </template>
