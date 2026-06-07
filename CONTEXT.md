@@ -40,6 +40,11 @@ HTTP 入口的"操作意图"标识，由前端在每次按钮点击时生成（U
 **取消语义（CancellationSemantics）**：
 仅对**延迟作业**（场景 3:定时部署 / 5 分钟后重启）有意义。RocketMQ 延迟消息发出后**不支持撤回**——本项目把"取消"下沉到业务状态机:用户在 UI 撤销时,HTTP 接口把 `deployment_job.status` 从 PENDING 直接转入 CANCELLED 终态;延迟消息到期照常触达消费端,但消费首行的 CAS UPDATE `WHERE status='PENDING'` 不命中,直接 ACK 不执行 SSH。**转换路径**:PENDING → CANCELLED(只允许这一条);IN_PROGRESS 之后不可撤,撤销 HTTP 请求 reject。**长延迟接力链**(详见 [ADR-0004](docs/adr/0004-delayed-message-cancellation.md))每次续发前都查 status,CANCELLED 则链条终止。
 
+**主机在线性（HostLiveness）**：
+对一台 Server 执行 `echo 1` 的 SSH 连通性检测结果。检测成功（连通且在超时 `1500ms` 内响应）则该主机视为**在线**；与该主机上所有 DeploymentRecord 的 `running` 状态无关。控制台 KPI「在线主机数」展示的是本指标。
+_Avoid_: 用应用进程存活率代替主机在线性（两者分属不同 KPI，职责不重叠）。
+_调度独立性_: HostLiveness 检测（60s 常驻）与资源监控采样（5s 惰性）是**两个独立定时任务**，后者订阅者为 0 时休眠，前者不受影响。两者共享同一 JSch Session Pool，但调度逻辑完全解耦。
+
 ## Flagged ambiguities
 
 （全部已 resolve:~~UPDATE 类作业的重试语义~~ → 见 [[作业类型]];~~顺序消息与失败重试的冲突~~ → [ADR-0003](docs/adr/0003-retry-strategy-with-ordered-messages.md);~~死信处理流程~~ → [ADR-0003](docs/adr/0003-retry-strategy-with-ordered-messages.md);~~场景 3 延迟消息的"取消"语义~~ → [ADR-0004](docs/adr/0004-delayed-message-cancellation.md) / 见 [[取消语义]];~~场景 4 Kafka 审计是否需要事务一致性~~ → [ADR-0005](docs/adr/0005-audit-log-non-transactional.md)。）
