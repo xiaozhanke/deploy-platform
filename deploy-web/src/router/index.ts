@@ -14,7 +14,7 @@ const router = createRouter({
       component: CommonLayout,
       redirect: '/dashboard',
       meta: {
-        title: '仪表盘',
+        title: '控制台',
         requiresAuth: true, // 默认所有页面都需要认证
       },
       children: [
@@ -23,7 +23,7 @@ const router = createRouter({
           name: 'Dashboard',
           component: () => import('@/views/dashboard/index.vue'),
           meta: {
-            title: '仪表盘',
+            title: '控制台',
           },
         },
         {
@@ -31,36 +31,27 @@ const router = createRouter({
           name: 'ServerIndex',
           component: () => import('@/views/server/index.vue'),
           meta: {
-            title: '服务器管理',
+            title: '主机管理',
             keepAlive: true,
           },
         },
         {
-          path: 'environment',
-          redirect: '/environment/installation',
+          path: 'installation',
+          name: 'EnvironmentInstallation',
+          component: () => import('@/views/environment/installation/index.vue'),
           meta: {
-            title: '环境管理',
+            title: '软件安装',
+            keepAlive: true,
           },
-          children: [
-            {
-              path: 'installation',
-              name: 'EnvironmentInstallation',
-              component: () => import('@/views/environment/installation/index.vue'),
-              meta: {
-                title: '环境安装',
-                keepAlive: true,
-              },
-            },
-            {
-              path: 'configuration',
-              name: 'EnvironmentConfiguration',
-              component: () => import('@/views/environment/configuration/index.vue'),
-              meta: {
-                title: '环境配置',
-                keepAlive: true,
-              },
-            },
-          ],
+        },
+        {
+          path: 'configuration',
+          name: 'EnvironmentConfiguration',
+          component: () => import('@/views/environment/configuration/index.vue'),
+          meta: {
+            title: '环境配置',
+            keepAlive: true,
+          },
         },
         {
           path: 'deployment',
@@ -94,7 +85,7 @@ const router = createRouter({
           name: 'AuditLogIndex',
           component: () => import('@/views/audit-log/index.vue'),
           meta: {
-            title: '操作审计',
+            title: '审计日志',
             keepAlive: true,
           },
         },
