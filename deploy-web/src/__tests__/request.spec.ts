@@ -2,13 +2,10 @@ import AxiosMockAdapter from 'axios-mock-adapter'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 
-// request.ts 通过 AutoImport + ElementPlusResolver 隐式拿到 ElLoading / ElNotification，
+// request.ts 通过 AutoImport + ElementPlusResolver 隐式拿到 ElNotification，
 // 用 vi.mock 替换 'element-plus' 模块导出即可拦截全部用法
-const elLoadingClose = vi.fn()
-const elLoadingService = vi.fn(() => ({ close: elLoadingClose }))
 const elNotificationError = vi.fn()
 vi.mock('element-plus', () => ({
-  ElLoading: { service: elLoadingService },
   ElNotification: { error: elNotificationError },
 }))
 
@@ -21,7 +18,6 @@ vi.mock('@/stores/auth', () => ({
   }),
 }))
 
-
 describe('request interceptor 401 处理', () => {
   let mockAdapter: AxiosMockAdapter
   let instance: import('axios').AxiosInstance
@@ -30,8 +26,6 @@ describe('request interceptor 401 处理', () => {
     setActivePinia(createPinia())
     vi.resetModules()
     handleSessionExpired.mockClear()
-    elLoadingClose.mockClear()
-    elLoadingService.mockClear()
     // dynamic import 让 vi.mock 在模块解析前生效
     const mod = await import('@/api/request')
     instance = mod.default
@@ -42,7 +36,7 @@ describe('request interceptor 401 处理', () => {
     mockAdapter.restore()
   })
 
-  it('在收到 401 时应让调用方 catch 到拒绝，而不是永久挂起 loading 计数', async () => {
+  it('在收到 401 时应让调用方 catch 到拒绝', async () => {
     mockAdapter.onGet('/api/anywhere').reply(401, {
       error: { status: 'UNAUTHENTICATED', message: '会话已失效' },
     })
@@ -52,9 +46,6 @@ describe('request interceptor 401 处理', () => {
       status: 'UNAUTHENTICATED',
     })
     expect(handleSessionExpired).toHaveBeenCalledOnce()
-    // 全局 loading 已经打开过一次（请求开始），且应该被关闭
-    expect(elLoadingService).toHaveBeenCalled()
-    expect(elLoadingClose).toHaveBeenCalled()
   })
 
   it('调用方的 finally 能在 401 之后执行', async () => {

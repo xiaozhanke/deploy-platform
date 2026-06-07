@@ -5,7 +5,6 @@ import { ApiError } from '@/types/error'
 // 拓展 AxiosRequestConfig 类型
 declare module 'axios' {
   interface AxiosRequestConfig {
-    showLoading?: boolean
     noAuth?: boolean
   }
 }
@@ -16,25 +15,9 @@ const instance = axios.create({
   baseURL: import.meta.env.VITE_API_ROOT,
 })
 
-// 加载状态变量
-let loadingInstance: ReturnType<typeof ElLoading.service>
-let activeRequests = 0
-
 // 请求拦截器
 instance.interceptors.request.use(
   (config) => {
-    // 显示 loading
-    if (config.showLoading !== false) {
-      activeRequests++
-      if (activeRequests === 1) {
-        loadingInstance = ElLoading.service({
-          lock: true,
-          fullscreen: true,
-          text: '加载中...',
-          background: 'rgba(0, 0, 0, 0.7)',
-        })
-      }
-    }
     const authStore = useAuthStore()
     if (authStore.sessionAbortController) {
       // 将中止信号附加到请求上
@@ -49,13 +32,6 @@ instance.interceptors.request.use(
     return config
   },
   (error) => {
-    if (error.config?.showLoading !== false) {
-      activeRequests--
-      if (activeRequests <= 0) {
-        activeRequests = 0
-        loadingInstance?.close()
-      }
-    }
     return Promise.reject(error instanceof Error ? error : new Error(String(error)))
   },
 )
@@ -63,14 +39,6 @@ instance.interceptors.request.use(
 // 响应拦截器
 instance.interceptors.response.use(
   (response) => {
-    // 关闭 loading
-    if (response.config.showLoading !== false) {
-      activeRequests--
-      if (activeRequests <= 0) {
-        activeRequests = 0
-        loadingInstance?.close()
-      }
-    }
     // 如果是下载文件的响应，直接返回
     if (response.config.responseType === 'blob') {
       return response
@@ -78,14 +46,6 @@ instance.interceptors.response.use(
     return response.data
   },
   async (error) => {
-    // 关闭 loading
-    if (error.config?.showLoading !== false) {
-      activeRequests--
-      if (activeRequests <= 0) {
-        activeRequests = 0
-        loadingInstance?.close()
-      }
-    }
 
     // 优先处理中止错误
     if (axios.isCancel(error)) {
