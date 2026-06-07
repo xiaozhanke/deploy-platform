@@ -21,9 +21,6 @@ vi.mock('@/stores/auth', () => ({
   }),
 }))
 
-vi.mock('@/utils/nprogress', () => ({
-  default: { start: vi.fn(), done: vi.fn() },
-}))
 
 describe('request interceptor 401 处理', () => {
   let mockAdapter: AxiosMockAdapter

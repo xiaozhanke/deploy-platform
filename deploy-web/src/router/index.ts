@@ -1,6 +1,5 @@
 import { h } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
-import NProgress from '@/utils/nprogress'
 import { useAuthStore } from '@/stores/auth'
 
 const CommonLayout = () => import('@/layouts/common/index.vue')
@@ -163,10 +162,6 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  if (to.path !== from.path) {
-    NProgress.start()
-  }
-
   const authStore = useAuthStore()
   // 目标路由是否需要认证？（通过 meta 字段判断）
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
@@ -183,7 +178,7 @@ router.beforeEach(async (to, from, next) => {
     try {
       await authStore.oauth2Authorize(to.fullPath)
     } catch (error) {
-      // signinRedirect 失败（如 authority 不可达）→ 终止本次导航，避免 NProgress 卡死、路由悬挂
+      // signinRedirect 失败（如 authority 不可达）→ 终止本次导航
       console.error('OIDC 授权跳转失败:', error)
       next(false)
     }
@@ -194,12 +189,7 @@ router.beforeEach(async (to, from, next) => {
   }
 })
 
-router.afterEach(() => {
-  NProgress.done()
-})
-
 router.onError((error) => {
-  NProgress.done()
   // chunk 懒加载失败（发版后旧 chunk 已失效 / 网络抖动）：持久提示、由用户手动刷新，
   // 不静默 reload —— 以免吞掉配置编辑器 / 部署向导 / 半填表单里未保存的编辑
   const message = error instanceof Error ? error.message : String(error)

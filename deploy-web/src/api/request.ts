@@ -1,5 +1,4 @@
 import axios from 'axios'
-import NProgress from '@/utils/nprogress'
 import { useAuthStore } from '@/stores/auth'
 import { ApiError } from '@/types/error'
 
@@ -24,8 +23,6 @@ let activeRequests = 0
 // 请求拦截器
 instance.interceptors.request.use(
   (config) => {
-    // 开始进度条
-    NProgress.start()
     // 显示 loading
     if (config.showLoading !== false) {
       activeRequests++
@@ -52,8 +49,6 @@ instance.interceptors.request.use(
     return config
   },
   (error) => {
-    // 结束进度条
-    NProgress.done()
     if (error.config?.showLoading !== false) {
       activeRequests--
       if (activeRequests <= 0) {
@@ -68,8 +63,6 @@ instance.interceptors.request.use(
 // 响应拦截器
 instance.interceptors.response.use(
   (response) => {
-    // 结束进度条
-    NProgress.done()
     // 关闭 loading
     if (response.config.showLoading !== false) {
       activeRequests--
@@ -85,8 +78,6 @@ instance.interceptors.response.use(
     return response.data
   },
   async (error) => {
-    // 结束进度条
-    NProgress.done()
     // 关闭 loading
     if (error.config?.showLoading !== false) {
       activeRequests--
