@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { Plus, EditPen, Refresh, Odometer, Loading, SwitchButton, MagicStick } from '@element-plus/icons-vue'
+import {
+  Plus,
+  EditPen,
+  Refresh,
+  Odometer,
+  Loading,
+  SwitchButton,
+  MagicStick,
+  DocumentCopy,
+} from '@element-plus/icons-vue'
 import { sshExecCommand, sshWriteFile } from '@/api/api'
 import CodeEditor from '@/components/code-editor/index.vue'
 import type { File, NginxConfigParams } from '@/types/environment'
@@ -79,6 +88,19 @@ const handleEditConfigDir = () => {
       await fetchFileList()
     })
     .catch(() => {})
+}
+
+// 复制配置目录路径到剪贴板
+const handleCopyConfigDir = () => {
+  if (!configDir.value) return
+  navigator.clipboard
+    .writeText(configDir.value)
+    .then(() => {
+      ElMessage.success('已复制配置目录到剪贴板')
+    })
+    .catch((err) => {
+      ElMessage.error('复制失败: ' + extractErrorMessage(err))
+    })
 }
 
 // 获取文件列表
@@ -415,6 +437,14 @@ onActivated(async () => {
       <code v-if="configDir" :title="configDir">{{ configDir }}</code>
       <span v-else class="config-path-empty">（未探测）</span>
       <div class="config-path-actions">
+        <el-tooltip content="复制目录">
+          <el-button
+            class="config-path-action"
+            :icon="DocumentCopy"
+            :disabled="!configDir"
+            @click="handleCopyConfigDir"
+          />
+        </el-tooltip>
         <el-tooltip content="重新探测">
           <el-button
             class="config-path-action"
@@ -437,23 +467,23 @@ onActivated(async () => {
         :description="sessionId ? '当前目录为空' : '未选择服务器'"
       />
       <el-table v-else height="100%" :data="fileList" highlight-current-row show-overflow-tooltip>
-        <el-table-column prop="name" label="文件名" min-width="130px" />
-        <el-table-column prop="size" label="文件大小" min-width="104px">
+        <el-table-column prop="name" label="文件名" min-width="136px" />
+        <el-table-column prop="size" label="文件大小" width="108px">
           <template #default="{ row }">
             <span>{{ $formatFileSize(row.size) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="updateTime" label="更新时间" min-width="182px">
+        <el-table-column prop="updateTime" label="更新时间" width="182px">
           <template #default="{ row }">
             {{ $formatDateTime(row.updateTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="366px" fixed="right" header-align="center" class-name="file-actions">
+        <el-table-column label="操作" width="282px" fixed="right" class-name="file-actions">
           <template #default="{ row }">
             <el-button type="primary" link @click="handleFileView(row.path)">查看</el-button>
             <el-button link @click="handleFileEditSimple(row.path)">简化编辑</el-button>
             <el-button link @click="handleFileEditManual(row.path)">手动编辑</el-button>
-            <el-button link @click="handleFileRename(row.name)">重命名</el-button>
+            <el-button type="warning" link @click="handleFileRename(row.name)">重命名</el-button>
             <el-button type="danger" link @click="handleFileDelete(row.path)">删除</el-button>
           </template>
         </el-table-column>
@@ -506,10 +536,10 @@ onActivated(async () => {
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 32px;
+    height: 38px;
     font-size: 14px;
-    background-color: var(--app-surface);
-    padding: 0 var(--app-space-2);
+    background-color: var(--el-fill-color-light);
+    padding: 0 var(--app-space-3);
     border-radius: var(--app-radius-control);
     border: 1px solid var(--app-border);
     .config-path-label {
@@ -535,11 +565,32 @@ onActivated(async () => {
     .config-path-actions {
       margin-left: auto;
       display: flex;
-      gap: 4px;
+      align-items: center;
+      gap: 6px;
       .config-path-action {
-        width: 24px;
-        height: 24px;
+        width: 28px;
+        height: 28px;
         padding: 0;
+        font-size: 15px;
+        border: none !important;
+        background: transparent !important;
+        border-radius: 50% !important;
+        color: var(--el-text-color-regular) !important;
+        transition: all var(--el-transition-duration);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover:not(.is-disabled) {
+          background-color: var(--el-fill-color) !important;
+          color: var(--el-color-primary) !important;
+        }
+
+        &.is-disabled {
+          color: var(--el-text-color-placeholder) !important;
+          background: transparent !important;
+          cursor: not-allowed;
+        }
       }
       .config-path-action + .config-path-action {
         margin-left: 0;

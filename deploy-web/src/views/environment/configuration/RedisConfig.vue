@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Plus, Refresh, Loading, SwitchButton } from '@element-plus/icons-vue'
+import { Plus, Refresh, Loading, SwitchButton, MagicStick, EditPen, DocumentCopy } from '@element-plus/icons-vue'
 import { sshExecCommand } from '@/api/api'
 import type { ExecResult, File, RedisConfigParams } from '@/types/environment'
 import CodeEditor from '@/components/code-editor/index.vue'
@@ -12,9 +12,9 @@ const props = defineProps<{
 const sessionId = inject('sessionId') as Ref<string>
 
 // 配置文件夹路径
-const configDir = computed(() => {
-  return `${props.homeDir}/environment/redis/conf`
-})
+const configDir = ref<string>('')
+const detecting = ref<boolean>(false)
+
 const redisDir = computed(() => {
   return `${props.homeDir}/environment/redis`
 })
@@ -55,10 +55,14 @@ const fetchFileList = async () => {
   if (!sessionId.value) {
     return ElMessage.warning('请先连接服务器')
   }
+  if (!configDir.value) {
+    fileList.value = []
+    return
+  }
   try {
     const data = await sshExecCommand(
       sessionId.value,
-      `stat --printf='{"path":"%n","size":%s,"updateTime":"%y"}\n' ${configDir.value}/*`,
+      `find ${configDir.value} -maxdepth 1 -type f -exec stat --printf='{"path":"%n","size":%s,"updateTime":"%y"}\n' {} +`,
     )
     const { exitCode, result } = data
     if (exitCode !== 0) {
@@ -345,10 +349,86 @@ const handleRedisReload = async () => {
   }
 }
 
-const handleRefresh = async () => {
-  if (sessionId.value) {
-    await fetchFileList()
+// 探测远程 Redis 布局目录
+const handleDetectLayout = async () => {
+  if (!sessionId.value) {
+    return ElMessage.warning('请先连接服务器')
   }
+  detecting.value = true
+  try {
+    const checkPaths = [
+      `${props.homeDir}/environment/redis/conf`,
+      '/etc/redis',
+      '/etc'
+    ]
+    
+    let foundDir = ''
+    for (const path of checkPaths) {
+      const checkCmd = `[ -d "${path}" ] && echo "exists"`
+      const res = await sshExecCommand(sessionId.value, checkCmd)
+      if (res.exitCode === 0 && res.result.trim() === 'exists') {
+        if (path === '/etc') {
+          const checkFileCmd = `[ -f "/etc/redis.conf" ] && echo "exists"`
+          const fileRes = await sshExecCommand(sessionId.value, checkFileCmd)
+          if (fileRes.exitCode === 0 && fileRes.result.trim() === 'exists') {
+            foundDir = '/etc'
+            break
+          }
+        } else {
+          foundDir = path
+          break
+        }
+      }
+    }
+
+    if (foundDir) {
+      configDir.value = foundDir
+      ElNotification.success(`检测到 Redis 配置目录 ${configDir.value}`)
+    } else {
+      configDir.value = `${props.homeDir}/environment/redis/conf`
+      ElMessage.warning(`未检测到 Redis 配置目录，回退到默认目录 ${configDir.value}`)
+    }
+  } catch (error) {
+    ElNotification.error('Redis 布局探测失败：' + extractErrorMessage(error))
+  } finally {
+    detecting.value = false
+  }
+}
+
+// 手动覆盖 configDir（仅当前会话生效，不持久化）
+const handleEditConfigDir = () => {
+  ElMessageBox.prompt('请输入 Redis 配置文件目录（绝对路径）', '手动设置配置目录', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    inputValue: configDir.value,
+    inputPattern: /^\/.+/,
+    inputErrorMessage: '请输入以 / 开头的绝对路径',
+  })
+    .then(async ({ value }) => {
+      configDir.value = value.replace(/\/+$/, '')
+      await fetchFileList()
+    })
+    .catch(() => {})
+}
+
+// 复制配置目录路径到剪贴板
+const handleCopyConfigDir = () => {
+  if (!configDir.value) return
+  navigator.clipboard.writeText(configDir.value)
+    .then(() => {
+      ElMessage.success('已复制配置目录到剪贴板')
+    })
+    .catch((err) => {
+      ElMessage.error('复制失败: ' + extractErrorMessage(err))
+    })
+}
+
+const handleRefresh = async () => {
+  if (!sessionId.value) return
+  if (!configDir.value) {
+    await handleDetectLayout()
+  }
+  await fetchFileList()
 }
 
 defineExpose({ handleRefresh })
@@ -400,8 +480,31 @@ onActivated(async () => {
     </div>
 
     <div class="config-path">
-      <span class="config-path-label">文件夹路径:&nbsp;</span>
-      <code :title="configDir">{{ configDir }}</code>
+      <span class="config-path-label">配置目录:&nbsp;</span>
+      <code v-if="configDir" :title="configDir">{{ configDir }}</code>
+      <span v-else class="config-path-empty">（未探测）</span>
+      <div class="config-path-actions">
+        <el-tooltip content="复制目录">
+          <el-button
+            class="config-path-action"
+            :icon="DocumentCopy"
+            :disabled="!configDir"
+            @click="handleCopyConfigDir"
+          />
+        </el-tooltip>
+        <el-tooltip content="重新探测">
+          <el-button
+            class="config-path-action"
+            :icon="MagicStick"
+            :loading="detecting"
+            :disabled="!sessionId"
+            @click="handleDetectLayout"
+          />
+        </el-tooltip>
+        <el-tooltip content="手动设置">
+          <el-button class="config-path-action" :icon="EditPen" :disabled="!sessionId" @click="handleEditConfigDir" />
+        </el-tooltip>
+      </div>
     </div>
 
     <div class="file-list-container">
@@ -420,22 +523,22 @@ onActivated(async () => {
       >
         <el-table-column type="selection" width="42px" fixed="left"></el-table-column>
         <el-table-column prop="name" label="文件名" min-width="136px" />
-        <el-table-column prop="size" label="文件大小" min-width="104px">
+        <el-table-column prop="size" label="文件大小" width="108px">
           <template #default="{ row }">
             <span>{{ $formatFileSize(row.size) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="updateTime" label="更新时间" min-width="182px">
+        <el-table-column prop="updateTime" label="更新时间" width="182px">
           <template #default="{ row }">
             {{ $formatDateTime(row.updateTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="366px" fixed="right" header-align="center" class-name="file-actions">
+        <el-table-column label="操作" width="282px" fixed="right" header-align="center" class-name="file-actions">
           <template #default="{ row }">
             <el-button type="primary" link @click="handleFileView(row.path)">查看</el-button>
             <el-button link @click="handleFileEditSimple(row.path)">简化编辑</el-button>
             <el-button link @click="handleFileEditManual(row.path)">手动编辑</el-button>
-            <el-button link @click="handleFileRename(row.path)">重命名</el-button>
+            <el-button type="warning" link @click="handleFileRename(row.path)">重命名</el-button>
             <el-button type="danger" link @click="handleFileDelete(row.path)">删除</el-button>
           </template>
         </el-table-column>
@@ -487,10 +590,10 @@ onActivated(async () => {
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 32px;
+    height: 38px;
     font-size: 14px;
-    background-color: var(--app-surface);
-    padding: 0 var(--app-space-2);
+    background-color: var(--el-fill-color-light);
+    padding: 0 var(--app-space-3);
     border-radius: var(--app-radius-control);
     border: 1px solid var(--app-border);
     .config-path-label {
@@ -507,6 +610,45 @@ onActivated(async () => {
       line-height: 20px;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+    .config-path-empty {
+      flex: 1;
+      min-width: 0;
+      color: var(--el-text-color-secondary);
+    }
+    .config-path-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      .config-path-action {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        font-size: 15px;
+        border: none !important;
+        background: transparent !important;
+        border-radius: 50% !important;
+        color: var(--el-text-color-regular) !important;
+        transition: all var(--el-transition-duration);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover:not(.is-disabled) {
+          background-color: var(--el-fill-color) !important;
+          color: var(--el-color-primary) !important;
+        }
+
+        &.is-disabled {
+          color: var(--el-text-color-placeholder) !important;
+          background: transparent !important;
+          cursor: not-allowed;
+        }
+      }
+      .config-path-action + .config-path-action {
+        margin-left: 0;
+      }
     }
   }
 
