@@ -45,6 +45,15 @@ HTTP 入口的"操作意图"标识，由前端在每次按钮点击时生成（U
 _Avoid_: 用应用进程存活率代替主机在线性（两者分属不同 KPI，职责不重叠）。
 _调度独立性_: HostLiveness 检测（60s 常驻）与资源监控采样（5s 惰性）是**两个独立定时任务**，后者订阅者为 0 时休眠，前者不受影响。两者共享同一 JSch Session Pool，但调度逻辑完全解耦。
 
+**文件资源（FileResource）**：
+在控制台托管和发布的前端静态包（`.zip`）或后端应用包（`.jar`）等具体制品。在 UI 层表现为「文件资源」管理列表。
+
+**死信队列（DeadLetterQueue / DLQ）**：
+在执行过程中连续失败并耗尽重试次数后被隔离的[[部署作业]]。进入死信队列的作业已属于终态，不再自动重试，必须由运维人员人工点击重试。
+
+**审计日志（AuditLog）**：
+以合规和审计为目的所记录的用户操作行为流水。记录每次操作的操作人、操作类型、目标资源以及最终的成功与失败状态。
+
 ## Flagged ambiguities
 
 （全部已 resolve:~~UPDATE 类作业的重试语义~~ → 见 [[作业类型]];~~顺序消息与失败重试的冲突~~ → [ADR-0003](docs/adr/0003-retry-strategy-with-ordered-messages.md);~~死信处理流程~~ → [ADR-0003](docs/adr/0003-retry-strategy-with-ordered-messages.md);~~场景 3 延迟消息的"取消"语义~~ → [ADR-0004](docs/adr/0004-delayed-message-cancellation.md) / 见 [[取消语义]];~~场景 4 Kafka 审计是否需要事务一致性~~ → [ADR-0005](docs/adr/0005-audit-log-non-transactional.md)。）
