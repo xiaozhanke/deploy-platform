@@ -146,11 +146,8 @@ onActivated(() => {
 
 <template>
   <section class="file-index-section common-page-container">
-    <!-- 工具栏：上传文件=该容器唯一实色主操作；下载 / 更新依赖选中，移入选中条 -->
-    <div class="page-toolbar">
-      <el-button type="primary" :icon="Upload" @click="handleUpload">上传文件</el-button>
-    </div>
-    <filter-bar layout="grid" :model="form" @query="handleQuery" @reset="handleReset">
+    <filter-bar layout="compact" :model="form" @query="handleQuery" @reset="handleReset">
+      <!-- 高频筛选字段：文件名 + 使用范围 -->
       <filter-field label="文件名" prop="fileName">
         <el-input v-model="form.fileName" placeholder="文件名" clearable />
       </filter-field>
@@ -159,29 +156,35 @@ onActivated(() => {
           <el-option v-for="item in FileScopeEnum.options" :key="item.value" :value="item.value" :label="item.label" />
         </el-select>
       </filter-field>
-      <filter-field label="分组 Id" prop="groupId">
-        <el-input v-model="form.groupId" placeholder="分组 Id" clearable />
-      </filter-field>
-      <filter-field label="构件 Id" prop="artifactId">
-        <el-input v-model="form.artifactId" placeholder="构件 Id" clearable />
-      </filter-field>
-      <filter-field label="版本" prop="version">
-        <el-input v-model="form.version" placeholder="版本" clearable />
-      </filter-field>
-      <filter-field label="芯片架构" prop="architecture">
-        <el-select v-model="form.architecture" placeholder="芯片架构" clearable>
-          <el-option
-            v-for="item in ArchitectureEnum.options"
-            :key="item.value"
-            :value="item.value"
-            :label="item.label"
-          />
-        </el-select>
-      </filter-field>
-      <!-- 文件描述是宽字段：覆盖默认 span，宽屏占更宽 -->
-      <filter-field label="文件描述" prop="description" :sm="24" :md="24" :lg="12" :xl="8">
-        <el-input v-model="form.description" placeholder="文件描述" clearable />
-      </filter-field>
+      <!-- 主操作：唯一实色按钮，收入操作区最左侧 -->
+      <template #actions>
+        <el-button type="primary" :icon="Upload" @click="handleUpload">上传文件</el-button>
+      </template>
+      <!-- 低频字段：收纳于气泡/抽屉（桌面 popover / 移动 drawer） -->
+      <template #advanced>
+        <filter-field label="分组 Id" prop="groupId">
+          <el-input v-model="form.groupId" placeholder="分组 Id" clearable />
+        </filter-field>
+        <filter-field label="构件 Id" prop="artifactId">
+          <el-input v-model="form.artifactId" placeholder="构件 Id" clearable />
+        </filter-field>
+        <filter-field label="版本" prop="version">
+          <el-input v-model="form.version" placeholder="版本" clearable />
+        </filter-field>
+        <filter-field label="芯片架构" prop="architecture">
+          <el-select v-model="form.architecture" placeholder="芯片架构" clearable>
+            <el-option
+              v-for="item in ArchitectureEnum.options"
+              :key="item.value"
+              :value="item.value"
+              :label="item.label"
+            />
+          </el-select>
+        </filter-field>
+        <filter-field label="文件描述" prop="description">
+          <el-input v-model="form.description" placeholder="文件描述" clearable />
+        </filter-field>
+      </template>
     </filter-bar>
 
     <table-pagination
@@ -210,14 +213,14 @@ onActivated(() => {
         </template>
       </el-table-column>
       <el-table-column prop="version" label="版本" width="100px"></el-table-column>
-      <el-table-column prop="scope" label="使用范围" width="82px">
+      <el-table-column prop="scope" label="使用范围" width="94px">
         <template #default="{ row }">
           <el-tag v-if="row.scope" :type="fileScopeTagTypeMap[row.scope]" effect="light">{{
             FileScopeEnum.getLabel(row.scope)
           }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="fileSize" label="文件大小" width="104px" sortable>
+      <el-table-column prop="fileSize" label="文件大小" width="108px" sortable>
         <template #default="{ row }">
           <span>{{ $formatFileSize(row.fileSize) }}</span>
         </template>

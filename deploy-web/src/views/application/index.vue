@@ -320,8 +320,7 @@ onUnmounted(() => {
 
 <template>
   <section class="application-index-section common-page-container">
-    <!-- 筛选项直摆；应用级批量操作依赖选中，移入选中条 -->
-    <filter-bar layout="grid" :model="form" @query="handleQuery" @reset="handleReset">
+    <filter-bar layout="compact" :model="form" @query="handleQuery" @reset="handleReset">
       <filter-field label="服务器">
         <el-input
           v-model="selectedServerName"
@@ -342,32 +341,35 @@ onUnmounted(() => {
           @click="handleFileSelect"
         />
       </filter-field>
-      <filter-field label="应用类型" prop="applicationType">
-        <el-select v-model="form.applicationType" placeholder="应用类型" clearable>
-          <el-option
-            v-for="item in ApplicationTypeEnum.options"
-            :key="item.value"
-            :value="item.value"
-            :label="item.label"
-          />
-        </el-select>
-      </filter-field>
-      <filter-field label="部署状态" prop="status">
-        <el-select v-model="form.status" placeholder="部署状态" clearable>
-          <el-option
-            v-for="item in DeploymentStatusEnum.options"
-            :key="item.value"
-            :value="item.value"
-            :label="item.label"
-          />
-        </el-select>
-      </filter-field>
-      <filter-field label="部署端口" prop="port">
-        <el-input v-model="form.port" type="number" placeholder="部署端口" clearable />
-      </filter-field>
-      <filter-field label="配置文件" prop="activeProfiles">
-        <el-input v-model="form.activeProfiles" placeholder="激活配置文件" clearable />
-      </filter-field>
+
+      <template #advanced>
+        <filter-field label="应用类型" prop="applicationType">
+          <el-select v-model="form.applicationType" placeholder="应用类型" clearable>
+            <el-option
+              v-for="item in ApplicationTypeEnum.options"
+              :key="item.value"
+              :value="item.value"
+              :label="item.label"
+            />
+          </el-select>
+        </filter-field>
+        <filter-field label="部署状态" prop="status">
+          <el-select v-model="form.status" placeholder="部署状态" clearable>
+            <el-option
+              v-for="item in DeploymentStatusEnum.options"
+              :key="item.value"
+              :value="item.value"
+              :label="item.label"
+            />
+          </el-select>
+        </filter-field>
+        <filter-field label="部署端口" prop="port">
+          <el-input v-model="form.port" type="number" placeholder="部署端口" clearable />
+        </filter-field>
+        <filter-field label="配置文件" prop="activeProfiles">
+          <el-input v-model="form.activeProfiles" placeholder="激活配置文件" clearable />
+        </filter-field>
+      </template>
     </filter-bar>
     <table-pagination
       ref="tablePaginationRef"

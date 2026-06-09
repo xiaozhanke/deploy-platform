@@ -67,7 +67,7 @@ onActivated(() => {
 
 <template>
   <section class="dead-letter-index-section common-page-container">
-    <filter-bar :model="form" @query="handleQuery" @reset="handleReset">
+    <filter-bar :model="form" layout="compact" @query="handleQuery" @reset="handleReset">
       <filter-field label="重试状态" prop="retried">
         <el-select v-model="form.retried" placeholder="全部" clearable>
           <el-option v-for="item in retriedOptions" :key="String(item.value)" :value="item.value" :label="item.label" />
