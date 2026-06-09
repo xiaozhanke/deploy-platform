@@ -209,7 +209,7 @@ onActivated(() => {
       <!-- 列表视图列：当且仅当 viewMode === 'list' 时作为默认插槽渲染到表格中 -->
       <el-table-column prop="name" label="服务器名称" min-width="150px" />
       <el-table-column prop="host" label="主机地址" min-width="120px" />
-      <el-table-column prop="port" label="端口" min-width="60px" />
+      <el-table-column prop="port" label="端口" min-width="64px" />
       <el-table-column prop="username" label="用户名" min-width="100px" />
       <el-table-column prop="authType" label="认证方式" min-width="100px">
         <template #default="{ row }">
@@ -218,11 +218,11 @@ onActivated(() => {
       </el-table-column>
       <el-table-column prop="homeDir" label="主目录" min-width="130px" />
       <el-table-column prop="description" label="服务器描述" min-width="130px" />
-      <el-table-column label="操作" width="200px" fixed="right">
+      <el-table-column label="操作" width="236px" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" @click="handleView(row)">详情</el-button>
-          <el-button link @click="handleEdit(row)">编辑</el-button>
-          <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+          <el-button type="primary" link @click="handleView(row)">详情</el-button>
+          <el-button type="warning" link @click="handleEdit(row)">编辑</el-button>
+          <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
           <el-button link @click="handleTestConnection(row)">测试连接</el-button>
         </template>
       </el-table-column>

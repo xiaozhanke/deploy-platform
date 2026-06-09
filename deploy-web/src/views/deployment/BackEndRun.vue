@@ -412,7 +412,7 @@ onMounted(async () => {
         <el-empty v-if="fileList.length === 0" :description="sessionId ? '当前目录为空' : '未选择服务器'" />
         <el-table v-else :data="fileList" highlight-current-row show-overflow-tooltip>
           <el-table-column prop="name" label="文件名" min-width="130px" />
-          <el-table-column prop="size" label="文件大小" width="104px">
+          <el-table-column prop="size" label="文件大小" width="108px">
             <template #default="{ row }">
               <span>{{ $formatFileSize(row.size) }}</span>
             </template>

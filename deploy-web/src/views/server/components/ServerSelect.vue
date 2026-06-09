@@ -69,7 +69,7 @@ onActivated(async () => {
       <el-table-column type="selection" width="42px" />
       <el-table-column prop="name" label="服务器名称" min-width="160px" />
       <el-table-column prop="host" label="主机地址" min-width="120px" />
-      <el-table-column prop="port" label="端口" min-width="60px" />
+      <el-table-column prop="port" label="端口" min-width="64px" />
       <el-table-column prop="username" label="用户名" min-width="100px" />
       <el-table-column prop="authType" label="认证方式" min-width="100px">
         <template #default="{ row }">

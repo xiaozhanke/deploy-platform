@@ -95,7 +95,7 @@ onActivated(() => {
           }}</status-dot>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="160px" fixed="right">
+      <el-table-column label="操作" width="110px" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="handleView(row)">详情</el-button>
           <el-button link :disabled="row.retried" @click="handleRetry(row)">重试</el-button>

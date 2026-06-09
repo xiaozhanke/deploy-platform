@@ -200,7 +200,7 @@ const handleFileRename = (filePath: string) => {
           </template>
         </el-table-column>
         <el-table-column prop="permissions" label="读写权限" width="120px" />
-        <el-table-column prop="size" label="文件大小" width="104px" sortable>
+        <el-table-column prop="size" label="文件大小" width="108px" sortable>
           <template #default="{ row }">
             <span>{{ $formatFileSize(row.size) }}</span>
           </template>

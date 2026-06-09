@@ -235,10 +235,10 @@ onActivated(() => {
           {{ $formatDateTime(row.updateTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="212px" fixed="right">
+      <el-table-column label="操作" width="158px" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="handleView(row)">详情</el-button>
-          <el-button link @click="handleEdit(row)">修改</el-button>
+          <el-button type="warning" link @click="handleEdit(row)">修改</el-button>
           <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>

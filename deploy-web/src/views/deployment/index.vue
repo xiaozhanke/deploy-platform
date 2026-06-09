@@ -175,7 +175,7 @@ onMounted(async () => {
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="fileSize" label="文件大小" width="104px" sortable>
+            <el-table-column prop="fileSize" label="文件大小" width="108px" sortable>
               <template #default="{ row }">
                 <span>{{ $formatFileSize(row.fileSize) }}</span>
               </template>
@@ -189,7 +189,7 @@ onMounted(async () => {
               <template #default="{ row }">
                 <!-- 行内操作纯文字链（克制、不带图标）；tooltip 与点击行为保持不变 -->
                 <el-tooltip content="部署" placement="top">
-                  <el-button link @click="handleRun(row)">部署</el-button>
+                  <el-button type="primary" link @click="handleRun(row)">部署</el-button>
                 </el-tooltip>
               </template>
             </el-table-column>
