@@ -158,6 +158,8 @@ defineExpose({
   queryPage,
   tableRef,
   clearSelection,
+  tableData,
+  isLoading,
 })
 </script>
 
@@ -184,17 +186,11 @@ defineExpose({
     </div>
     <!-- 正常 / 二次加载：保留旧内容 + 浅遮罩；空数据走 EmptyState -->
     <template v-else>
-      <!-- 选中条：勾选才浮现，左「已选 N 项 · 取消选择」、右 #selection-actions 槽放批量 / 依赖选中的动作 -->
-      <div v-if="selectedRows.length > 0" class="selection-bar">
-        <div class="selection-bar__info">
-          <span>已选 {{ selectedRows.length }} 项</span>
-          <el-button link type="primary" @click="clearSelection">取消选择</el-button>
-        </div>
-        <div class="selection-bar__actions">
-          <slot name="selection-actions" :selection="selectedRows" />
-        </div>
+      <div v-if="$slots.content" v-loading="isLoading" class="custom-content-container">
+        <slot name="content" :data="tableData" />
       </div>
       <el-table
+        v-else
         ref="tableRef"
         v-loading="isLoading"
         class="table-container"
@@ -210,14 +206,32 @@ defineExpose({
           <empty-state />
         </template>
       </el-table>
-      <el-pagination
-        v-bind="pagination"
-        v-model:current-page="pagination.currentPage"
-        v-model:page-size="pagination.pageSize"
-        class="pagination-container"
-        @update:current-page="handleCurrentPageUpdate"
-        @update:page-size="handlePageSizeUpdate"
-      />
+      <!-- 分页脚栏：左侧勾选才浮现「已选 N 项 · 取消选择 + #selection-actions 批量动作」，右侧标准分页 -->
+      <footer class="pagination-bar">
+        <!-- 左槽常驻占位（即便空），稳住脚栏高度、消除选中时主区上下抖动 -->
+        <div class="pagination-bar__lead">
+          <transition name="selection-fade">
+            <div v-if="selectedRows.length > 0" class="selection-tools">
+              <span class="selection-tools__count">已选 <strong>{{ selectedRows.length }}</strong> 项</span>
+              <el-button class="selection-tools__clear" link type="primary" @click="clearSelection">
+                取消选择
+              </el-button>
+              <span class="selection-tools__divider" aria-hidden="true"></span>
+              <div class="selection-tools__actions">
+                <slot name="selection-actions" :selection="selectedRows" />
+              </div>
+            </div>
+          </transition>
+        </div>
+        <el-pagination
+          v-bind="pagination"
+          v-model:current-page="pagination.currentPage"
+          v-model:page-size="pagination.pageSize"
+          class="pagination-container"
+          @update:current-page="handleCurrentPageUpdate"
+          @update:page-size="handlePageSizeUpdate"
+        />
+      </footer>
     </template>
   </section>
 </template>
@@ -229,30 +243,79 @@ defineExpose({
   gap: 10px;
   flex: 1;
   overflow: hidden;
-  // 选中条：勾选才浮现，淡主色底呼应「选中」语义（同侧栏选中项的淡主色 pill）
-  .selection-bar {
+  .custom-content-container {
+    flex: 1;
+    overflow-y: auto;
+  }
+  .table-container {
+    flex: 1;
+  }
+  .pagination-bar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: var(--app-space-3);
-    padding: var(--app-space-2) var(--app-space-3);
-    background: var(--el-color-primary-light-9);
-    border: 1px solid var(--el-color-primary-light-7);
-    border-radius: var(--app-radius-control);
-    &__info {
+    // 与默认控件 / 分页器同高并留呼吸；左槽空时也维持此高度，避免选中时抖动
+    min-height: 36px;
+    // 左槽常驻占位（flex:1 撑满左半），把分页推到右侧；min-width:0 允许内容收缩不溢出
+    &__lead {
+      flex: 1;
+      min-width: 0;
       display: flex;
       align-items: center;
-      gap: var(--app-space-2);
-      color: var(--el-text-color-regular);
+    }
+  }
+  // 选中工具组：已选计数 chip · 取消选择 · 分隔线 · 批量动作槽
+  .selection-tools {
+    display: flex;
+    align-items: center;
+    gap: var(--app-space-3);
+    min-width: 0;
+    // 间距统一交 flex gap 管控，清掉 Element Plus 相邻按钮默认 margin-left（否则与 gap 叠加变宽）
+    :deep(.el-button + .el-button) {
+      margin-left: 0;
+    }
+    // 已选计数 chip：淡主色 pill 承袭「选中」语义（同侧栏选中项的淡主色背景）
+    &__count {
+      flex-shrink: 0;
+      padding: 2px 10px;
+      background: var(--el-color-primary-light-9);
+      border: 1px solid var(--el-color-primary-light-7);
+      border-radius: 999px;
+      color: var(--el-color-primary);
+      white-space: nowrap;
+      strong {
+        font-variant-numeric: tabular-nums;
+      }
+    }
+    &__clear {
+      flex-shrink: 0;
+    }
+    // 分隔线：把「计数 / 取消」状态组与「批量动作」区隔开
+    &__divider {
+      flex-shrink: 0;
+      width: 1px;
+      height: 16px;
+      background: var(--app-border);
     }
     &__actions {
       display: flex;
       align-items: center;
+      // 批量按钮间距对齐全站按钮组节奏（12px）
       gap: var(--app-space-3);
+      min-width: 0;
     }
   }
-  .table-container {
-    flex: 1;
+  // 选中条浮现：淡入 + 轻微左滑，呼应「随勾选出现」
+  .selection-fade-enter-active,
+  .selection-fade-leave-active {
+    transition:
+      opacity 0.18s ease,
+      transform 0.18s ease;
+  }
+  .selection-fade-enter-from,
+  .selection-fade-leave-to {
+    opacity: 0;
+    transform: translateX(-6px);
   }
   .pagination-container {
     :deep(.el-select) {
