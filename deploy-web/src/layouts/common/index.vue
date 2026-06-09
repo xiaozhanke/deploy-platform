@@ -357,17 +357,12 @@ const handleUserCommand = async (command: string | number | object) => {
   .layout-header {
     height: var(--system-header-height);
     flex-shrink: 0;
-    // 背景透明，与画布融为一体
     background-color: transparent;
     color: var(--el-text-color-primary);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    // padding-left 对齐主卡片内容区：main-inset（卡片外边距）+ layout-common-padding（卡片内边距）
-    // 使面包屑起始位置与主卡片内文字左边缘严格对齐
-    padding-top: var(--main-inset);
-    padding-left: calc(var(--main-inset) + var(--layout-common-padding));
-    padding-right: var(--main-inset);
+    padding: var(--main-inset) var(--main-inset) 0 var(--main-inset);
     .header-left {
       display: flex;
       align-items: center;
@@ -562,7 +557,7 @@ const handleUserCommand = async (command: string | number | object) => {
     .main-wrapper {
       position: relative;
       height: calc(100% - 2 * var(--main-inset));
-      margin: var(--main-inset);
+      margin: var(--main-inset) var(--main-inset) var(--main-inset) 0;
       background-color: var(--app-surface);
       border: 1px solid var(--app-border);
       // 手机基线：直角、零内嵌、铺满全屏无缝平铺；平板 / 宽桌面逐级放大留白与圆角
