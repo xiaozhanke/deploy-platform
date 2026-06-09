@@ -118,9 +118,9 @@ const navConfig: NavGroup[] = [
     title: '',
     items: [
       { index: '/server', icon: markRaw(Monitor) },
+      { index: '/file', icon: markRaw(Files) },
       { index: '/installation', icon: markRaw(Box) },
       { index: '/configuration', icon: markRaw(Operation) },
-      { index: '/file', icon: markRaw(Files) },
     ],
   },
   {
