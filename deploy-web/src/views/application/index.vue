@@ -395,25 +395,25 @@ onUnmounted(() => {
       <el-table-column type="index" label="序号" width="54px" fixed="left"></el-table-column>
       <el-table-column prop="serverRecord.name" label="服务器" min-width="100px"></el-table-column>
       <el-table-column prop="fileRecord.fileName" label="应用包名称" min-width="100px"></el-table-column>
-      <el-table-column prop="fileRecord.version" label="应用版本" width="80px"></el-table-column>
+      <el-table-column prop="fileRecord.version" label="应用版本" width="84px"></el-table-column>
       <el-table-column prop="deploymentPath" label="部署路径" min-width="130px"></el-table-column>
-      <el-table-column prop="applicationType" label="应用类型" width="82px">
+      <el-table-column prop="applicationType" label="应用类型" width="86px">
         <template #default="{ row }">
           {{ ApplicationTypeEnum.getLabel(row.applicationType) }}
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="部署状态" width="82px">
+      <el-table-column prop="status" label="部署状态" width="86px">
         <template #default="{ row }">
           {{ DeploymentStatusEnum.getLabel(row.status) }}
         </template>
       </el-table-column>
-      <el-table-column prop="running" label="是否运行中" width="94px">
+      <el-table-column prop="running" label="是否运行中" width="100px">
         <template #default="{ row }">
-          <el-switch
-            v-if="row.applicationType === ApplicationTypeEnum.BACKEND.value"
-            :model-value="row.running"
-            style="--el-switch-on-color: var(--el-color-success); --el-switch-off-color: var(--el-color-danger)"
-          />
+          <template v-if="row.applicationType === ApplicationTypeEnum.BACKEND.value">
+            <status-dot v-if="row.running === null" intent="info">状态未知</status-dot>
+            <status-dot v-else-if="row.running" intent="success" pulse>运行中</status-dot>
+            <status-dot v-else intent="danger">已停止</status-dot>
+          </template>
         </template>
       </el-table-column>
       <el-table-column label="最近作业" width="150px">
@@ -426,12 +426,12 @@ onUnmounted(() => {
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="340px" fixed="right">
+      <el-table-column label="操作" width="254px" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="handleView(row)">详情</el-button>
-          <el-button link @click="handleEdit(row)">修改</el-button>
+          <el-button type="warning" link @click="handleEdit(row)">修改</el-button>
           <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
-          <el-button link @click="handleJobHistory(row)">作业</el-button>
+          <el-button type="info" link @click="handleJobHistory(row)">作业</el-button>
           <el-button
             v-if="latestJobMap[row.id]?.status === JobStatusEnum.PENDING.value"
             type="danger"
