@@ -4,13 +4,12 @@ import ServerCard from './components/ServerCard.vue'
 import ServerFormDialog from './components/ServerFormDialog.vue'
 import { serverQueryList, serverDelete, serverTestConnection, serverAdd, serverUpdate } from '@/api/api'
 import { SshAuthTypeEnum } from '@/enums/platform'
+import TablePagination from '@/components/table-pagination/index.vue'
+import type { PageParams } from '@/types/api'
 
 defineOptions({
   name: 'ServerIndex',
 })
-
-// 服务器列表
-const serverList = ref<ServerRecord[]>([])
 
 // 视图模式
 const viewMode = ref<'card' | 'list'>('card')
@@ -20,14 +19,64 @@ const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit' | 'view'>('add')
 const currentServer = ref<ServerRecord>({} as ServerRecord)
 
-// 加载服务器列表
-const loadServerList = async () => {
-  try {
-    const list = await serverQueryList()
-    serverList.value = list
-  } catch (error) {
-    ElNotification.error('服务器列表加载失败: ' + extractErrorMessage(error))
+// table-pagination 实例引用
+const tablePaginationRef = ref()
+
+// 搜索条件表单
+const form = reactive({
+  name: '',
+  host: '',
+})
+
+// 分页及条件查询方法（前端过滤及分页）
+const queryMethod = async (queryParams: Record<string, unknown>, pageParams: PageParams) => {
+  const list = await serverQueryList()
+  const qName = (queryParams.name as string || '').trim().toLowerCase()
+  const qHost = (queryParams.host as string || '').trim().toLowerCase()
+
+  const filtered = list.filter(item => {
+    const matchName = !qName || item.name.toLowerCase().includes(qName)
+    const matchHost = !qHost || item.host.toLowerCase().includes(qHost)
+    return matchName && matchHost
+  })
+
+  // 排序支持
+  if (pageParams.sort) {
+    const [prop, order] = pageParams.sort.split(',')
+    filtered.sort((a: ServerRecord, b: ServerRecord) => {
+      const valA = String(a[prop as keyof ServerRecord] ?? '')
+      const valB = String(b[prop as keyof ServerRecord] ?? '')
+      const orderFactor = order === 'asc' ? 1 : -1
+      return valA.localeCompare(valB) * orderFactor
+    })
   }
+
+  const page = pageParams.page ?? 0
+  const size = pageParams.size ?? 20
+  const start = page * size
+  const end = start + size
+  const pageData = filtered.slice(start, end)
+
+  return {
+    content: pageData,
+    totalElements: filtered.length,
+    totalPages: Math.ceil(filtered.length / size),
+    number: page,
+    size: size,
+  }
+}
+
+// 触发查询（错误由 table-pagination 内部统一处理：错误态 / 轻提示）
+const handleQuery = () => tablePaginationRef.value?.queryPage(form)
+
+// 重置查询
+const handleReset = () => {
+  handleQuery()
+}
+
+// 刷新当前页
+const reloadData = () => {
+  tablePaginationRef.value?.queryPage()
 }
 
 // 打开添加对话框
@@ -62,7 +111,7 @@ const handleDelete = (server: ServerRecord) => {
       try {
         await serverDelete(server.id)
         ElNotification.success('服务器删除成功')
-        await loadServerList()
+        reloadData()
       } catch (error) {
         ElNotification.error('服务器删除失败: ' + extractErrorMessage(error))
       }
@@ -95,60 +144,69 @@ const handleSubmit = async (server: ServerParams) => {
       ElNotification.success('服务器更新成功')
     }
     dialogVisible.value = false
-    await loadServerList()
+    reloadData()
   } catch (error) {
     ElNotification.error('服务器保存失败: ' + extractErrorMessage(error))
   }
 }
 
-// 页面加载时获取服务器列表
-onMounted(async () => {
-  await loadServerList()
+onActivated(() => {
+  handleQuery()
 })
 </script>
 
 <template>
-  <section class="server-index-section">
-    <!-- 工具栏：添加 / 刷新左对齐，视图切换推到最右；本页无筛选 -->
-    <div class="page-toolbar">
-      <!-- 页面主操作：唯一实色 primary -->
-      <el-button type="primary" @click="handleAdd">
-        <el-icon><Plus /></el-icon>
-        添加服务器
-      </el-button>
-      <!-- 次要动作：中性按钮，避免与主操作争抢视觉层级 -->
-      <el-button @click="loadServerList">
-        <el-icon><Refresh /></el-icon>
-        刷新
-      </el-button>
-      <el-radio-group v-model="viewMode" class="view-mode-switch">
-        <el-radio-button value="card">
-          <el-icon><Grid /></el-icon>
-        </el-radio-button>
-        <el-radio-button value="list">
-          <el-icon><List /></el-icon>
-        </el-radio-button>
-      </el-radio-group>
-    </div>
+  <section class="server-index-section common-page-container">
+    <!-- 筛选工具栏：layout="compact" 合并高频字段和动作 -->
+    <filter-bar layout="compact" :model="form" @query="handleQuery" @reset="handleReset">
+      <filter-field label="服务器名称" prop="name">
+        <el-input v-model="form.name" placeholder="请输入服务器名称" clearable />
+      </filter-field>
+      <filter-field label="主机地址" prop="host">
+        <el-input v-model="form.host" placeholder="请输入主机地址" clearable />
+      </filter-field>
 
-    <!-- 卡片视图 -->
-    <div v-if="viewMode === 'card'">
-      <empty-state v-if="serverList.length === 0" description="暂无服务器，点击右上角「添加服务器」新增" />
-      <div class="app-card-grid">
-        <server-card
-          v-for="server in serverList"
-          :key="server.id"
-          :server="server"
-          @view="handleView"
-          @edit="handleEdit"
-          @delete="handleDelete"
-          @test-connection="handleTestConnection"
-        />
-      </div>
-    </div>
+      <template #actions>
+        <!-- 页面主操作：唯一实色 primary -->
+        <el-button type="primary" @click="handleAdd">
+          <el-icon><Plus /></el-icon>
+          添加服务器
+        </el-button>
+        <!-- 视图切换 -->
+        <el-radio-group v-model="viewMode" class="view-mode-switch">
+          <el-radio-button value="card">
+            <el-icon><Grid /></el-icon>
+          </el-radio-button>
+          <el-radio-button value="list">
+            <el-icon><List /></el-icon>
+          </el-radio-button>
+        </el-radio-group>
+      </template>
+    </filter-bar>
 
-    <!-- 列表视图 -->
-    <el-table v-else :data="serverList" highlight-current-row show-overflow-tooltip>
+    <table-pagination
+      ref="tablePaginationRef"
+      :query-method="queryMethod"
+      highlight-current-row
+      show-overflow-tooltip
+    >
+      <!-- 卡片视图插槽：当且仅当 viewMode === 'card' 时渲染此插槽 -->
+      <template v-if="viewMode === 'card'" #content="{ data }">
+        <empty-state v-if="data.length === 0" description="暂无服务器，点击右上角「添加服务器」新增" />
+        <div v-else class="app-card-grid">
+          <server-card
+            v-for="server in data"
+            :key="server.id"
+            :server="server"
+            @view="handleView"
+            @edit="handleEdit"
+            @delete="handleDelete"
+            @test-connection="handleTestConnection"
+          />
+        </div>
+      </template>
+
+      <!-- 列表视图列：当且仅当 viewMode === 'list' 时作为默认插槽渲染到表格中 -->
       <el-table-column prop="name" label="服务器名称" min-width="150px" />
       <el-table-column prop="host" label="主机地址" min-width="120px" />
       <el-table-column prop="port" label="端口" min-width="60px" />
@@ -168,7 +226,7 @@ onMounted(async () => {
           <el-button link @click="handleTestConnection(row)">测试连接</el-button>
         </template>
       </el-table-column>
-    </el-table>
+    </table-pagination>
 
     <!-- 服务器表单对话框 -->
     <server-form-dialog
@@ -187,7 +245,6 @@ onMounted(async () => {
   flex-direction: column;
   gap: var(--layout-common-gap);
 
-  // 视图切换（卡片 / 列表）推到操作行最右，与左侧的添加 / 刷新分立两端
   .view-mode-switch {
     margin-left: auto;
   }

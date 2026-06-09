@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Connection } from '@element-plus/icons-vue'
+import { Connection, Delete, Edit, View } from '@element-plus/icons-vue'
 import type { ServerRecord } from '@/types/server'
 import { SshAuthTypeEnum } from '@/enums/platform'
 
@@ -20,98 +20,150 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <el-card class="server-card" shadow="hover">
-    <template #header>
-      <div class="card-header">
-        <div class="server-title">
-          <h3 class="server-name">{{ server.name }}</h3>
-        </div>
-        <div class="card-actions">
-          <el-button link type="primary" @click="emit('view', server)">详情</el-button>
-          <el-button link @click="emit('edit', server)">编辑</el-button>
-          <el-button link type="danger" @click="emit('delete', server)">删除</el-button>
-        </div>
+  <!-- 扁平单卡：整卡点击=详情；内部按钮一律 .stop 阻止冒泡到整卡 -->
+  <div class="server-card" @click="emit('view', server)">
+    <!-- 标题行：liveness 占位 + 名称 + hover 淡入的 CRUD 图标 -->
+    <div class="server-card__header">
+      <div class="server-card__name">
+        <!-- liveness 占位：待主机存活数据接入后启用 StatusDot -->
+        <!-- <status-dot v-if="server.liveness" :intent="server.liveness ? 'success' : 'info'" /> -->
+        <span class="server-card__name-text">{{ server.name }}</span>
       </div>
-    </template>
-    <div class="server-info">
-      <div class="info-item">
-        <span class="label">主机地址</span>
-        <span class="value">{{ server.host }}</span>
-      </div>
-      <div class="info-item">
-        <span class="label">端口</span>
-        <span class="value">{{ server.port }}</span>
-      </div>
-      <div class="info-item">
-        <span class="label">用户名</span>
-        <span class="value">{{ server.username }}</span>
-      </div>
-      <div class="info-item">
-        <span class="label">认证方式</span>
-        <span class="value">{{ SshAuthTypeEnum.getLabel(server.authType) }}</span>
-      </div>
-      <div class="info-item">
-        <span class="label">主目录</span>
-        <span class="value">{{ server.homeDir }}</span>
+      <div class="server-card__actions">
+        <el-button link :icon="View" class="action-icon" @click.stop="emit('view', server)" />
+        <el-button link :icon="Edit" class="action-icon" @click.stop="emit('edit', server)" />
+        <el-button link type="danger" :icon="Delete" class="action-icon" @click.stop="emit('delete', server)" />
       </div>
     </div>
-    <template #footer>
-      <el-button type="primary" @click="emit('test-connection', server)">
-        <el-icon><Connection /></el-icon>
-        测试连接
-      </el-button>
-    </template>
-  </el-card>
+
+    <!-- 连接串行：user@host:port + 常驻弱色测试连接图标 -->
+    <div class="server-card__connection">
+      <span class="server-card__conn-string">{{ server.username }}@{{ server.host }}:{{ server.port }}</span>
+      <el-button
+        link
+        :icon="Connection"
+        class="server-card__test-btn"
+        @click.stop="emit('test-connection', server)"
+      />
+    </div>
+
+    <!-- 元数据行：认证方式 · 主目录 -->
+    <div class="server-card__meta">
+      <span>{{ SshAuthTypeEnum.getLabel(server.authType) }}</span>
+      <span class="server-card__meta-dot">·</span>
+      <span>{{ server.homeDir }}</span>
+    </div>
+  </div>
 </template>
 
 <style lang="scss" scoped>
 .server-card {
-  height: 100%;
+  // 扁平卡片：1px 描边 + 圆角；hover 微背景 + 轻阴影抬起
+  background-color: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-card); // 8px
+  padding: var(--app-space-4); // 16px
+  cursor: pointer;
+  transition:
+    background-color var(--app-transition-fast),
+    box-shadow var(--app-transition-fast);
+
   display: flex;
   flex-direction: column;
-  border-radius: var(--layout-common-border-radius);
+  gap: var(--app-space-2); // 8px 行间距
 
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    .server-title {
-      flex: 1;
-      margin-right: var(--layout-common-margin);
-      .server-name {
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--el-text-color-primary);
-      }
-    }
-  }
-
-  .server-info {
-    flex: 1;
-    padding: var(--layout-common-padding);
+  &:hover {
     background-color: var(--el-fill-color-light);
-    border-radius: var(--layout-common-border-radius);
-    .info-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 12px;
-      &:last-child {
-        margin-bottom: 0;
-      }
-      .label {
-        color: var(--el-text-color-secondary);
-        margin-right: 8px;
-        min-width: 80px;
-      }
-      .value {
-        color: var(--el-text-color-primary);
-      }
+    box-shadow: var(--app-shadow-sm);
+
+    // hover 时 CRUD 图标淡入
+    .server-card__actions {
+      opacity: 1;
     }
   }
 
-  :deep(.el-card__footer) {
+  &__header {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--app-space-2);
+  }
+
+  &__name {
+    display: flex;
+    align-items: center;
+    gap: var(--app-space-2);
+    min-width: 0; // 允许文字截断
+  }
+
+  &__name-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // CRUD 图标：默认隐藏，hover 淡入
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--app-space-1); // 4px
+    opacity: 0;
+    transition: opacity var(--app-transition-fast);
+    flex-shrink: 0;
+
+    // 触屏（无 hover 能力）：CRUD 图标常驻可见，否则触屏设备上永远点不到编辑/删除
+    @media (hover: none) {
+      opacity: 1;
+    }
+
+    .el-button {
+      padding: 0 4px;
+    }
+  }
+
+  &__connection {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--app-space-2);
+  }
+
+  &__conn-string {
+    font-family: var(--app-font-mono); // 等宽字体
+    font-size: 13px;
+    color: var(--el-text-color-regular);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // 测试连接：常驻弱色，hover 转主题色
+  &__test-btn.el-button {
+    color: var(--el-text-color-secondary);
+    padding: 0 4px;
+    flex-shrink: 0;
+
+    &:hover {
+      color: var(--el-color-primary);
+    }
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--app-space-2);
+    font-size: 13px;
+    color: var(--el-text-color-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__meta-dot {
+    color: var(--app-border);
   }
 }
 </style>
