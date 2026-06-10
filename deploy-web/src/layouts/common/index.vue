@@ -270,6 +270,14 @@ const handleUserCommand = async (command: string | number | object) => {
           </el-breadcrumb>
         </div>
         <div class="header-right">
+          <!-- 离线横幅 -->
+          <transition name="ws-banner">
+            <div v-if="websocketStore.status === 'offline'" class="ws-offline-banner" role="status">
+              <el-icon class="ws-offline-banner__icon"><WarnTriangleFilled /></el-icon>
+              <span class="ws-offline-banner__text">实时连接已断开，数据可能不是最新</span>
+              <el-button link type="primary" :icon="RefreshRight" @click="handleReconnect">重连</el-button>
+            </div>
+          </transition>
           <el-tooltip v-if="websocketStore.status === 'reconnecting'" content="连接断开，正在重连…" placement="bottom">
             <status-dot class="ws-indicator" intent="warning" pulse />
           </el-tooltip>
@@ -310,14 +318,6 @@ const handleUserCommand = async (command: string | number | object) => {
       </el-header>
       <el-main class="layout-main">
         <div class="main-wrapper">
-          <!-- 离线横幅 -->
-          <transition name="ws-banner">
-            <div v-if="websocketStore.status === 'offline'" class="ws-offline-banner" role="status">
-              <el-icon class="ws-offline-banner__icon"><WarnTriangleFilled /></el-icon>
-              <span class="ws-offline-banner__text">实时连接已断开，数据可能不是最新</span>
-              <el-button link type="primary" :icon="RefreshRight" @click="handleReconnect">重连</el-button>
-            </div>
-          </transition>
           <router-view v-slot="{ Component }">
             <keep-alive :include="cachedViews">
               <component :is="Component" :key="route.fullPath" class="main-container" />
@@ -393,6 +393,24 @@ const handleUserCommand = async (command: string | number | object) => {
       display: flex;
       align-items: center;
       gap: var(--app-space-3);
+
+      .ws-offline-banner {
+        display: flex;
+        align-items: center;
+        gap: var(--app-space-2);
+        padding: 4px var(--app-space-3);
+        background-color: var(--el-color-danger-light-9);
+        color: var(--el-color-danger);
+        border: 1px solid var(--el-color-danger-light-7);
+        border-radius: var(--app-radius-control);
+        font-size: var(--el-font-size-base);
+        &__icon {
+          font-size: 16px;
+        }
+        &__text {
+          white-space: nowrap;
+        }
+      }
 
       .theme-toggle {
         width: 30px;
@@ -574,26 +592,7 @@ const handleUserCommand = async (command: string | number | object) => {
       @include respond-to('lg') {
         border-radius: var(--app-radius-overlay);
       }
-      // offline 非阻塞细横幅：danger 语义，常驻直到恢复
-      .ws-offline-banner {
-        position: sticky;
-        top: 0;
-        z-index: 5;
-        display: flex;
-        align-items: center;
-        gap: var(--app-space-2);
-        padding: var(--app-space-2) var(--layout-common-padding);
-        background-color: var(--el-color-danger-light-9);
-        color: var(--el-color-danger);
-        border-bottom: 1px solid var(--el-color-danger-light-7);
-        font-size: var(--el-font-size-base);
-        &__icon {
-          font-size: 16px;
-        }
-        &__text {
-          flex: 1;
-        }
-      }
+
       .main-container {
         padding: var(--layout-common-padding);
       }
