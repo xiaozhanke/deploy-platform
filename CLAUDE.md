@@ -44,15 +44,15 @@ npm run type-check   # vue-tsc --build（仅类型检查不产物）
 ## 运行架构
 
 ### 端口与 URL
-- API: `https://localhost:6060`（HTTPS 通过 `keystore.p12`，密码 `changeit`，alias `deploy`）
-- 前端开发：`https://localhost:5173/ui`（基础路径 `/ui`，由 `VITE_BASE_URL` 设置）
-- Swagger: `https://localhost:6060/swagger-ui.html`
-- OpenAPI JSON: `https://localhost:6060/v3/api-docs`
+- API: `http://localhost:6060`（后端默认 HTTP：`application.yml` 里 `server.ssl.enabled=false`，TLS 由前置 nginx 终止；`keystore.p12` 仅为兼容旧配置保留在 classpath、不再加载）
+- 前端开发：`https://localhost:5173/ui`（基础路径 `/ui`，由 `VITE_BASE_URL` 设置；HTTPS 由 basic-ssl 提供）
+- Swagger: `http://localhost:6060/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:6060/v3/api-docs`
 
 ### 开发模式请求流向
 Vite 代理两个前缀到后端 API（见 `vite.config.ts`）：
-- `${VITE_API_ROOT}`（默认 `/api`） → `https://localhost:6060`
-- `/.well-known` → `https://localhost:6060`（OIDC discovery）
+- `${VITE_API_ROOT}`（默认 `/api`） → `http://localhost:6060`
+- `/.well-known` → `http://localhost:6060`（OIDC discovery）
 
 WebSocket(STOMP) 经 vite 升级代理（`/websocket`，`ws: true`）到后端 `ws://localhost:6060/websocket`；浏览器侧用同源 `wss://localhost:5173/websocket`（由 `getWebSocketUrl()` 按页面协议推导），避免 HTTPS 页面直连明文 `ws://` 的混合内容限制 —— 见 `vite.config.ts`。
 
