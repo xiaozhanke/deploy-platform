@@ -20,11 +20,11 @@ import java.time.LocalDateTime;
 @Schema(description = "部署参数")
 public class DeploymentParams {
     /**
-     * 服务器 Id
+     * 主机 Id
      */
-    @Schema(description = "服务器 Id")
-    @NotBlank(message = "服务器 Id 不能为空")
-    private String serverRecordId;
+    @Schema(description = "主机 Id")
+    @NotBlank(message = "主机 Id 不能为空")
+    private String hostRecordId;
 
     /**
      * 文件记录 Id

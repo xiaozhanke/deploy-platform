@@ -38,14 +38,9 @@ const uploadProgressMap = ref<Record<string, number>>({})
 // 更新状态映射
 const updateStatusMap = ref<Record<string, 'success' | 'error' | 'pending'>>({})
 
-// 上传文件到服务器
-const handleUploadToServer = (
-  deploymentRecordId: string,
-  serverId: string,
-  localPath: string,
-  deploymentPath: string,
-) => {
-  return sshConnect(serverId).then((sessionId) =>
+// 上传文件到主机
+const handleUploadToHost = (deploymentRecordId: string, hostId: string, localPath: string, deploymentPath: string) => {
+  return sshConnect(hostId).then((sessionId) =>
     websocketStore.sendAndAwait(
       `/topic/ssh/sessions/${sessionId}/sftp/upload`,
       `/app/ssh/sessions/${sessionId}/sftp/upload`,
@@ -75,10 +70,10 @@ const handleUploadStep = async () => {
           uploadProgressMap.value[record.id] = 0
         })
 
-        // 并行上传到所有服务器
+        // 并行上传到所有主机
         await Promise.all(
           props.recordSelection.map((record) =>
-            handleUploadToServer(record.id, record.serverRecord.id, localPath, record.deploymentPath),
+            handleUploadToHost(record.id, record.hostRecord.id, localPath, record.deploymentPath),
           ),
         )
 
@@ -124,13 +119,13 @@ const handleUpdateDeploymentRecord = async () => {
   }
 }
 
-const logServerId = ref('')
+const logHostId = ref('')
 const logPath = ref('')
 const logVisible = ref(false)
 
 const handleViewLog = (record: DeploymentRecord) => {
-  const { serverRecord, deploymentPath } = record
-  logServerId.value = serverRecord.id
+  const { hostRecord, deploymentPath } = record
+  logHostId.value = hostRecord.id
   logPath.value = `${deploymentPath}/nohup.out`
   logVisible.value = true
 }
@@ -233,7 +228,7 @@ const handleClose = () => {
         <el-form-item label="上传进度">
           <div class="upload-progress-list">
             <div v-for="record in recordSelection" :key="record.id" class="upload-progress-item">
-              <span class="server-name">{{ record.serverRecord.name }}</span>
+              <span class="host-name">{{ record.hostRecord.name }}</span>
               <span class="deployment-path">{{ record.deploymentPath }}</span>
               <el-progress
                 :percentage="uploadProgressMap[record.id] || 0"
@@ -251,7 +246,7 @@ const handleClose = () => {
       <div class="update-status-list">
         <div v-for="record in recordSelection" :key="record.id" class="update-status-item">
           <div class="record-info">
-            <span class="server-name">{{ record.serverRecord.name }}</span>
+            <span class="host-name">{{ record.hostRecord.name }}</span>
             <span class="deployment-path">{{ record.deploymentPath }}</span>
           </div>
           <div class="status-indicator">
@@ -278,7 +273,7 @@ const handleClose = () => {
     </template>
 
     <file-select v-if="fileSelectVisible" v-model="fileSelectVisible" @select="handleFileSelectComplete" />
-    <log-view v-if="logVisible" v-model="logVisible" :server-id="logServerId" :log-path="logPath" />
+    <log-view v-if="logVisible" v-model="logVisible" :host-id="logHostId" :log-path="logPath" />
   </app-drawer>
 </template>
 
@@ -301,7 +296,7 @@ const handleClose = () => {
     display: flex;
     align-items: center;
     gap: 10px;
-    .server-name {
+    .host-name {
       font-weight: bold;
     }
     .el-progress {
@@ -325,7 +320,7 @@ const handleClose = () => {
       display: flex;
       flex-direction: column;
       gap: 4px;
-      .server-name {
+      .host-name {
         font-weight: bold;
       }
       .deployment-path {

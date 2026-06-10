@@ -54,9 +54,9 @@ const titleIcon = computed(() => {
       <el-descriptions-item label-class-name="description-label" class-name="description-content">
         <template #label>
           <el-icon><monitor /></el-icon>
-          服务器
+          主机
         </template>
-        {{ record.serverRecord.name }}
+        {{ record.hostRecord.name }}
       </el-descriptions-item>
 
       <el-descriptions-item label-class-name="description-label" class-name="description-content">
@@ -64,7 +64,7 @@ const titleIcon = computed(() => {
           <el-icon><position /></el-icon>
           主机地址
         </template>
-        {{ record.serverRecord.host }}
+        {{ record.hostRecord.address }}
       </el-descriptions-item>
 
       <el-descriptions-item label-class-name="description-label" class-name="description-content">

@@ -16,7 +16,7 @@ import lombok.ToString;
 import org.hibernate.annotations.Comment;
 
 /**
- * 服务器记录 PO 类
+ * 主机记录 PO 类
  *
  * @author xiaozhanke
  */
@@ -24,28 +24,28 @@ import org.hibernate.annotations.Comment;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "server_record")
-@Comment("服务器记录表")
-public class ServerRecord extends BasePo {
+@Table(name = "host_record")
+@Comment("主机记录表")
+public class HostRecord extends BasePo {
     /**
-     * 服务器 Id
+     * 主机 Id
      */
-    @Comment("服务器 Id")
+    @Comment("主机 Id")
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     /**
-     * 服务器名称
+     * 主机名称
      */
-    @Comment("服务器名称")
+    @Comment("主机名称")
     @Column(nullable = false)
     private String name;
 
     /**
-     * 服务器描述
+     * 主机描述
      */
-    @Comment("服务器描述")
+    @Comment("主机描述")
     @Column
     private String description;
 
@@ -54,7 +54,7 @@ public class ServerRecord extends BasePo {
      */
     @Comment("主机地址")
     @Column(nullable = false)
-    private String host;
+    private String address;
 
     /**
      * 端口号
@@ -170,4 +170,4 @@ public class ServerRecord extends BasePo {
     @Comment("是否启用端口转发")
     @Column
     private Boolean portForwardingEnabled;
-} 
+}

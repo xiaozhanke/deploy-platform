@@ -44,13 +44,13 @@ public class DeploymentRecord extends BasePo {
     private String id;
 
     /**
-     * 服务器记录
+     * 主机记录
      */
-    @Comment("服务器记录")
+    @Comment("主机记录")
     @ManyToOne
-    @JoinColumn(name = "server_record_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_deployment_record_server_record"))
-    private ServerRecord serverRecord;
+    @JoinColumn(name = "host_record_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_deployment_record_host_record"))
+    private HostRecord hostRecord;
 
     /**
      * 文件记录

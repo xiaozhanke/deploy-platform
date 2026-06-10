@@ -1,5 +1,5 @@
 import type { ApplicationTypeEnum, DeploymentStatusEnum, JobStatusEnum, JobTypeEnum } from '@/enums/platform'
-import type { ServerRecord } from './server'
+import type { HostRecord } from './host'
 import type { FileRecord } from './file'
 
 /**
@@ -7,7 +7,7 @@ import type { FileRecord } from './file'
  */
 export interface DeploymentRecord {
   id: string
-  serverRecord: ServerRecord
+  hostRecord: HostRecord
   fileRecord: FileRecord
   applicationType: keyof typeof ApplicationTypeEnum
   deploymentPath: string
@@ -28,7 +28,7 @@ export interface DeploymentRecord {
  * 部署参数
  */
 export interface DeploymentParams {
-  serverRecordId: string
+  hostRecordId: string
   fileRecordId: string
   applicationType: keyof typeof ApplicationTypeEnum
   deploymentPath: string

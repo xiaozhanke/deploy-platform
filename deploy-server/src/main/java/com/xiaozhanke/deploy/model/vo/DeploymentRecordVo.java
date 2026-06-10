@@ -27,10 +27,10 @@ public class DeploymentRecordVo extends BaseVo {
     private String id;
 
     /**
-     * 服务器记录
+     * 主机记录
      */
-    @Schema(description = "服务器记录")
-    private ServerRecordVo serverRecord;
+    @Schema(description = "主机记录")
+    private HostRecordVo hostRecord;
 
     /**
      * 文件记录

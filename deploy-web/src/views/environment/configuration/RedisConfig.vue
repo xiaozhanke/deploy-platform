@@ -53,7 +53,7 @@ const checkConfigFileSelected = () => {
 // 获取文件列表
 const fetchFileList = async () => {
   if (!sessionId.value) {
-    return ElMessage.warning('请先连接服务器')
+    return ElMessage.warning('请先连接主机')
   }
   if (!configDir.value) {
     fileList.value = []
@@ -207,8 +207,8 @@ const handleFileRename = (filePath: string) => {
 // 解析 Redis 配置文件
 const parseRedisConfig = async (filePath: string): Promise<RedisConfigParams> => {
   if (!sessionId.value) {
-    ElMessage.warning('请先连接服务器')
-    throw new Error('请先连接服务器')
+    ElMessage.warning('请先连接主机')
+    throw new Error('请先连接主机')
   }
 
   try {
@@ -284,7 +284,7 @@ const handleRedisConfigAddSubmit = async (params: RedisConfigParams) => {
 // Redis 启动服务
 const handleRedisStart = async () => {
   if (!sessionId.value) {
-    return ElMessage.warning('请先连接服务器')
+    return ElMessage.warning('请先连接主机')
   }
   if (!checkRedisInstalled()) return
   if (!checkConfigFileSelected()) return
@@ -306,7 +306,7 @@ const handleRedisStart = async () => {
 // Redis 停止服务
 const handleRedisStop = async () => {
   if (!sessionId.value) {
-    return ElMessage.warning('请先连接服务器')
+    return ElMessage.warning('请先连接主机')
   }
   if (!checkRedisInstalled()) return
   if (!checkConfigFileSelected()) return
@@ -329,7 +329,7 @@ const handleRedisStop = async () => {
 // Redis 重启服务
 const handleRedisReload = async () => {
   if (!sessionId.value) {
-    return ElMessage.warning('请先连接服务器')
+    return ElMessage.warning('请先连接主机')
   }
   if (!checkRedisInstalled()) return
   if (!checkConfigFileSelected()) return
@@ -352,7 +352,7 @@ const handleRedisReload = async () => {
 // 探测远程 Redis 布局目录
 const handleDetectLayout = async () => {
   if (!sessionId.value) {
-    return ElMessage.warning('请先连接服务器')
+    return ElMessage.warning('请先连接主机')
   }
   detecting.value = true
   try {
@@ -511,7 +511,7 @@ onActivated(async () => {
       <el-empty
         v-if="fileList.length === 0"
         class="file-list-empty"
-        :description="sessionId ? '当前目录为空' : '未选择服务器'"
+        :description="sessionId ? '当前目录为空' : '未选择主机'"
       />
       <el-table
         v-else

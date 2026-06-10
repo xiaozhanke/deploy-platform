@@ -53,7 +53,7 @@ public class DeploymentController {
      * @return 保存后的部署记录信息
      */
     @Operation(summary = "创建部署记录", description = "创建部署记录")
-    @Auditable(operationType = AuditOperationTypeEnum.DEPLOYMENT_CREATE, target = "#params.serverId")
+    @Auditable(operationType = AuditOperationTypeEnum.DEPLOYMENT_CREATE, target = "#params.hostRecordId")
     @PostMapping
     public ResponseEntity<DeploymentRecordVo> addDeployment(@Validated @RequestBody DeploymentParams params) {
         DeploymentRecordVo createdRecord = deploymentService.createDeployment(params);

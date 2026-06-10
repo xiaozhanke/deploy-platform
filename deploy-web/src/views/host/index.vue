@@ -1,31 +1,31 @@
 <script setup lang="ts">
-import type { ServerRecord, ServerParams, ServerQueryParams } from '@/types/server'
-import ServerFormDialog from './components/ServerFormDialog.vue'
-import { serverQueryPage, serverDelete, serverTestConnection, serverAdd, serverUpdate } from '@/api/api'
+import type { HostRecord, HostParams, HostQueryParams } from '@/types/host'
+import HostFormDialog from './components/HostFormDialog.vue'
+import { hostQueryPage, hostDelete, hostTestConnection, hostAdd, hostUpdate } from '@/api/api'
 import { SshAuthTypeEnum } from '@/enums/platform'
 import TablePagination from '@/components/table-pagination/index.vue'
 import type { PageParams } from '@/types/api'
 
 defineOptions({
-  name: 'ServerIndex',
+  name: 'HostIndex',
 })
 
 // 对话框控制
 const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit' | 'view'>('add')
-const currentServer = ref<ServerRecord>({} as ServerRecord)
+const currentHost = ref<HostRecord>({} as HostRecord)
 
 // table-pagination 实例引用
 const tablePaginationRef = ref()
 
 // 搜索条件表单
-const form = reactive<ServerQueryParams>({
+const form = reactive<HostQueryParams>({
   name: '',
-  host: '',
+  address: '',
 })
 
-// 分页及条件查询：后端分页 + name / host 模糊匹配，错误由 table-pagination 内部统一处理（错误态 / 轻提示）
-const queryMethod = (queryParams: Record<string, unknown>, pageParams: PageParams) => serverQueryPage(form, pageParams)
+// 分页及条件查询：后端分页 + name / address 模糊匹配，错误由 table-pagination 内部统一处理（错误态 / 轻提示）
+const queryMethod = (queryParams: Record<string, unknown>, pageParams: PageParams) => hostQueryPage(form, pageParams)
 
 // 触发查询
 const handleQuery = () => tablePaginationRef.value?.queryPage(form)
@@ -41,71 +41,71 @@ const reloadData = () => tablePaginationRef.value?.queryPage()
 // 打开添加对话框
 const handleAdd = () => {
   dialogType.value = 'add'
-  currentServer.value = {} as ServerRecord
+  currentHost.value = {} as HostRecord
   dialogVisible.value = true
 }
 
 // 打开编辑对话框
-const handleEdit = (server: ServerRecord) => {
+const handleEdit = (host: HostRecord) => {
   dialogType.value = 'edit'
-  currentServer.value = server
+  currentHost.value = host
   dialogVisible.value = true
 }
 
 // 打开查看对话框
-const handleView = (server: ServerRecord) => {
+const handleView = (host: HostRecord) => {
   dialogType.value = 'view'
-  currentServer.value = server
+  currentHost.value = host
   dialogVisible.value = true
 }
 
-// 删除服务器
-const handleDelete = (server: ServerRecord) => {
-  ElMessageBox.confirm('确认删除该服务器信息?', '警告', {
+// 删除主机
+const handleDelete = (host: HostRecord) => {
+  ElMessageBox.confirm('确认删除该主机信息?', '警告', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning',
   })
     .then(async () => {
       try {
-        await serverDelete(server.id)
-        ElNotification.success('服务器删除成功')
+        await hostDelete(host.id)
+        ElNotification.success('主机删除成功')
         reloadData()
       } catch (error) {
-        ElNotification.error('服务器删除失败: ' + extractErrorMessage(error))
+        ElNotification.error('主机删除失败: ' + extractErrorMessage(error))
       }
     })
     .catch(() => {})
 }
 
 // 测试连接
-const handleTestConnection = async (server: ServerParams) => {
+const handleTestConnection = async (host: HostParams) => {
   try {
-    const isSuccess = await serverTestConnection(server)
+    const isSuccess = await hostTestConnection(host)
     if (isSuccess) {
-      ElMessage.success('服务器连通性测试成功')
+      ElMessage.success('主机连通性测试成功')
     } else {
-      ElMessage.error('服务器连通性测试失败')
+      ElMessage.error('主机连通性测试失败')
     }
   } catch (error) {
-    ElNotification.error('服务器测试连接失败: ' + extractErrorMessage(error))
+    ElNotification.error('主机测试连接失败: ' + extractErrorMessage(error))
   }
 }
 
 // 提交表单
-const handleSubmit = async (server: ServerParams) => {
+const handleSubmit = async (host: HostParams) => {
   try {
     if (dialogType.value === 'add') {
-      await serverAdd(server)
-      ElNotification.success('服务器添加成功')
+      await hostAdd(host)
+      ElNotification.success('主机添加成功')
     } else if (dialogType.value === 'edit') {
-      await serverUpdate(currentServer.value.id, server)
-      ElNotification.success('服务器更新成功')
+      await hostUpdate(currentHost.value.id, host)
+      ElNotification.success('主机更新成功')
     }
     dialogVisible.value = false
     reloadData()
   } catch (error) {
-    ElNotification.error('服务器保存失败: ' + extractErrorMessage(error))
+    ElNotification.error('主机保存失败: ' + extractErrorMessage(error))
   }
 }
 
@@ -116,28 +116,28 @@ onActivated(() => {
 </script>
 
 <template>
-  <section class="server-index-section common-page-container">
+  <section class="host-index-section common-page-container">
     <!-- 筛选工具栏：栅格化字段 + 行内动作区 -->
     <filter-bar :model="form" @query="handleQuery" @reset="handleReset">
-      <filter-field label="服务器名称" prop="name">
-        <el-input v-model="form.name" placeholder="请输入服务器名称" clearable />
+      <filter-field label="主机名称" prop="name">
+        <el-input v-model="form.name" placeholder="请输入主机名称" clearable />
       </filter-field>
-      <filter-field label="主机地址" prop="host">
-        <el-input v-model="form.host" placeholder="请输入主机地址" clearable />
+      <filter-field label="主机地址" prop="address">
+        <el-input v-model="form.address" placeholder="请输入主机地址" clearable />
       </filter-field>
 
       <template #actions>
         <!-- 页面主操作：唯一实色 primary -->
         <el-button type="primary" @click="handleAdd">
           <el-icon><Plus /></el-icon>
-          添加服务器
+          添加主机
         </el-button>
       </template>
     </filter-bar>
 
     <table-pagination ref="tablePaginationRef" :query-method="queryMethod" highlight-current-row show-overflow-tooltip>
-      <el-table-column prop="name" label="服务器名称" min-width="150px" />
-      <el-table-column prop="host" label="主机地址" min-width="120px" />
+      <el-table-column prop="name" label="主机名称" min-width="150px" />
+      <el-table-column prop="address" label="主机地址" min-width="120px" />
       <el-table-column prop="port" label="端口" min-width="64px" />
       <el-table-column prop="username" label="用户名" min-width="100px" />
       <el-table-column prop="authType" label="认证方式" min-width="100px">
@@ -146,7 +146,7 @@ onActivated(() => {
         </template>
       </el-table-column>
       <el-table-column prop="homeDir" label="主目录" min-width="130px" />
-      <el-table-column prop="description" label="服务器描述" min-width="130px" />
+      <el-table-column prop="description" label="主机描述" min-width="130px" />
       <el-table-column label="操作" width="236px" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="handleView(row)">详情</el-button>
@@ -157,11 +157,11 @@ onActivated(() => {
       </el-table-column>
     </table-pagination>
 
-    <!-- 服务器表单对话框 -->
-    <server-form-dialog
+    <!-- 主机表单对话框 -->
+    <host-form-dialog
       v-model="dialogVisible"
       :type="dialogType"
-      :server="currentServer"
+      :host="currentHost"
       @test="handleTestConnection"
       @submit="handleSubmit"
     />
@@ -169,7 +169,7 @@ onActivated(() => {
 </template>
 
 <style lang="scss" scoped>
-.server-index-section {
+.host-index-section {
   display: flex;
   flex-direction: column;
   gap: var(--layout-common-gap);

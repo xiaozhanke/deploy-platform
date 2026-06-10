@@ -3,12 +3,14 @@ defineOptions({
   name: 'DeploymentIndex',
 })
 
-import { fileQueryList } from '@/api/api'
+import { fileQueryPage } from '@/api/api'
+import type { PageParams } from '@/types/api'
 import type { ExecResult } from '@/types/environment'
 import type { FileParams, FileRecord } from '@/types/file'
 import { FileScopeEnum } from '@/enums/platform'
-import type { ServerRecord } from '@/types/server'
-import ServerSidebar from '@/views/server/components/ServerSidebar.vue'
+import type { HostRecord } from '@/types/host'
+import HostSidebar from '@/views/host/components/HostSidebar.vue'
+import TablePagination from '@/components/table-pagination/index.vue'
 import type { Sort, TabPaneName } from 'element-plus'
 import { RefreshRight, Search } from '@element-plus/icons-vue'
 import FrontEndRun from './FrontEndRun.vue'
@@ -16,7 +18,7 @@ import FrontEndRun from './FrontEndRun.vue'
 import BackEndRun from './BackEndRun.vue'
 
 const sessionId = ref<string>('')
-const currentServer = ref<ServerRecord>({} as ServerRecord)
+const currentHost = ref<HostRecord>({} as HostRecord)
 const environmentStatus = ref<Record<string, ExecResult>>({
   arch: { result: '', exitCode: -1 },
   Java: { result: '', exitCode: -1 },
@@ -25,60 +27,43 @@ const environmentStatus = ref<Record<string, ExecResult>>({
 })
 
 provide('sessionId', sessionId)
-provide('currentServer', currentServer)
+provide('currentHost', currentHost)
 provide('environmentStatus', environmentStatus)
 
 const activeTabName = ref<TabPaneName>('APPLICATION_BACKEND')
 const handleTabChange = async (name: TabPaneName) => {
   form.scope = name as 'APPLICATION_BACKEND' | 'APPLICATION_FRONTEND'
-  await handleQuery()
+  handleQuery()
 }
 
 const form = reactive<FileParams>({
   scope: 'APPLICATION_BACKEND',
 } as FileParams)
-const fileList = ref<Array<FileRecord>>([])
+
 // 文件排序
 const fileSort = ref<Sort>({
   prop: 'updateTime',
   order: 'descending',
 })
-const sortOrderMap: Record<string, string> = {
-  ascending: 'asc',
-  descending: 'desc',
-}
-const handleSortChange = (newSort: Sort) => {
-  fileSort.value = newSort
-}
 
-const fileFilter = ref<string>('')
 const fileLoading = ref<boolean>(false)
-const filteredFileList = computed(() => {
-  if (!fileFilter.value) return fileList.value
-  const filter = fileFilter.value.toLowerCase()
-  return fileList.value.filter((file) => {
-    return (
-      file.groupId.toLowerCase().includes(filter) ||
-      file.artifactId.toLowerCase().includes(filter) ||
-      file.version.toLowerCase().includes(filter) ||
-      file.fileName.toLowerCase().includes(filter)
-    )
-  })
-})
+const tablePaginationRef = ref()
 
-// 获取文件列表
-const handleQuery = async () => {
+const queryMethod = async (queryParams: Record<string, unknown>, pageParams: PageParams) => {
   try {
     fileLoading.value = true
-    const sort = fileSort.value.prop
-      ? `${fileSort.value.prop},${sortOrderMap[fileSort.value.order || 'descending']}`
-      : ''
-    const list = await fileQueryList(form, sort)
-    fileList.value = list
-  } catch (error) {
-    ElNotification.error('获取文件列表失败' + extractErrorMessage(error))
+    return await fileQueryPage(form, pageParams)
   } finally {
     fileLoading.value = false
+  }
+}
+
+// 获取文件列表
+const handleQuery = () => {
+  try {
+    tablePaginationRef.value?.queryPage(form)
+  } catch (error) {
+    ElNotification.error('获取文件列表失败: ' + extractErrorMessage(error))
   }
 }
 
@@ -89,7 +74,7 @@ const currentFile = ref<FileRecord>({} as FileRecord)
 // 部署
 const handleRun = (row: FileRecord) => {
   if (!sessionId.value) {
-    ElMessage.warning('请先选择服务器')
+    ElMessage.warning('请先选择主机')
     return
   }
   currentFile.value = row
@@ -101,67 +86,72 @@ const handleRun = (row: FileRecord) => {
   }
 }
 
-onMounted(async () => {
-  await handleQuery()
+onMounted(() => {
+  handleQuery()
 })
 </script>
 
 <template>
-  <section class="deployment-index-section">
+  <section class="deployment-index-section common-page-container">
     <div class="content-container">
       <div class="content-wrapper">
-        <!-- 筛选行：搜索框 + 中性刷新；本页部署动作在表格行内，筛选区无实色主操作 -->
-        <div class="deployment-filter">
-          <el-input v-model="fileFilter" :prefix-icon="Search" placeholder="搜索" clearable />
-          <!-- 刷新为中性次操作（plain，非实色），loading 时图标旋转 -->
-          <el-tooltip content="刷新" placement="top">
-            <el-button plain :icon="RefreshRight" :loading="fileLoading" @click="handleQuery" />
-          </el-tooltip>
+        <div class="deployment-header">
+          <!-- 前后端切换：页内内容切换，保留在页头下方 -->
+          <el-tabs v-model="activeTabName" class="deployment-tabs" @tab-change="handleTabChange">
+            <el-tab-pane name="APPLICATION_BACKEND">
+              <template #label>
+                <div class="tabs-label">
+                  <img class="tabs-label-icon" src="@/assets/icons/logo-spring.svg" alt="Spring Boot" />
+                  <span>后端部署</span>
+                </div>
+              </template>
+            </el-tab-pane>
+            <el-tab-pane name="APPLICATION_FRONTEND">
+              <template #label>
+                <div class="tabs-label">
+                  <img class="tabs-label-icon" src="@/assets/icons/logo-vue.svg" alt="Vue.js" />
+                  <span>前端部署</span>
+                </div>
+              </template>
+            </el-tab-pane>
+          </el-tabs>
+
+          <!-- 筛选行：搜索框 + 中性刷新；紧凑同行布局 -->
+          <div class="deployment-filter">
+            <el-input
+              v-model="form.fileName"
+              :prefix-icon="Search"
+              placeholder="搜索包文件名"
+              clearable
+              @change="handleQuery"
+              @clear="handleQuery"
+            />
+            <!-- 刷新为中性次操作（plain，非实色），loading 时图标旋转 -->
+            <el-tooltip content="刷新" placement="top">
+              <el-button plain :icon="RefreshRight" :loading="fileLoading" @click="handleQuery" />
+            </el-tooltip>
+          </div>
         </div>
 
-        <!-- 前后端切换：页内内容切换，保留在页头下方 -->
-        <el-tabs v-model="activeTabName" @tab-change="handleTabChange">
-          <el-tab-pane name="APPLICATION_BACKEND">
-            <template #label>
-              <div class="tabs-label">
-                <img class="tabs-label-icon" src="@/assets/icons/logo-spring.svg" alt="Spring Boot" />
-                <span>后端部署</span>
-              </div>
-            </template>
-          </el-tab-pane>
-          <el-tab-pane name="APPLICATION_FRONTEND">
-            <template #label>
-              <div class="tabs-label">
-                <img class="tabs-label-icon" src="@/assets/icons/logo-vue.svg" alt="Vue.js" />
-                <span>前端部署</span>
-              </div>
-            </template>
-          </el-tab-pane>
-        </el-tabs>
-
         <div class="file-list-container">
-          <el-table
-            :data="filteredFileList"
+          <table-pagination
+            ref="tablePaginationRef"
             :default-sort="fileSort"
             highlight-current-row
             show-overflow-tooltip
-            @sort-change="handleSortChange"
+            :query-method="queryMethod"
           >
-            <!-- 空态：区分加载中与无数据，加载态由表格自身 loading 处理，此处仅渲染空结果 -->
-            <template #empty>
-              <empty-state v-if="!fileLoading" description="暂无可部署的应用包" />
-            </template>
-            <el-table-column prop="groupId" label="应用分组" min-width="104px" sortable>
+            <el-table-column prop="groupId" label="应用分组" min-width="108px" sortable>
               <template #default="{ row }">
                 <span>{{ row.groupId }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="artifactId" label="应用名称" min-width="104px" sortable>
+            <el-table-column prop="artifactId" label="应用名称" min-width="108px" sortable>
               <template #default="{ row }">
                 <span>{{ row.artifactId }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="version" label="应用版本" min-width="104px" sortable>
+            <el-table-column prop="version" label="应用版本" min-width="108px" sortable>
               <template #default="{ row }">
                 <span>{{ row.version }}</span>
               </template>
@@ -187,19 +177,16 @@ onMounted(async () => {
             </el-table-column>
             <el-table-column label="操作" width="76px" fixed="right">
               <template #default="{ row }">
-                <!-- 行内操作纯文字链（克制、不带图标）；tooltip 与点击行为保持不变 -->
-                <el-tooltip content="部署" placement="top">
-                  <el-button type="primary" link @click="handleRun(row)">部署</el-button>
-                </el-tooltip>
+                <el-button type="primary" link @click="handleRun(row)">部署</el-button>
               </template>
             </el-table-column>
-          </el-table>
+          </table-pagination>
         </div>
       </div>
     </div>
-    <!-- 选择服务器面板：ServerSidebar 放进右侧文档流、吸顶常驻 -->
-    <aside class="server-panel">
-      <server-sidebar />
+    <!-- 选择主机面板：HostSidebar 放进右侧文档流、吸顶常驻 -->
+    <aside class="host-panel">
+      <host-sidebar />
     </aside>
 
     <front-end-run v-if="frontEndRunVisible" v-model="frontEndRunVisible" :file-record="currentFile" />
@@ -211,15 +198,51 @@ onMounted(async () => {
 .deployment-index-section {
   position: relative;
   display: flex;
+  flex-direction: row;
   gap: var(--layout-common-gap);
+  height: 100%;
+  min-height: 0;
 
   .content-container {
     flex: 1;
     min-width: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
     .content-wrapper {
       display: flex;
       flex-direction: column;
       gap: var(--layout-common-gap);
+      flex: 1;
+      min-height: 0;
+
+      .deployment-header {
+        position: relative;
+        width: 100%;
+
+        .deployment-tabs {
+          width: 100%;
+          :deep(.el-tabs__header) {
+            margin-bottom: 0 !important;
+          }
+          // 保留自带的伪元素分割线，不进行隐藏
+        }
+
+        .deployment-filter {
+          position: absolute;
+          right: 0;
+          top: 0;
+          height: 40px; // 与 el-tabs__header 默认高度一致，实现完美的垂直居中
+          display: flex;
+          align-items: center;
+          gap: var(--app-space-3);
+          z-index: 10;
+          .el-input {
+            width: 240px;
+          }
+        }
+      }
 
       .tabs-label {
         display: flex;
@@ -231,17 +254,12 @@ onMounted(async () => {
         }
       }
 
-      // 筛选行：搜索框 + 中性刷新按钮横向排布
-      .deployment-filter {
-        display: flex;
-        align-items: center;
-        gap: var(--app-space-3);
-        .el-input {
-          width: 240px;
-        }
-      }
-
       .file-list-container {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+
         .file-name {
           display: flex;
           align-items: center;
@@ -251,8 +269,8 @@ onMounted(async () => {
     }
   }
 
-  // ServerSidebar 现默认即「文档流内吸顶卡片」（card 样式在组件内），本页只负责把它放右侧、定宽并吸顶
-  .server-panel {
+  // HostSidebar 现默认即「文档流内吸顶卡片」（card 样式在组件内），本页只负责把它放右侧、定宽并吸顶
+  .host-panel {
     flex: 0 0 var(--layout-right-sidebar-width);
     // 跟随文件列表滚动时面板常驻可见，吸顶定位在页头内边距之下
     align-self: flex-start;

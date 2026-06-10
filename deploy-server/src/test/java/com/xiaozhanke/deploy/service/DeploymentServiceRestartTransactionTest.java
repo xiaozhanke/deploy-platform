@@ -11,13 +11,13 @@ import com.xiaozhanke.deploy.enums.ApplicationTypeEnum;
 import com.xiaozhanke.deploy.enums.DeploymentStatusEnum;
 import com.xiaozhanke.deploy.enums.SshAuthTypeEnum;
 import com.xiaozhanke.deploy.exception.BusinessException;
-import com.xiaozhanke.deploy.model.dto.ServerRecordDto;
+import com.xiaozhanke.deploy.model.dto.HostRecordDto;
 import com.xiaozhanke.deploy.model.entity.DeploymentRecord;
 import com.xiaozhanke.deploy.model.entity.FileRecord;
-import com.xiaozhanke.deploy.model.entity.ServerRecord;
+import com.xiaozhanke.deploy.model.entity.HostRecord;
 import com.xiaozhanke.deploy.repository.DeploymentRecordRepository;
 import com.xiaozhanke.deploy.repository.FileRecordRepository;
-import com.xiaozhanke.deploy.repository.ServerRepository;
+import com.xiaozhanke.deploy.repository.HostRepository;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,7 +57,7 @@ class DeploymentServiceRestartTransactionTest {
     private DeploymentRecordRepository deploymentRecordRepository;
 
     @Autowired
-    private ServerRepository serverRepository;
+    private HostRepository hostRepository;
 
     @Autowired
     private FileRecordRepository fileRecordRepository;
@@ -66,7 +66,7 @@ class DeploymentServiceRestartTransactionTest {
     private SshService sshService;
 
     @MockitoBean
-    private ServerService serverService;
+    private HostService hostService;
 
     private DeploymentRecord seed;
 
@@ -74,17 +74,17 @@ class DeploymentServiceRestartTransactionTest {
     void setUp() {
         deploymentRecordRepository.deleteAll();
         fileRecordRepository.deleteAll();
-        serverRepository.deleteAll();
+        hostRepository.deleteAll();
 
-        ServerRecord server = new ServerRecord();
-        server.setName("test-server");
-        server.setHost("127.0.0.1");
-        server.setPort(22);
-        server.setUsername("test");
-        server.setHomeDir("/tmp");
-        server.setAuthType(SshAuthTypeEnum.PASSWORD);
-        server.setPassword("dummy");
-        server = serverRepository.save(server);
+        HostRecord host = new HostRecord();
+        host.setName("test-host");
+        host.setAddress("127.0.0.1");
+        host.setPort(22);
+        host.setUsername("test");
+        host.setHomeDir("/tmp");
+        host.setAuthType(SshAuthTypeEnum.PASSWORD);
+        host.setPassword("dummy");
+        host = hostRepository.save(host);
 
         FileRecord file = new FileRecord();
         file.setFileName("app.jar");
@@ -92,7 +92,7 @@ class DeploymentServiceRestartTransactionTest {
         file = fileRecordRepository.save(file);
 
         DeploymentRecord deployment = new DeploymentRecord();
-        deployment.setServerRecord(server)
+        deployment.setHostRecord(host)
                 .setFileRecord(file)
                 .setApplicationType(ApplicationTypeEnum.BACKEND)
                 .setDeploymentPath("/opt/app")
@@ -106,7 +106,7 @@ class DeploymentServiceRestartTransactionTest {
                 .setRunning(true);
         this.seed = deploymentRecordRepository.save(deployment);
 
-        when(serverService.getServerDto(any())).thenReturn(new ServerRecordDto());
+        when(hostService.getHostDto(any())).thenReturn(new HostRecordDto());
     }
 
     @Test

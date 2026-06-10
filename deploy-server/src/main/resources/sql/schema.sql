@@ -11,7 +11,7 @@ DROP TABLE IF EXISTS `deployment_record`;
 DROP TABLE IF EXISTS `platform_user_role`;
 DROP TABLE IF EXISTS `platform_user`;
 DROP TABLE IF EXISTS `platform_role`;
-DROP TABLE IF EXISTS `server_record`;
+DROP TABLE IF EXISTS `host_record`;
 DROP TABLE IF EXISTS `file_record`;
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -35,23 +35,23 @@ CREATE TABLE `file_record` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='文件记录表';
 
-CREATE TABLE `server_record` (
-  `id` varchar(255) NOT NULL COMMENT '服务器 Id',
+CREATE TABLE `host_record` (
+  `id` varchar(255) NOT NULL COMMENT '主机 Id',
   `create_time` datetime(6) NOT NULL COMMENT '创建时间',
   `create_user` varchar(255) NOT NULL COMMENT '创建用户',
   `is_deleted` bit(1) DEFAULT NULL COMMENT '已删除',
   `update_time` datetime(6) NOT NULL COMMENT '更新时间',
   `update_user` varchar(255) NOT NULL COMMENT '更新用户',
+  `address` varchar(255) NOT NULL COMMENT '主机地址',
   `auth_type` enum('KEY','KEY_WITH_PASS','PASSWORD') NOT NULL COMMENT '认证方式',
   `cipher_algorithms` varchar(255) DEFAULT NULL COMMENT '加密算法',
   `compression_enabled` bit(1) DEFAULT NULL COMMENT '是否启用压缩',
   `connection_timeout` int DEFAULT NULL COMMENT '连接超时时间（毫秒）',
-  `description` varchar(255) DEFAULT NULL COMMENT '服务器描述',
+  `description` varchar(255) DEFAULT NULL COMMENT '主机描述',
   `home_dir` varchar(255) NOT NULL COMMENT '主目录',
-  `host` varchar(255) NOT NULL COMMENT '主机地址',
   `kex_algorithms` varchar(255) DEFAULT NULL COMMENT '密钥交换算法',
   `mac_algorithms` varchar(255) DEFAULT NULL COMMENT 'MAC 算法',
-  `name` varchar(255) NOT NULL COMMENT '服务器名称',
+  `name` varchar(255) NOT NULL COMMENT '主机名称',
   `password` varchar(255) DEFAULT NULL COMMENT '密码（如果使用密码认证）',
   `port` int NOT NULL COMMENT '端口号',
   `port_forwarding_enabled` bit(1) DEFAULT NULL COMMENT '是否启用端口转发',
@@ -62,7 +62,7 @@ CREATE TABLE `server_record` (
   `username` varchar(255) NOT NULL COMMENT '用户名',
   `x11forwarding_enabled` bit(1) DEFAULT NULL COMMENT '是否启用 X11 转发',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='服务器记录表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='主机记录表';
 
 CREATE TABLE `platform_role` (
   `id` varchar(255) NOT NULL COMMENT '角色 Id',
@@ -129,10 +129,10 @@ CREATE TABLE `deployment_record` (
   `is_running` bit(1) DEFAULT NULL COMMENT '是否正在运行',
   `status` enum('DEPLOYING','FAILED','SUCCESS') NOT NULL COMMENT '部署状态',
   `file_record_id` varchar(255) NOT NULL COMMENT '文件记录',
-  `server_record_id` varchar(255) NOT NULL COMMENT '服务器记录',
+  `host_record_id` varchar(255) NOT NULL COMMENT '主机记录',
   PRIMARY KEY (`id`),
   KEY `fk_deployment_record_file_record` (`file_record_id`),
-  KEY `fk_deployment_record_server_record` (`server_record_id`),
+  KEY `fk_deployment_record_host_record` (`host_record_id`),
   CONSTRAINT `fk_deployment_record_file_record` FOREIGN KEY (`file_record_id`) REFERENCES `file_record` (`id`),
-  CONSTRAINT `fk_deployment_record_server_record` FOREIGN KEY (`server_record_id`) REFERENCES `server_record` (`id`)
+  CONSTRAINT `fk_deployment_record_host_record` FOREIGN KEY (`host_record_id`) REFERENCES `host_record` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='部署记录表';

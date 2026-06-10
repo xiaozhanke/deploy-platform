@@ -26,9 +26,9 @@ const router = createRouter({
           },
         },
         {
-          path: 'server',
-          name: 'ServerIndex',
-          component: () => import('@/views/server/index.vue'),
+          path: 'host',
+          name: 'HostIndex',
+          component: () => import('@/views/host/index.vue'),
           meta: {
             title: '主机管理',
             keepAlive: true,

@@ -61,16 +61,14 @@ const deploymentStatusTagTypeMap: Record<string, 'success' | 'warning' | 'info' 
           }}</el-descriptions-item>
         </el-descriptions>
       </el-collapse-item>
-      <el-collapse-item title="服务器信息" name="server">
+      <el-collapse-item title="主机信息" name="host">
         <el-descriptions class="common-descriptions" border :column="2">
-          <el-descriptions-item label="服务器名称" :span="2">{{ record.serverRecord.name }}</el-descriptions-item>
-          <el-descriptions-item label="主机地址">{{ record.serverRecord.host }}</el-descriptions-item>
-          <el-descriptions-item label="端口号">{{ record.serverRecord.port }}</el-descriptions-item>
-          <el-descriptions-item label="用户名">{{ record.serverRecord.username }}</el-descriptions-item>
-          <el-descriptions-item label="主目录">{{ record.serverRecord.homeDir }}</el-descriptions-item>
-          <el-descriptions-item label="服务器描述" :span="2">{{
-            record.serverRecord.description
-          }}</el-descriptions-item>
+          <el-descriptions-item label="主机名称" :span="2">{{ record.hostRecord.name }}</el-descriptions-item>
+          <el-descriptions-item label="主机地址">{{ record.hostRecord.address }}</el-descriptions-item>
+          <el-descriptions-item label="端口号">{{ record.hostRecord.port }}</el-descriptions-item>
+          <el-descriptions-item label="用户名">{{ record.hostRecord.username }}</el-descriptions-item>
+          <el-descriptions-item label="主目录">{{ record.hostRecord.homeDir }}</el-descriptions-item>
+          <el-descriptions-item label="主机描述" :span="2">{{ record.hostRecord.description }}</el-descriptions-item>
         </el-descriptions>
       </el-collapse-item>
       <el-collapse-item title="应用包信息" name="file">

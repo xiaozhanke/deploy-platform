@@ -24,9 +24,9 @@ watch(
   (newObject) => {
     Object.assign(form, newObject)
     const { id: fileRecordId } = newObject.fileRecord
-    const { id: serverRecordId } = newObject.serverRecord
+    const { id: hostRecordId } = newObject.hostRecord
     form.fileRecordId = fileRecordId
-    form.serverRecordId = serverRecordId
+    form.hostRecordId = hostRecordId
   },
   { immediate: true, deep: true },
 )

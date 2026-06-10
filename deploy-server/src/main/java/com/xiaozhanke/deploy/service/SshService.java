@@ -16,9 +16,9 @@ import com.xiaozhanke.deploy.core.websocket.WebSocketSftpProgressMonitor;
 import com.xiaozhanke.deploy.enums.FileOperationEnum;
 import com.xiaozhanke.deploy.enums.SshAuthTypeEnum;
 import com.xiaozhanke.deploy.exception.BusinessException;
-import com.xiaozhanke.deploy.model.dto.ServerRecordDto;
+import com.xiaozhanke.deploy.model.dto.HostRecordDto;
 import com.xiaozhanke.deploy.model.dto.SshExecResult;
-import com.xiaozhanke.deploy.model.request.ServerParams;
+import com.xiaozhanke.deploy.model.request.HostParams;
 import com.xiaozhanke.deploy.util.PathSafetyUtils;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -84,16 +84,16 @@ public class SshService {
     /**
      * 建立 SSH 连接到服务器
      *
-     * @param server 连接详情
+     * @param host 连接详情
      * @return 建立连接的唯一会话 Id
      * @throws BusinessException 如果连接失败
      */
-    public String connect(ServerRecordDto server) {
+    public String connect(HostRecordDto host) {
         sessionLock.lock();
         try {
-            log.info("开始 SSH 连接到服务器 {}@{} -p {}", server.getUsername(), server.getHost(), server.getPort());
-            Session session = createSession(server);
-            int connectTimeout = server.getConnectionTimeout() != null ? server.getConnectionTimeout() :
+            log.info("开始 SSH 连接到服务器 {}@{} -p {}", host.getUsername(), host.getAddress(), host.getPort());
+            Session session = createSession(host);
+            int connectTimeout = host.getConnectionTimeout() != null ? host.getConnectionTimeout() :
                     SshConstants.DEFAULT_CONNECT_TIMEOUT;
             session.connect(connectTimeout);
             String sessionId = UUID.randomUUID().toString();
@@ -101,8 +101,8 @@ public class SshService {
             log.info("SSH 连接成功, 连接会话 Id: {}", sessionId);
             return sessionId;
         } catch (JSchException e) {
-            String errorMessage = String.format("SSH 连接到服务器 %s@%s -p%s 失败: %s", server.getUsername(),
-                    server.getHost(), server.getPort(), e.getMessage());
+            String errorMessage = String.format("SSH 连接到服务器 %s@%s -p%s 失败: %s", host.getUsername(),
+                    host.getAddress(), host.getPort(), e.getMessage());
             throw new BusinessException(errorMessage, e);
         } finally {
             sessionLock.unlock();
@@ -116,17 +116,17 @@ public class SshService {
      * @return 如果连接测试成功则返回 true
      * @throws BusinessException 如果连接测试失败, 包含详细信息
      */
-    public boolean testConnection(ServerParams params) {
+    public boolean testConnection(HostParams params) {
         Session testSession = null;
         try {
-            log.info("开始测试 SSH 连接到服务器 {}@{} -p {}", params.getUsername(), params.getHost(), params.getPort());
-            ServerRecordDto serverRecordDto = new ServerRecordDto();
-            BeanUtils.copyProperties(params, serverRecordDto);
-            testSession = createSession(serverRecordDto);
+            log.info("开始测试 SSH 连接到服务器 {}@{} -p {}", params.getUsername(), params.getAddress(), params.getPort());
+            HostRecordDto hostRecordDto = new HostRecordDto();
+            BeanUtils.copyProperties(params, hostRecordDto);
+            testSession = createSession(hostRecordDto);
             int connectTimeout = params.getConnectionTimeout() != null ? params.getConnectionTimeout() :
                     SshConstants.DEFAULT_CONNECT_TIMEOUT;
             testSession.connect(connectTimeout);
-            log.info("测试 SSH 连接成功, 连接到服务器 {}@{} -p {}", params.getUsername(), params.getHost(), params.getPort());
+            log.info("测试 SSH 连接成功, 连接到服务器 {}@{} -p {}", params.getUsername(), params.getAddress(), params.getPort());
             return true;
         } catch (JSchException e) {
             String errorMessage = String.format("测试 SSH 连接失败: %s", e.getMessage());
@@ -603,27 +603,27 @@ public class SshService {
     /**
      * 创建并配置 JSch Session 对象
      *
-     * @param server 连接详情
+     * @param host 连接详情
      * @return 配置好的 Session 对象
      * @throws JSchException 如果会话创建或配置失败
      */
-    private Session createSession(ServerRecordDto server) throws JSchException {
-        log.debug("创建 JSch 实例并配置认证, 用户: {}", server.getUsername());
+    private Session createSession(HostRecordDto host) throws JSchException {
+        log.debug("创建 JSch 实例并配置认证, 用户: {}", host.getUsername());
         JSch jsch = new JSch();
         // 设置认证方式
-        setupAuth(jsch, server);
+        setupAuth(jsch, host);
 
-        log.debug("获取 JSch 会话实例, 服务器: {}@{} -p {}", server.getUsername(), server.getHost(), server.getPort());
-        Session session = jsch.getSession(server.getUsername(), server.getHost(), server.getPort());
+        log.debug("获取 JSch 会话实例, 服务器: {}@{} -p {}", host.getUsername(), host.getAddress(), host.getPort());
+        Session session = jsch.getSession(host.getUsername(), host.getAddress(), host.getPort());
 
         // 如果是密码认证, 设置密码（用 byte[] 重载，避免 JSch 内部把 String 留在 String pool）
-        if (server.getAuthType() == SshAuthTypeEnum.PASSWORD && server.getPassword() != null) {
-            session.setPassword(server.getPassword().getBytes(StandardCharsets.UTF_8));
+        if (host.getAuthType() == SshAuthTypeEnum.PASSWORD && host.getPassword() != null) {
+            session.setPassword(host.getPassword().getBytes(StandardCharsets.UTF_8));
             log.debug("已设置会话密码 (密码本身不记录日志)");
         }
 
         // 应用其他会话配置
-        applySessionConfig(session, server);
+        applySessionConfig(session, host);
 
         session.setServerAliveCountMax(SshConstants.DEFAULT_SERVER_ALIVE_COUNT_MAX);
         session.setServerAliveInterval(SshConstants.DEFAULT_SERVER_ALIVE_INTERVAL);
@@ -634,15 +634,15 @@ public class SshService {
      * 设置认证方式
      *
      * @param jsch   JSch 对象
-     * @param server 服务器连接信息
+     * @param host 主机连接信息
      * @throws JSchException 认证设置失败时抛出
      */
-    private void setupAuth(JSch jsch, ServerRecordDto server) throws JSchException {
-        SshAuthTypeEnum authType = server.getAuthType();
+    private void setupAuth(JSch jsch, HostRecordDto host) throws JSchException {
+        SshAuthTypeEnum authType = host.getAuthType();
         log.debug("配置认证类型: {}", authType);
 
         if (authType == SshAuthTypeEnum.KEY || authType == SshAuthTypeEnum.KEY_WITH_PASS) {
-            String privateKeyPath = server.getPrivateKeyPath();
+            String privateKeyPath = host.getPrivateKeyPath();
             if (!StringUtils.hasText(privateKeyPath)) {
                 throw new BusinessException("私钥认证需要提供私钥文件路径");
             }
@@ -651,7 +651,7 @@ public class SshService {
                 throw new BusinessException("指定的私钥文件不存在或不是一个有效文件: " + privateKeyPath);
             }
 
-            String passphrase = (authType == SshAuthTypeEnum.KEY_WITH_PASS) ? server.getPrivateKeyPassword() : null;
+            String passphrase = (authType == SshAuthTypeEnum.KEY_WITH_PASS) ? host.getPrivateKeyPassword() : null;
             try {
                 // 用 byte[] 重载，避免 passphrase 以 String 形式被 JSch 内部缓存
                 byte[] passphraseBytes = passphrase == null ? null : passphrase.getBytes(StandardCharsets.UTF_8);
@@ -676,28 +676,28 @@ public class SshService {
      * 应用 Session 配置
      *
      * @param session Session 对象
-     * @param server  服务器连接信息
+     * @param host  主机连接信息
      */
-    private void applySessionConfig(Session session, ServerRecordDto server) throws JSchException {
+    private void applySessionConfig(Session session, HostRecordDto host) throws JSchException {
         log.debug("开始应用会话配置");
         // 设置加密算法等配置
-        setIfNotNull(session, "kex", server.getKexAlgorithms());
-        setIfNotNull(session, "cipher.s2c", server.getCipherAlgorithms());
-        setIfNotNull(session, "cipher.c2s", server.getCipherAlgorithms());
-        setIfNotNull(session, "mac.s2c", server.getMacAlgorithms());
-        setIfNotNull(session, "mac.c2s", server.getMacAlgorithms());
-        setIfNotNull(session, "server_host_key", server.getServerHostKeyAlgorithms());
+        setIfNotNull(session, "kex", host.getKexAlgorithms());
+        setIfNotNull(session, "cipher.s2c", host.getCipherAlgorithms());
+        setIfNotNull(session, "cipher.c2s", host.getCipherAlgorithms());
+        setIfNotNull(session, "mac.s2c", host.getMacAlgorithms());
+        setIfNotNull(session, "mac.c2s", host.getMacAlgorithms());
+        setIfNotNull(session, "server_host_key", host.getServerHostKeyAlgorithms());
 
         // 设置连接超时
-        if (server.getConnectionTimeout() != null) {
-            session.setTimeout(server.getConnectionTimeout());
+        if (host.getConnectionTimeout() != null) {
+            session.setTimeout(host.getConnectionTimeout());
         }
 
         // 设置布尔型配置项
-        setBooleanConfig(session, "compression", server.getCompressionEnabled(), "zlib", "none");
-        setBooleanConfig(session, "StrictHostKeyChecking", server.getStrictHostKeyChecking(), "yes", "no");
-        setBooleanConfig(session, "X11Forwarding", server.getX11ForwardingEnabled(), "yes", "no");
-        setBooleanConfig(session, "AllowTcpForwarding", server.getPortForwardingEnabled(), "yes", "no");
+        setBooleanConfig(session, "compression", host.getCompressionEnabled(), "zlib", "none");
+        setBooleanConfig(session, "StrictHostKeyChecking", host.getStrictHostKeyChecking(), "yes", "no");
+        setBooleanConfig(session, "X11Forwarding", host.getX11ForwardingEnabled(), "yes", "no");
+        setBooleanConfig(session, "AllowTcpForwarding", host.getPortForwardingEnabled(), "yes", "no");
         log.debug("会话配置应用完毕");
     }
 
@@ -1232,16 +1232,16 @@ public class SshService {
     /**
      * 执行命令并返回结果
      *
-     * @param server  服务器信息
+     * @param host  主机信息
      * @param command 要执行的命令
      * @return 命令执行结果
      * @throws BusinessException 如果执行失败
      */
-    public String executeCommand(ServerRecordDto server, String command) {
-        log.info("请求在服务器 [{}] 上执行命令: '{}'", server.getHost(), command);
+    public String executeCommand(HostRecordDto host, String command) {
+        log.info("请求在服务器 [{}] 上执行命令: '{}'", host.getAddress(), command);
 
         // 建立SSH连接
-        String sessionId = connect(server);
+        String sessionId = connect(host);
         try {
             // 执行命令
             SshExecResult result = executeExecCommand(sessionId, command);

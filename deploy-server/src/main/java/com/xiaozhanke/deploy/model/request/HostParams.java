@@ -10,12 +10,12 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
- * 服务器信息参数
+ * 主机信息参数
  *
  * @author xiaozhanke
  */
 @Data
-@Schema(description = "服务器信息参数")
+@Schema(description = "主机信息参数")
 @ConditionalNotBlank(
         selected = "authType",
         values = {"PASSWORD"},
@@ -34,17 +34,17 @@ import lombok.Data;
         required = {"privateKeyPassword"},
         message = "带密码的密钥认证方式下私钥密码不能为空"
 )
-public class ServerParams {
+public class HostParams {
     /**
-     * 服务器名称
+     * 主机名称
      */
-    @Schema(description = "服务器名称")
+    @Schema(description = "主机名称")
     private String name;
 
     /**
-     * 服务器描述
+     * 主机描述
      */
-    @Schema(description = "服务器描述")
+    @Schema(description = "主机描述")
     private String description;
 
     /**
@@ -52,7 +52,7 @@ public class ServerParams {
      */
     @Schema(description = "主机地址", example = "localhost")
     @NotBlank(message = "主机地址不能为空")
-    private String host;
+    private String address;
 
     /**
      * 端口号

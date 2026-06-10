@@ -6,10 +6,10 @@ import com.xiaozhanke.deploy.enums.DeploymentStatusEnum;
 import com.xiaozhanke.deploy.exception.BusinessException;
 import com.xiaozhanke.deploy.exception.InvalidOperationException;
 import com.xiaozhanke.deploy.exception.ResourceNotFoundException;
-import com.xiaozhanke.deploy.model.dto.ServerRecordDto;
+import com.xiaozhanke.deploy.model.dto.HostRecordDto;
 import com.xiaozhanke.deploy.model.entity.DeploymentRecord;
 import com.xiaozhanke.deploy.model.entity.FileRecord;
-import com.xiaozhanke.deploy.model.entity.ServerRecord;
+import com.xiaozhanke.deploy.model.entity.HostRecord;
 import com.xiaozhanke.deploy.model.mapper.DeploymentRecordPoVoMapper;
 import com.xiaozhanke.deploy.model.request.DeploymentParams;
 import com.xiaozhanke.deploy.model.response.PageResult;
@@ -42,20 +42,20 @@ public class DeploymentService {
     private final DeploymentRecordRepository deploymentRecordRepository;
     private final DeploymentRecordPoVoMapper deploymentRecordPoVoMapper;
     private final SshService sshService;
-    private final ServerService serverService;
+    private final HostService hostService;
     private final FileStorageService fileStorageService;
     private final SshOperationExecutor sshOperationExecutor;
 
     public DeploymentService(DeploymentRecordRepository deploymentRecordRepository,
                              DeploymentRecordPoVoMapper deploymentRecordPoVoMapper,
                              SshService sshService,
-                             ServerService serverService,
+                             HostService hostService,
                              FileStorageService fileStorageService,
                              SshOperationExecutor sshOperationExecutor) {
         this.deploymentRecordRepository = deploymentRecordRepository;
         this.deploymentRecordPoVoMapper = deploymentRecordPoVoMapper;
         this.sshService = sshService;
-        this.serverService = serverService;
+        this.hostService = hostService;
         this.fileStorageService = fileStorageService;
         this.sshOperationExecutor = sshOperationExecutor;
     }
@@ -68,12 +68,12 @@ public class DeploymentService {
      */
     @Transactional
     public DeploymentRecordVo createDeployment(DeploymentParams params) {
-        // 关联仅作 FK 占位：用代理避免把 ServerRecord/FileRecord 的全部字段拉到内存
-        ServerRecord serverRecord = serverService.getServerReference(params.getServerRecordId());
+        // 关联仅作 FK 占位：用代理避免把 HostRecord/FileRecord 的全部字段拉到内存
+        HostRecord hostRecord = hostService.getHostReference(params.getHostRecordId());
         FileRecord fileRecord = fileStorageService.getFileRecordReference(params.getFileRecordId());
 
         DeploymentRecord deployment = new DeploymentRecord()
-                .setServerRecord(serverRecord)
+                .setHostRecord(hostRecord)
                 .setFileRecord(fileRecord)
                 .setApplicationType(params.getApplicationType())
                 .setDeploymentPath(params.getDeploymentPath())
@@ -140,10 +140,10 @@ public class DeploymentService {
     @Transactional
     public DeploymentRecordVo updateDeployment(String id, DeploymentParams params) {
         DeploymentRecord deployment = getDeployment(id);
-        ServerRecord serverRecord = serverService.getServerReference(params.getServerRecordId());
+        HostRecord hostRecord = hostService.getHostReference(params.getHostRecordId());
         FileRecord fileRecord = fileStorageService.getFileRecordReference(params.getFileRecordId());
 
-        deployment.setServerRecord(serverRecord)
+        deployment.setHostRecord(hostRecord)
                 .setFileRecord(fileRecord)
                 .setApplicationType(params.getApplicationType())
                 .setDeploymentPath(params.getDeploymentPath())
@@ -193,8 +193,8 @@ public class DeploymentService {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (StringUtils.hasText(params.getServerRecordId())) {
-                predicates.add(criteriaBuilder.equal(root.get("serverRecord").get("id"), params.getServerRecordId()));
+            if (StringUtils.hasText(params.getHostRecordId())) {
+                predicates.add(criteriaBuilder.equal(root.get("hostRecord").get("id"), params.getHostRecordId()));
             }
 
             if (StringUtils.hasText(params.getFileRecordId())) {
@@ -368,15 +368,15 @@ public class DeploymentService {
         }
 
         try {
-            // 获取服务器信息
-            ServerRecordDto server = serverService.getServerDto(deployment.getServerRecord().getId());
+            // 获取主机信息
+            HostRecordDto host = hostService.getHostDto(deployment.getHostRecord().getId());
 
             // processId 强制数字，避免被 shell 当 jobspec 或被注入额外语义
             String command = String.format("ps -p %s > /dev/null && echo 'running' || echo 'stopped'",
                     ShellArgEscaper.requireNumericProcessId(deployment.getProcessId()));
 
             // 执行检查命令
-            String result = sshService.executeCommand(server, command);
+            String result = sshService.executeCommand(host, command);
 
             // 更新运行状态
             boolean isRunning = "running".equals(result.trim());
@@ -424,10 +424,10 @@ public class DeploymentService {
                 return restartApplication(id);
             } else {
                 // 如果是前端应用，解压压缩包
-                // 获取服务器信息
-                ServerRecordDto server = serverService.getServerDto(deployment.getServerRecord().getId());
+                // 获取主机信息
+                HostRecordDto host = hostService.getHostDto(deployment.getHostRecord().getId());
                 // 建立 SSH 连接
-                String sessionId = sshService.connect(server);
+                String sessionId = sshService.connect(host);
                 try {
                     // 解压文件；deploymentPath 与 fileName 来自用户输入，必须套单引号字面值
                     String unzipCommand = String.format(
@@ -435,7 +435,7 @@ public class DeploymentService {
                             ShellArgEscaper.singleQuote(deployment.getDeploymentPath()),
                             ShellArgEscaper.singleQuote(newFileRecord.getFileName())
                     );
-                    sshService.executeCommand(server, unzipCommand);
+                    sshService.executeCommand(host, unzipCommand);
 
                     // 更新部署记录
                     deployment.setFileRecord(newFileRecord)

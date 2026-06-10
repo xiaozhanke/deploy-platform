@@ -2,7 +2,7 @@
 import { deploymentRecordAdd, deploymentRecordStart, fileQueryList, fileQueryPathById, sshExecCommand } from '@/api/api'
 import { useWebSocketStore } from '@/stores/websocket'
 import type { FileRecord } from '@/types/file'
-import type { ServerRecord } from '@/types/server'
+import type { HostRecord } from '@/types/host'
 import { generateRandomNumber } from '@/utils/common'
 import type { FormInstance, FormRules, UploadInstance, UploadUserFile } from 'element-plus'
 import CodeEditor from '@/components/code-editor/index.vue'
@@ -17,13 +17,13 @@ const props = defineProps<{
 const visible = defineModel<boolean>()
 
 const sessionId = inject('sessionId') as Ref<string>
-const currentServer = inject('currentServer') as Ref<ServerRecord>
+const currentHost = inject('currentHost') as Ref<HostRecord>
 const websocketStore = useWebSocketStore()
 
 // 构建默认的上传目录
 const bulidUploadDir = () => {
   const { groupId, artifactId } = props.fileRecord
-  const { homeDir } = currentServer.value
+  const { homeDir } = currentHost.value
   return `${homeDir}/resource/${groupId}/${artifactId}`
 }
 
@@ -87,7 +87,7 @@ const handleUploadJarStep = async () => {
   })
 }
 
-// 上传 jar 包到服务器
+// 上传 jar 包到主机
 const handleUploadJar = (localPath: string, remoteDir: string) =>
   websocketStore.sendAndAwait(
     `/topic/ssh/sessions/${sessionId.value}/sftp/upload`,
@@ -127,7 +127,7 @@ const fetchConfigFileList = async () => {
   }))
 }
 
-// 上传配置文件到服务器
+// 上传配置文件到主机
 const handleUploadConfig = (localPath: string, remoteDir: string, file: UploadUserFile) => {
   // 立即标记上传中（后续进度帧再细化）；jar 与各配置文件复用同一频道，靠 sendAndAwait 完成即退订隔离
   file.status = 'uploading'
@@ -270,7 +270,7 @@ const handleRunStep = async () => {
       try {
         // 保存部署记录
         const savedResponse = await deploymentRecordAdd({
-          serverRecordId: currentServer.value.id,
+          hostRecordId: currentHost.value.id,
           fileRecordId: props.fileRecord.id,
           applicationType: ApplicationTypeEnum.BACKEND.value,
           deploymentPath: uploadForm.dir,
@@ -409,7 +409,7 @@ onMounted(async () => {
       </div>
 
       <div class="file-list-container">
-        <el-empty v-if="fileList.length === 0" :description="sessionId ? '当前目录为空' : '未选择服务器'" />
+        <el-empty v-if="fileList.length === 0" :description="sessionId ? '当前目录为空' : '未选择主机'" />
         <el-table v-else :data="fileList" highlight-current-row show-overflow-tooltip>
           <el-table-column prop="name" label="文件名" min-width="130px" />
           <el-table-column prop="size" label="文件大小" width="108px">
@@ -456,7 +456,7 @@ onMounted(async () => {
     </section>
     <!-- 命令式查看/编辑器与日志浮层随抽屉迁入主体末尾，行为不变 -->
     <code-editor ref="codeEditorRef" @close="fetchFileList" />
-    <log-view v-if="logVisible" v-model="logVisible" :server-id="currentServer.id" :log-path="logPath" />
+    <log-view v-if="logVisible" v-model="logVisible" :host-id="currentHost.id" :log-path="logPath" />
     <template #footer>
       <div class="actions-container">
         <el-button :disabled="activeStep === 0 || stepLoading" @click="handlePrevStep">上一步</el-button>

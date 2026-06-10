@@ -4,9 +4,9 @@ import com.jcraft.jsch.JSchException;
 import com.xiaozhanke.deploy.exception.BusinessException;
 import com.xiaozhanke.deploy.exception.JobFailureException;
 import com.xiaozhanke.deploy.exception.SshTransientException;
-import com.xiaozhanke.deploy.model.dto.ServerRecordDto;
+import com.xiaozhanke.deploy.model.dto.HostRecordDto;
 import com.xiaozhanke.deploy.model.entity.DeploymentRecord;
-import com.xiaozhanke.deploy.service.ServerService;
+import com.xiaozhanke.deploy.service.HostService;
 import com.xiaozhanke.deploy.service.SshService;
 import com.xiaozhanke.deploy.util.ShellArgEscaper;
 import lombok.RequiredArgsConstructor;
@@ -37,13 +37,13 @@ import java.io.IOException;
 public class SshOperationExecutor {
 
     private final SshService sshService;
-    private final ServerService serverService;
+    private final HostService hostService;
 
     /**
      * 在远程主机启动应用,返回新进程的 PID(字符串)。
      */
     public String executeStart(DeploymentRecord deployment) {
-        ServerRecordDto server = serverService.getServerDto(deployment.getServerRecord().getId());
+        HostRecordDto host = hostService.getHostDto(deployment.getHostRecord().getId());
 
         // 所有取自用户输入的字段都套上单引号字面值,避免 ; && ` $() 这类元字符触发命令注入
         String command = String.format(
@@ -60,7 +60,7 @@ public class SshOperationExecutor {
                 ShellArgEscaper.singleQuote(deployment.getActiveProfiles())
         );
 
-        String result = runJobCommand(server, command);
+        String result = runJobCommand(host, command);
         return result.trim();
     }
 
@@ -68,21 +68,21 @@ public class SshOperationExecutor {
      * 在远程主机停止应用进程(kill -15)。
      */
     public void executeStop(DeploymentRecord deployment) {
-        ServerRecordDto server = serverService.getServerDto(deployment.getServerRecord().getId());
+        HostRecordDto host = hostService.getHostDto(deployment.getHostRecord().getId());
 
         // processId 必须是纯数字,否则 shell 会按 jobspec 解析或被注入额外语义
         String command = String.format("kill -15 %s",
                 ShellArgEscaper.requireNumericProcessId(deployment.getProcessId()));
-        runJobCommand(server, command);
+        runJobCommand(host, command);
     }
 
     /**
      * 执行 SSH 命令并把失败按 ADR-0003 分级:连接/通道/IO 类基础设施异常 → {@link SshTransientException}
      * (可短重试);其余(命令退出码非 0 等业务失败)→ {@link JobFailureException}(重试无益)。
      */
-    private String runJobCommand(ServerRecordDto server, String command) {
+    private String runJobCommand(HostRecordDto host, String command) {
         try {
-            return sshService.executeCommand(server, command);
+            return sshService.executeCommand(host, command);
         } catch (BusinessException e) {
             Throwable cause = e.getCause();
             if (cause instanceof JSchException || cause instanceof IOException) {

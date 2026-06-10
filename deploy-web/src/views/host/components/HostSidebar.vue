@@ -1,29 +1,29 @@
 <script setup lang="ts">
 import { Close, Connection, Position, Refresh } from '@element-plus/icons-vue'
 import { sshConnect, sshDisconnect, sshExecCommand } from '@/api/api'
-import type { ServerRecord } from '@/types/server'
+import type { HostRecord } from '@/types/host'
 import type { ExecResult } from '@/types/environment'
 import JavaIcon from '@/assets/icons/logo-java.svg'
 import NodeIcon from '@/assets/icons/logo-nodejs.svg'
 import NginxIcon from '@/assets/icons/logo-nginx.svg'
 import RedisIcon from '@/assets/icons/logo-redis.svg'
-import ServerSelect from './ServerSelect.vue'
+import HostSelect from './HostSelect.vue'
 
 const emit = defineEmits<{
   (e: 'connect'): void
 }>()
 
 const sessionId = inject('sessionId') as Ref<string>
-const currentServer = inject('currentServer') as Ref<ServerRecord>
+const currentHost = inject('currentHost') as Ref<HostRecord>
 const selectVisible = ref<boolean>(false)
-const sidebarTitle = computed(() => currentServer.value?.name || '请选择服务器')
+const sidebarTitle = computed(() => currentHost.value?.name || '请选择主机')
 
-// 选择服务器
+// 选择主机
 const handleSelect = () => {
   selectVisible.value = true
 }
-const handleSelectComplete = async (server: ServerRecord) => {
-  currentServer.value = server
+const handleSelectComplete = async (host: HostRecord) => {
+  currentHost.value = host
   await handleConnection()
 }
 
@@ -51,12 +51,12 @@ const showEnvironments = computed(() => {
 // 建立连接
 const handleConnection = async () => {
   try {
-    const serverId = currentServer.value?.id
-    if (!serverId) {
-      return ElMessage.warning('请先选择服务器')
+    const hostId = currentHost.value?.id
+    if (!hostId) {
+      return ElMessage.warning('请先选择主机')
     }
     // 创建 SSH 会话
-    const sessionIdResult = await sshConnect(serverId)
+    const sessionIdResult = await sshConnect(hostId)
     sessionId.value = sessionIdResult
     ElNotification.success('SSH 会话连接成功')
     emit('connect')
@@ -74,7 +74,7 @@ const handleDisconnect = async () => {
   if (sessionId.value) {
     await sshDisconnect(sessionId.value)
   }
-  currentServer.value = {} as ServerRecord
+  currentHost.value = {} as HostRecord
   Object.keys(environmentStatus.value).forEach((key) => {
     environmentStatus.value[key] = { result: '', exitCode: -1 }
   })
@@ -82,8 +82,8 @@ const handleDisconnect = async () => {
 
 // 查询环境状态
 const fetchEnvironmentStatus = async (environment: string) => {
-  if (!currentServer.value || Object.keys(currentServer.value).length === 0) {
-    return ElMessage.warning('请先选择服务器')
+  if (!currentHost.value || Object.keys(currentHost.value).length === 0) {
+    return ElMessage.warning('请先选择主机')
   }
   try {
     const command = environmentCommands[environment]
@@ -128,16 +128,16 @@ onBeforeUnmount(async () => {
 </script>
 
 <template>
-  <div class="server-sidebar">
+  <div class="host-sidebar">
     <!-- 标题和操作按钮 -->
     <div class="block header-block">
       <div class="header-content">
         <h3 class="header-title">{{ sidebarTitle }}</h3>
         <div class="action-wrapper">
-          <el-tooltip content="选择服务器">
+          <el-tooltip content="选择主机">
             <el-button class="action-button" :icon="Position" @click="handleSelect" />
           </el-tooltip>
-          <el-tooltip content="连接服务器">
+          <el-tooltip content="连接主机">
             <el-button class="action-button" type="primary" :icon="Connection" @click="handleConnection" />
           </el-tooltip>
           <el-tooltip content="断开连接">
@@ -146,23 +146,23 @@ onBeforeUnmount(async () => {
         </div>
       </div>
     </div>
-    <!-- 服务器信息 -->
-    <div class="block server-info-block">
+    <!-- 主机信息 -->
+    <div class="block host-info-block">
       <div class="info-row">
         <div class="label">主机地址</div>
-        <div class="value">{{ currentServer?.host }}</div>
+        <div class="value">{{ currentHost?.address }}</div>
       </div>
       <div class="info-row">
         <div class="label">端口</div>
-        <div class="value">{{ currentServer?.port }}</div>
+        <div class="value">{{ currentHost?.port }}</div>
       </div>
       <div class="info-row">
         <div class="label">用户名</div>
-        <div class="value">{{ currentServer?.username }}</div>
+        <div class="value">{{ currentHost?.username }}</div>
       </div>
       <div class="info-row">
         <div class="label">主目录</div>
-        <div class="value">{{ currentServer?.homeDir }}</div>
+        <div class="value">{{ currentHost?.homeDir }}</div>
       </div>
       <div class="info-row">
         <div class="label">芯片架构</div>
@@ -193,12 +193,12 @@ onBeforeUnmount(async () => {
       </div>
     </div>
   </div>
-  <server-select v-if="selectVisible" v-model="selectVisible" @select="handleSelectComplete" />
+  <host-select v-if="selectVisible" v-model="selectVisible" @select="handleSelectComplete" />
 </template>
 
 <style lang="scss" scoped>
-.server-sidebar {
-  // 文档流内的吸顶卡片（定位 / 吸顶由各页 .server-panel 容器负责）：
+.host-sidebar {
+  // 文档流内的吸顶卡片（定位 / 吸顶由各页 .host-panel 容器负责）：
   // 宽度铺满容器、高度随内容、以视口为上限并内部独立滚动，避免长环境列表撑破页面。
   // 不再固定右栏、也不带左描边线（卡片靠面层底色 + 圆角与画布区分）
   width: 100%;
@@ -245,7 +245,7 @@ onBeforeUnmount(async () => {
       }
     }
 
-    &.server-info-block {
+    &.host-info-block {
       .info-row {
         display: flex;
         margin: 8px 0;

@@ -1,33 +1,33 @@
 <script setup lang="ts">
-import type { ServerRecord, ServerParams } from '@/types/server'
+import type { HostRecord, HostParams } from '@/types/host'
 import type { FormInstance, FormRules } from 'element-plus'
 import type { InternalRuleItem } from 'async-validator/dist-types/interface'
 import { SshAuthTypeEnum } from '@/enums/platform'
 
 defineOptions({
-  name: 'ServerFormDialog',
+  name: 'HostFormDialog',
 })
 
 const props = defineProps<{
   type: 'add' | 'edit' | 'view'
-  server?: Partial<ServerRecord>
+  host?: Partial<HostRecord>
 }>()
 
 // 可见性由父级 v-model 显式接管（迁到 AppDrawer 后底层非单根，靠属性透传不再生效）
 const visible = defineModel<boolean>()
 
 const emit = defineEmits<{
-  (e: 'test', server: ServerParams): void
-  (e: 'submit', server: ServerParams): void
+  (e: 'test', host: HostParams): void
+  (e: 'submit', host: HostParams): void
 }>()
 
 const formRef = ref<FormInstance>()
 
 // 表单初始值
-const initialForm: ServerParams = {
+const initialForm: HostParams = {
   name: '',
   description: '',
-  host: '',
+  address: '',
   port: 22,
   username: '',
   homeDir: '',
@@ -46,13 +46,13 @@ const initialForm: ServerParams = {
   portForwardingEnabled: false,
 }
 
-const form = reactive<ServerParams>({ ...initialForm })
+const form = reactive<HostParams>({ ...initialForm })
 
 // 活动的折叠面板
 const activeCollapseNames = ref(['base'])
 
 watch(
-  () => props.server,
+  () => props.host,
   (newVal) => {
     Object.assign(form, initialForm)
     activeCollapseNames.value = ['base']
@@ -63,9 +63,9 @@ watch(
   { immediate: true, deep: true },
 )
 
-const formRules = reactive<FormRules<ServerParams>>({
-  name: [{ required: false, message: '服务器名称不能为空', trigger: 'blur' }],
-  host: [{ required: true, message: '主机地址不能为空', trigger: 'blur' }],
+const formRules = reactive<FormRules<HostParams>>({
+  name: [{ required: false, message: '主机名称不能为空', trigger: 'blur' }],
+  address: [{ required: true, message: '主机地址不能为空', trigger: 'blur' }],
   port: [{ required: true, message: '端口号不能为空', trigger: 'blur' }],
   username: [{ required: true, message: '用户名不能为空', trigger: 'blur' }],
   authType: [{ required: true, message: '认证方式不能为空', trigger: 'change' }],
@@ -119,11 +119,11 @@ const formRules = reactive<FormRules<ServerParams>>({
 const dialogTitle = computed(() => {
   switch (props.type) {
     case 'add':
-      return '添加服务器'
+      return '添加主机'
     case 'edit':
-      return '编辑服务器'
+      return '编辑主机'
     case 'view':
-      return '服务器详情'
+      return '主机详情'
     default:
       return ''
   }
@@ -164,33 +164,33 @@ const handleClosed = () => {
   <app-drawer v-model="visible" :title="dialogTitle" width="md" @close="handleClosed">
     <!-- 只读详情用 el-descriptions 键值展示，不复用编辑表单灰掉冒充详情；敏感字段（密码/私钥密码）不回显明文 -->
     <el-descriptions v-if="type === 'view'" :column="2" border>
-      <el-descriptions-item label="服务器名称">{{ server?.name }}</el-descriptions-item>
-      <el-descriptions-item label="主机地址">{{ server?.host }}</el-descriptions-item>
-      <el-descriptions-item label="端口">{{ server?.port }}</el-descriptions-item>
-      <el-descriptions-item label="用户名">{{ server?.username }}</el-descriptions-item>
-      <el-descriptions-item label="认证方式">{{ SshAuthTypeEnum.getLabel(server?.authType) }}</el-descriptions-item>
-      <el-descriptions-item label="主目录">{{ server?.homeDir }}</el-descriptions-item>
-      <el-descriptions-item label="私钥路径">{{ server?.privateKeyPath }}</el-descriptions-item>
-      <el-descriptions-item label="密钥交换算法">{{ server?.kexAlgorithms }}</el-descriptions-item>
-      <el-descriptions-item label="加密算法">{{ server?.cipherAlgorithms }}</el-descriptions-item>
-      <el-descriptions-item label="MAC算法">{{ server?.macAlgorithms }}</el-descriptions-item>
-      <el-descriptions-item label="主机密钥算法">{{ server?.serverHostKeyAlgorithms }}</el-descriptions-item>
-      <el-descriptions-item label="连接超时时间(毫秒)">{{ server?.connectionTimeout }}</el-descriptions-item>
-      <el-descriptions-item label="启用压缩">{{ server?.compressionEnabled ? '是' : '否' }}</el-descriptions-item>
+      <el-descriptions-item label="主机名称">{{ host?.name }}</el-descriptions-item>
+      <el-descriptions-item label="主机地址">{{ host?.address }}</el-descriptions-item>
+      <el-descriptions-item label="端口">{{ host?.port }}</el-descriptions-item>
+      <el-descriptions-item label="用户名">{{ host?.username }}</el-descriptions-item>
+      <el-descriptions-item label="认证方式">{{ SshAuthTypeEnum.getLabel(host?.authType) }}</el-descriptions-item>
+      <el-descriptions-item label="主目录">{{ host?.homeDir }}</el-descriptions-item>
+      <el-descriptions-item label="私钥路径">{{ host?.privateKeyPath }}</el-descriptions-item>
+      <el-descriptions-item label="密钥交换算法">{{ host?.kexAlgorithms }}</el-descriptions-item>
+      <el-descriptions-item label="加密算法">{{ host?.cipherAlgorithms }}</el-descriptions-item>
+      <el-descriptions-item label="MAC算法">{{ host?.macAlgorithms }}</el-descriptions-item>
+      <el-descriptions-item label="主机密钥算法">{{ host?.serverHostKeyAlgorithms }}</el-descriptions-item>
+      <el-descriptions-item label="连接超时时间(毫秒)">{{ host?.connectionTimeout }}</el-descriptions-item>
+      <el-descriptions-item label="启用压缩">{{ host?.compressionEnabled ? '是' : '否' }}</el-descriptions-item>
       <el-descriptions-item label="严格主机密钥检查">
-        {{ server?.strictHostKeyChecking ? '是' : '否' }}
+        {{ host?.strictHostKeyChecking ? '是' : '否' }}
       </el-descriptions-item>
-      <el-descriptions-item label="启用X11转发">{{ server?.x11ForwardingEnabled ? '是' : '否' }}</el-descriptions-item>
+      <el-descriptions-item label="启用X11转发">{{ host?.x11ForwardingEnabled ? '是' : '否' }}</el-descriptions-item>
       <el-descriptions-item label="启用端口转发">
-        {{ server?.portForwardingEnabled ? '是' : '否' }}
+        {{ host?.portForwardingEnabled ? '是' : '否' }}
       </el-descriptions-item>
-      <el-descriptions-item label="服务器描述" :span="2">{{ server?.description }}</el-descriptions-item>
+      <el-descriptions-item label="主机描述" :span="2">{{ host?.description }}</el-descriptions-item>
     </el-descriptions>
     <el-form v-else ref="formRef" :model="form" :rules="formRules" label-width="140px">
       <el-collapse v-model="activeCollapseNames">
         <el-collapse-item title="基础信息" name="base">
-          <el-form-item label="主机地址" prop="host">
-            <el-input v-model="form.host" placeholder="主机地址" clearable />
+          <el-form-item label="主机地址" prop="address">
+            <el-input v-model="form.address" placeholder="主机地址" clearable />
           </el-form-item>
           <el-form-item label="端口" prop="port">
             <el-input-number v-model="form.port" :min="1" :max="65535" />
@@ -234,15 +234,15 @@ const handleClosed = () => {
           <el-form-item label="主目录" prop="homeDir">
             <el-input v-model="form.homeDir" placeholder="主目录" clearable />
           </el-form-item>
-          <el-form-item label="服务器名称" prop="name">
-            <el-input v-model="form.name" placeholder="服务器名称" clearable />
+          <el-form-item label="主机名称" prop="name">
+            <el-input v-model="form.name" placeholder="主机名称" clearable />
           </el-form-item>
-          <el-form-item label="服务器描述" prop="description">
+          <el-form-item label="主机描述" prop="description">
             <el-input
               v-model="form.description"
               type="textarea"
               :autosize="{ minRows: 3 }"
-              placeholder="服务器描述"
+              placeholder="主机描述"
               clearable
             />
           </el-form-item>

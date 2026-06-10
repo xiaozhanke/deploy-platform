@@ -8,41 +8,41 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 /**
- * 服务器记录 VO 类
+ * 主机记录 VO 类
  *
  * <p>VO 不携带任何凭据字段：password 与 privateKeyPassword 在 PO 上仍然保留以供建立连接使用，
- * 但绝不通过 VO 出站；如需在内部传递凭据请走 {@link com.xiaozhanke.deploy.model.dto.ServerRecordDto}。
+ * 但绝不通过 VO 出站；如需在内部传递凭据请走 {@link com.xiaozhanke.deploy.model.dto.HostRecordDto}。
  *
  * @author xiaozhanke
  */
 @Data
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@Schema(description = "服务器记录信息")
-public class ServerRecordVo extends BaseVo {
+@Schema(description = "主机记录信息")
+public class HostRecordVo extends BaseVo {
     /**
-     * 服务器 Id
+     * 主机 Id
      */
-    @Schema(description = "服务器 Id")
+    @Schema(description = "主机 Id")
     private String id;
 
     /**
-     * 服务器名称
+     * 主机名称
      */
-    @Schema(description = "服务器名称")
+    @Schema(description = "主机名称")
     private String name;
 
     /**
-     * 服务器描述
+     * 主机描述
      */
-    @Schema(description = "服务器描述")
+    @Schema(description = "主机描述")
     private String description;
 
     /**
      * 主机地址
      */
     @Schema(description = "主机地址", example = "localhost")
-    private String host;
+    private String address;
 
     /**
      * 端口号

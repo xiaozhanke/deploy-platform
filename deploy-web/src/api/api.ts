@@ -1,6 +1,6 @@
 import type { ExecResult, NginxConfigParams } from '@/types/environment'
 import request from './request'
-import type { ServerRecord, ServerParams, ServerQueryParams } from '@/types/server'
+import type { HostRecord, HostParams, HostQueryParams } from '@/types/host'
 import type { PageParams, PageResult } from '@/types/api'
 import type { FileParams, FileRecord } from '@/types/file'
 import type { PasswordForm, UserProfile } from '@/types/auth'
@@ -23,71 +23,71 @@ export const testPing = (): Promise<string> => {
 }
 
 /**
- * 获取服务器列表
+ * 获取主机列表
  */
-export const serverQueryList = (): Promise<Array<ServerRecord>> => {
-  return request.get('/servers/list')
+export const hostQueryList = (): Promise<Array<HostRecord>> => {
+  return request.get('/hosts/list')
 }
 
 /**
- * 分页查询服务器列表
+ * 分页查询主机列表
  * @param queryParams 查询参数
  * @param pageParams 分页参数
  */
-export const serverQueryPage = (
-  queryParams: ServerQueryParams,
+export const hostQueryPage = (
+  queryParams: HostQueryParams,
   pageParams?: PageParams,
-): Promise<PageResult<ServerRecord>> => {
-  return request.get('/servers/page', { params: { ...queryParams, ...pageParams } })
+): Promise<PageResult<HostRecord>> => {
+  return request.get('/hosts/page', { params: { ...queryParams, ...pageParams } })
 }
 
 /**
- * 添加服务器
- * @param server 服务器信息
+ * 添加主机
+ * @param host 主机信息
  */
-export const serverAdd = (server: ServerParams): Promise<ServerRecord> => {
-  return request.post('/servers', server)
+export const hostAdd = (host: HostParams): Promise<HostRecord> => {
+  return request.post('/hosts', host)
 }
 
 /**
- * 更新服务器信息
- * @param id 服务器 Id
- * @param server 服务器信息
+ * 更新主机信息
+ * @param id 主机 Id
+ * @param host 主机信息
  */
-export const serverUpdate = (id: string, server: ServerParams): Promise<ServerRecord> => {
-  return request.put(`/servers/${id}`, server)
+export const hostUpdate = (id: string, host: HostParams): Promise<HostRecord> => {
+  return request.put(`/hosts/${id}`, host)
 }
 
 /**
- * 删除服务器
- * @param id 服务器 Id
+ * 删除主机
+ * @param id 主机 Id
  */
-export const serverDelete = (id: string): Promise<void> => {
-  return request.delete(`/servers/${id}`)
+export const hostDelete = (id: string): Promise<void> => {
+  return request.delete(`/hosts/${id}`)
 }
 
 /**
- * 获取服务器信息
- * @param id 服务器 Id
+ * 获取主机信息
+ * @param id 主机 Id
  */
-export const serverQueryById = (id: string): Promise<ServerRecord> => {
-  return request.get(`/servers/${id}`)
+export const hostQueryById = (id: string): Promise<HostRecord> => {
+  return request.get(`/hosts/${id}`)
 }
 
 /**
- * 测试服务器连接
- * @param server 服务器信息
+ * 测试主机连接
+ * @param host 主机信息
  */
-export const serverTestConnection = (server: ServerParams): Promise<boolean> => {
-  return request.post('/servers/test-connection', server)
+export const hostTestConnection = (host: HostParams): Promise<boolean> => {
+  return request.post('/hosts/test-connection', host)
 }
 
 /**
  * SSH 连接
- * @param serverId 服务器 Id
+ * @param hostId 主机 Id
  */
-export const sshConnect = (serverId: string): Promise<string> => {
-  return request.post('/ssh/sessions', null, { params: { serverId } })
+export const sshConnect = (hostId: string): Promise<string> => {
+  return request.post('/ssh/sessions', null, { params: { hostId } })
 }
 
 /**

@@ -3,7 +3,7 @@ defineOptions({
   name: 'EnvironmentInstallation',
 })
 
-import { type ServerRecord } from '@/types/server'
+import { type HostRecord } from '@/types/host'
 import { useWebSocketStore } from '@/stores/websocket'
 import { fileQueryPath, sshShellAdd } from '@/api/api'
 import type { ExecResult, SetupStep } from '@/types/environment'
@@ -15,21 +15,21 @@ import JavaIcon from '@/assets/icons/logo-java.svg'
 import NodeIcon from '@/assets/icons/logo-nodejs.svg'
 import NginxIcon from '@/assets/icons/logo-nginx.svg'
 import RedisIcon from '@/assets/icons/logo-redis.svg'
-import ServerSidebar from '@/views/server/components/ServerSidebar.vue'
+import HostSidebar from '@/views/host/components/HostSidebar.vue'
 
 const websocketStore = useWebSocketStore()
 const terminalPanelRef = ref<InstanceType<typeof TerminalPanel>>()
 const sessionId = ref<string>('')
 const channelId = ref<string>('')
-const currentServer = ref<ServerRecord>({} as ServerRecord)
+const currentHost = ref<HostRecord>({} as HostRecord)
 const homeDir = computed(() => {
-  return currentServer.value?.homeDir || '~'
+  return currentHost.value?.homeDir || '~'
 })
 
 // 给子孙组件传递 sessionId 和 channelId
 provide('sessionId', sessionId)
 provide('channelId', channelId)
-provide('currentServer', currentServer)
+provide('currentHost', currentHost)
 
 // 页签数据
 const tabs = [
@@ -421,7 +421,7 @@ const redisSteps = (): SetupStep[] => {
               v-if="activeTabName === tab.name"
               :ref="(el) => (tab.stepExecutorRef.value = el as InstanceType<typeof StepExecutor>)"
               :init-steps="tab.steps()"
-              :current-server="currentServer"
+              :current-host="currentHost"
             />
           </el-tab-pane>
         </el-tabs>
@@ -430,8 +430,8 @@ const redisSteps = (): SetupStep[] => {
       </div>
     </div>
 
-    <aside class="server-panel">
-      <server-sidebar @connect="handleShellConnect" />
+    <aside class="host-panel">
+      <host-sidebar @connect="handleShellConnect" />
     </aside>
   </section>
 </template>
@@ -442,8 +442,8 @@ const redisSteps = (): SetupStep[] => {
   display: flex;
   gap: var(--layout-common-gap);
 
-  // 选择服务器面板：右侧定宽、文档流内吸顶（与部署发布一致）
-  .server-panel {
+  // 选择主机面板：右侧定宽、文档流内吸顶（与部署发布一致）
+  .host-panel {
     flex: 0 0 var(--layout-right-sidebar-width);
     align-self: flex-start;
     position: sticky;

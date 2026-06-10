@@ -71,19 +71,19 @@ public enum AuditOperationTypeEnum {
     JOB_CANCEL("取消部署作业"),
 
     /**
-     * 创建服务器
+     * 创建主机
      */
-    SERVER_CREATE("创建服务器"),
+    HOST_CREATE("创建主机"),
 
     /**
-     * 更新服务器
+     * 更新主机
      */
-    SERVER_UPDATE("更新服务器"),
+    HOST_UPDATE("更新主机"),
 
     /**
-     * 删除服务器
+     * 删除主机
      */
-    SERVER_DELETE("删除服务器"),
+    HOST_DELETE("删除主机"),
 
     /**
      * 创建用户

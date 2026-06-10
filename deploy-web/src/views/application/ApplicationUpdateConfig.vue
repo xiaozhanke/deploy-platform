@@ -28,15 +28,15 @@ const configDir = computed(() => {
 
 // 核心逻辑：建立连接并获取文件列表
 const initialize = async () => {
-  if (!props.record.serverRecord?.id) {
-    errorMessage.value = '记录中缺少服务器信息，无法连接。'
+  if (!props.record.hostRecord?.id) {
+    errorMessage.value = '记录中缺少主机信息，无法连接。'
     return
   }
   isLoading.value = true
   errorMessage.value = ''
   try {
     // 创建 SSH 会话
-    sessionId.value = await sshConnect(props.record.serverRecord.id)
+    sessionId.value = await sshConnect(props.record.hostRecord.id)
     // 获取文件列表
     await fetchFileList()
   } catch (error) {

@@ -3,7 +3,7 @@ import { deploymentRecordAdd, fileQueryPathById, sshExecCommand } from '@/api/ap
 import { ApplicationTypeEnum, DeploymentStatusEnum } from '@/enums/platform'
 import { useWebSocketStore } from '@/stores/websocket'
 import type { FileRecord } from '@/types/file'
-import type { ServerRecord } from '@/types/server'
+import type { HostRecord } from '@/types/host'
 import { generateRandomNumber } from '@/utils/common'
 import type { FormInstance, FormRules } from 'element-plus'
 
@@ -16,13 +16,13 @@ const props = defineProps<{
 const visible = defineModel<boolean>()
 
 const sessionId = inject('sessionId') as Ref<string>
-const currentServer = inject('currentServer') as Ref<ServerRecord>
+const currentHost = inject('currentHost') as Ref<HostRecord>
 const websocketStore = useWebSocketStore()
 
 // 构建默认的上传目录
 const bulidUploadDir = () => {
   const { groupId, artifactId } = props.fileRecord
-  const { homeDir } = currentServer.value
+  const { homeDir } = currentHost.value
   return `${homeDir}/resource/${groupId}/${artifactId}`
 }
 
@@ -36,7 +36,7 @@ const formRules = reactive<FormRules>({
     { required: true, message: '部署上传目录不能为空', trigger: 'blur' },
     {
       pattern: /^[a-zA-Z0-9-_.\/]+$/,
-      message: '部署上传目录只能包含字母、数字、下划线、短横线、点和斜杠',
+      message: '部署上传目录只能包含字母、数字、下划线、短横线、点 and 斜杠',
       trigger: 'blur',
     },
   ],
@@ -62,7 +62,7 @@ const handleSubmit = async () => {
         await handleUnzipFile()
         // 保存部署记录
         await deploymentRecordAdd({
-          serverRecordId: currentServer.value.id,
+          hostRecordId: currentHost.value.id,
           fileRecordId: props.fileRecord.id,
           applicationType: ApplicationTypeEnum.FRONTEND.value,
           deploymentPath: form.dir,

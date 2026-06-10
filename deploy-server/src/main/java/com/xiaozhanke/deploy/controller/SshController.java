@@ -3,11 +3,11 @@ package com.xiaozhanke.deploy.controller;
 
 import com.xiaozhanke.deploy.aspect.Auditable;
 import com.xiaozhanke.deploy.enums.AuditOperationTypeEnum;
-import com.xiaozhanke.deploy.model.dto.ServerRecordDto;
+import com.xiaozhanke.deploy.model.dto.HostRecordDto;
 import com.xiaozhanke.deploy.model.dto.SshExecResult;
 import com.xiaozhanke.deploy.model.request.SshExecMessage;
 import com.xiaozhanke.deploy.model.request.SshWriteFileMessage;
-import com.xiaozhanke.deploy.service.ServerService;
+import com.xiaozhanke.deploy.service.HostService;
 import com.xiaozhanke.deploy.service.SshService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -42,31 +42,31 @@ import java.net.URI;
 public class SshController {
 
     private final SshService sshService;
-    private final ServerService serverService;
+    private final HostService hostService;
 
-    public SshController(SshService sshService, ServerService serverService) {
+    public SshController(SshService sshService, HostService hostService) {
         this.sshService = sshService;
-        this.serverService = serverService;
+        this.hostService = hostService;
     }
 
     /**
-     * 创建一个服务器连接会话
+     * 创建一个主机连接会话
      *
-     * @param serverId 服务器 Id
+     * @param hostId 主机 Id
      * @return 会话 Id
      */
     @Operation(summary = "创建连接会话", description = "创建 JSch Session 连接会话并连接，返回会话 Id")
     @PostMapping("/sessions")
-    public ResponseEntity<String> connect(@Parameter(description = "服务器 Id", required = true) @RequestParam String serverId) {
-        ServerRecordDto server = serverService.getServerDto(serverId);
-        String sessionId = sshService.connect(server);
+    public ResponseEntity<String> connect(@Parameter(description = "主机 Id", required = true) @RequestParam String hostId) {
+        HostRecordDto host = hostService.getHostDto(hostId);
+        String sessionId = sshService.connect(host);
         URI location =
                 ServletUriComponentsBuilder.fromCurrentRequest().path("/{sessionId}").buildAndExpand(sessionId).toUri();
         return ResponseEntity.created(location).body(sessionId);
     }
 
     /**
-     * 断开服务器连接会话
+     * 断开主机连接会话
      *
      * @param sessionId 会话 Id
      */

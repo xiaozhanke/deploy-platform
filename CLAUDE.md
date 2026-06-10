@@ -63,8 +63,8 @@ WebSocket(STOMP) 经 vite 升级代理（`/websocket`，`ws: true`）到后端 `
 - WebSocket 安全依赖 `spring-security-messaging`；Java 包 `security/` 下有 `config/`、`exception/`、`token/`、`user/` 四个子目录
 
 ### 后端包结构（`com.xiaozhanke.deploy`）
-- `controller/` —— REST 接口（Auth、Config、Deployment、File、PlatformRole、PlatformUser、Server、Ssh、WebSocketSsh、Test）
-- `service/` —— 业务逻辑（ConfigService、DeploymentService、FileStorageService、PlatformRoleService、PlatformUserService、ServerService、SshService）
+- `controller/` —— REST 接口（Auth、Config、Deployment、File、PlatformRole、PlatformUser、Host、Ssh、WebSocketSsh、Test）
+- `service/` —— 业务逻辑（ConfigService、DeploymentService、FileStorageService、PlatformRoleService、PlatformUserService、HostService、SshService）
 - `core/ssh/` —— 基于 JSch 的 SSH 会话管理（用的是 `com.github.mwiede:jsch`，**不是**原始的 jcraft fork）
 - `core/websocket/` —— 浏览器端 SSH 终端的 STOMP / WebSocket 通道
 - `model/{dto,entity,mapper,request,vo}` —— MapStruct 在 entity / DTO / VO 之间做映射

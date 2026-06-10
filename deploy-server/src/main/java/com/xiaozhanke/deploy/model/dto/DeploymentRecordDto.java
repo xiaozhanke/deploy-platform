@@ -27,10 +27,10 @@ public class DeploymentRecordDto extends BaseDto {
     private String id;
 
     /**
-     * 服务器记录
+     * 主机记录
      */
-    @Schema(description = "服务器记录")
-    private ServerRecordDto serverRecord;
+    @Schema(description = "主机记录")
+    private HostRecordDto hostRecord;
 
     /**
      * 文件记录

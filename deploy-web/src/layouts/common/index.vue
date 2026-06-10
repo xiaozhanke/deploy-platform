@@ -117,7 +117,7 @@ const navConfig: NavGroup[] = [
     // title: '基础设施',
     title: '',
     items: [
-      { index: '/server', icon: markRaw(Monitor) },
+      { index: '/host', icon: markRaw(Monitor) },
       { index: '/file', icon: markRaw(Files) },
       { index: '/installation', icon: markRaw(Box) },
       { index: '/configuration', icon: markRaw(Operation) },

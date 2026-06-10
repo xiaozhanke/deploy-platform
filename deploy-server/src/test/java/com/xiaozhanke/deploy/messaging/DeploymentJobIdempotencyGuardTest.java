@@ -20,13 +20,13 @@ import com.xiaozhanke.deploy.messaging.transaction.DeploymentTransactionListener
 import com.xiaozhanke.deploy.model.entity.DeploymentJob;
 import com.xiaozhanke.deploy.model.entity.DeploymentRecord;
 import com.xiaozhanke.deploy.model.entity.FileRecord;
-import com.xiaozhanke.deploy.model.entity.ServerRecord;
+import com.xiaozhanke.deploy.model.entity.HostRecord;
 import com.xiaozhanke.deploy.model.request.CreateJobRequest;
 import com.xiaozhanke.deploy.model.vo.DeploymentJobVo;
 import com.xiaozhanke.deploy.repository.DeploymentJobRepository;
 import com.xiaozhanke.deploy.repository.DeploymentRecordRepository;
 import com.xiaozhanke.deploy.repository.FileRecordRepository;
-import com.xiaozhanke.deploy.repository.ServerRepository;
+import com.xiaozhanke.deploy.repository.HostRepository;
 import com.xiaozhanke.deploy.service.DeploymentJobService;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -92,7 +92,7 @@ class DeploymentJobIdempotencyGuardTest {
     private DeploymentRecordRepository deploymentRecordRepository;
 
     @Autowired
-    private ServerRepository serverRepository;
+    private HostRepository hostRepository;
 
     @Autowired
     private FileRecordRepository fileRecordRepository;
@@ -104,21 +104,21 @@ class DeploymentJobIdempotencyGuardTest {
 
     @BeforeEach
     void setUp() {
-        // 删除顺序:job → record → file/server,先清掉外键引用方
+        // 删除顺序:job → record → file/host,先清掉外键引用方
         deploymentJobRepository.deleteAll();
         deploymentRecordRepository.deleteAll();
         fileRecordRepository.deleteAll();
-        serverRepository.deleteAll();
+        hostRepository.deleteAll();
 
-        ServerRecord server = new ServerRecord();
-        server.setName("idempotency-server");
-        server.setHost("127.0.0.1");
-        server.setPort(22);
-        server.setUsername("test");
-        server.setHomeDir("/tmp");
-        server.setAuthType(SshAuthTypeEnum.PASSWORD);
-        server.setPassword("dummy");
-        server = serverRepository.save(server);
+        HostRecord host = new HostRecord();
+        host.setName("idempotency-host");
+        host.setAddress("127.0.0.1");
+        host.setPort(22);
+        host.setUsername("test");
+        host.setHomeDir("/tmp");
+        host.setAuthType(SshAuthTypeEnum.PASSWORD);
+        host.setPassword("dummy");
+        host = hostRepository.save(host);
 
         FileRecord file = new FileRecord();
         file.setFileName("app.jar");
@@ -126,7 +126,7 @@ class DeploymentJobIdempotencyGuardTest {
         file = fileRecordRepository.save(file);
 
         DeploymentRecord deployment = new DeploymentRecord();
-        deployment.setServerRecord(server)
+        deployment.setHostRecord(host)
                 .setFileRecord(file)
                 .setApplicationType(ApplicationTypeEnum.BACKEND)
                 .setDeploymentPath("/opt/app")

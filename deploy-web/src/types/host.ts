@@ -1,13 +1,13 @@
 import type { SshAuthTypeEnum } from '@/enums/platform'
 
 /**
- * 服务器信息
+ * 主机信息
  */
-export interface ServerRecord {
+export interface HostRecord {
   id: string
   name: string
   description: string
-  host: string
+  address: string
   port: number
   username: string
   homeDir: string
@@ -27,12 +27,12 @@ export interface ServerRecord {
 }
 
 /**
- * 服务器信息参数
+ * 主机信息参数
  */
-export interface ServerParams {
+export interface HostParams {
   name?: string
   description?: string
-  host: string
+  address: string
   port: number
   username: string
   homeDir?: string
@@ -52,11 +52,11 @@ export interface ServerParams {
 }
 
 /**
- * 服务器查询参数
+ * 主机查询参数
  *
- * 仅承载列表 / 分页查询的过滤字段，与写入用的 ServerParams 解耦
+ * 仅承载列表 / 分页查询的过滤字段，与写入用的 HostParams 解耦
  */
-export interface ServerQueryParams {
+export interface HostQueryParams {
   name?: string
-  host?: string
+  address?: string
 }

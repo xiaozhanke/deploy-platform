@@ -5,7 +5,7 @@ import { useWebSocketStore } from '@/stores/websocket'
 import { generateRandomId } from '@/utils/common'
 
 const props = defineProps<{
-  serverId: string
+  hostId: string
   logPath: string
 }>()
 
@@ -23,7 +23,7 @@ let shellSubscription: { unsubscribe: () => void } | null = null
 // 连接 Shell 通道
 const handleShellConnect = async () => {
   try {
-    const sessionIdResult = await sshConnect(props.serverId)
+    const sessionIdResult = await sshConnect(props.hostId)
     sessionId.value = sessionIdResult
     // 创建 Shell 通道
     const channelIdResult = await sshShellAdd(sessionId.value)

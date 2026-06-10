@@ -77,7 +77,7 @@ const handleReset = () => {
           </el-icon>
         </el-button>
 
-        <!-- 页面主操作（如「上传文件」「添加服务器」），唯一实色 primary 收在此处 -->
+        <!-- 页面主操作（如「上传文件」「添加主机」），唯一实色 primary 收在此处 -->
         <slot name="actions" />
       </div>
     </el-row>

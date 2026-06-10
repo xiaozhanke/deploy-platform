@@ -12,10 +12,10 @@ import { Search, SwitchButton, Loading, Switch } from '@element-plus/icons-vue'
 import ApplicationDetails from './ApplicationDetails.vue'
 import ApplicationUpdate from './ApplicationUpdate.vue'
 import JobHistory from './JobHistory.vue'
-import ServerSelect from '@/views/server/components/ServerSelect.vue'
+import HostSelect from '@/views/host/components/HostSelect.vue'
 import FileSelect from '@/views/file/FileSelect.vue'
 import type { FileRecord } from '@/types/file'
-import type { ServerRecord } from '@/types/server'
+import type { HostRecord } from '@/types/host'
 import LogView from '@/views/log/components/LogView.vue'
 import ApplicationUpdatePackage from './ApplicationUpdatePackage.vue'
 import ApplicationUpdateConfig from './ApplicationUpdateConfig.vue'
@@ -118,9 +118,9 @@ const queryMethod = async (queryParams: Record<string, unknown>, pageParams: Pag
 // 查询
 const handleQuery = () => tablePaginationRef.value?.queryPage(form)
 
-// 重置：FilterBar 已 resetFields 复位带 prop 的字段，这里再清服务器/文件选择器的回显与 id，然后重新查询
+// 重置：FilterBar 已 resetFields 复位带 prop 的字段，这里再清主机/文件选择器的回显与 id，然后重新查询
 const handleReset = () => {
-  handleServerSelectClear()
+  handleHostSelectClear()
   handleFileSelectClear()
   handleQuery()
 }
@@ -259,31 +259,31 @@ const handleDelete = (row: DeploymentRecord) => {
 
 const logVisible = ref(false)
 const logPath = ref('')
-const logServerId = ref('')
+const logHostId = ref('')
 
 const handleLogView = (row: DeploymentRecord) => {
-  const { deploymentPath, serverRecord } = row
-  logServerId.value = serverRecord.id
+  const { deploymentPath, hostRecord } = row
+  logHostId.value = hostRecord.id
   logPath.value = `${deploymentPath}/nohup.out`
   logVisible.value = true
 }
 
-const serverSelectVisible = ref(false)
-const selectedServerName = ref('')
-// 选择服务器
-const handleServerSelect = () => {
-  serverSelectVisible.value = true
+const hostSelectVisible = ref(false)
+const selectedHostName = ref('')
+// 选择主机
+const handleHostSelect = () => {
+  hostSelectVisible.value = true
 }
-const handleServerSelectComplete = async (server: ServerRecord) => {
-  const { id, name } = server
-  form.serverRecordId = id
-  selectedServerName.value = name
+const handleHostSelectComplete = async (host: HostRecord) => {
+  const { id, name } = host
+  form.hostRecordId = id
+  selectedHostName.value = name
   await handleQuery()
 }
-// 清空选择服务器
-const handleServerSelectClear = () => {
-  form.serverRecordId = ''
-  selectedServerName.value = ''
+// 清空选择主机
+const handleHostSelectClear = () => {
+  form.hostRecordId = ''
+  selectedHostName.value = ''
 }
 
 const fileSelectVisible = ref(false)
@@ -321,14 +321,14 @@ onUnmounted(() => {
 <template>
   <section class="application-index-section common-page-container">
     <filter-bar :model="form" @query="handleQuery" @reset="handleReset">
-      <filter-field label="服务器">
+      <filter-field label="主机">
         <el-input
-          v-model="selectedServerName"
-          placeholder="选择服务器"
+          v-model="selectedHostName"
+          placeholder="选择主机"
           :suffix-icon="Search"
           clearable
-          @clear="handleServerSelectClear"
-          @click="handleServerSelect"
+          @clear="handleHostSelectClear"
+          @click="handleHostSelect"
         />
       </filter-field>
       <filter-field label="应用文件">
@@ -393,7 +393,7 @@ onUnmounted(() => {
         </template>
       </el-table-column>
       <el-table-column type="index" label="序号" width="54px" fixed="left"></el-table-column>
-      <el-table-column prop="serverRecord.name" label="服务器" min-width="100px"></el-table-column>
+      <el-table-column prop="hostRecord.name" label="主机" min-width="100px"></el-table-column>
       <el-table-column prop="fileRecord.fileName" label="应用包名称" min-width="100px"></el-table-column>
       <el-table-column prop="fileRecord.version" label="应用版本" width="84px"></el-table-column>
       <el-table-column prop="deploymentPath" label="部署路径" min-width="130px"></el-table-column>
@@ -452,9 +452,9 @@ onUnmounted(() => {
     <application-details v-if="detailVisible" v-model="detailVisible" :record="currentRecord" />
     <application-update v-if="updateVisible" v-model="updateVisible" :record="currentRecord" @complete="handleQuery" />
     <job-history v-if="jobHistoryVisible" v-model="jobHistoryVisible" :record="currentRecord" />
-    <server-select v-if="serverSelectVisible" v-model="serverSelectVisible" @select="handleServerSelectComplete" />
+    <host-select v-if="hostSelectVisible" v-model="hostSelectVisible" @select="handleHostSelectComplete" />
     <file-select v-if="fileSelectVisible" v-model="fileSelectVisible" @select="handleFileSelectComplete" />
-    <log-view v-if="logVisible" v-model="logVisible" :server-id="logServerId" :log-path="logPath" />
+    <log-view v-if="logVisible" v-model="logVisible" :host-id="logHostId" :log-path="logPath" />
     <application-update-package
       v-if="updatePackageVisible"
       v-model="updatePackageVisible"

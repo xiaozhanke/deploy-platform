@@ -53,7 +53,7 @@ const checkNginxInstalled = () => {
 // 探测远程 Nginx 布局
 const handleDetectLayout = async () => {
   if (!sessionId.value) {
-    return ElMessage.warning('请先连接服务器')
+    return ElMessage.warning('请先连接主机')
   }
   detecting.value = true
   try {
@@ -106,7 +106,7 @@ const handleCopyConfigDir = () => {
 // 获取文件列表
 const fetchFileList = async () => {
   if (!sessionId.value) {
-    return ElMessage.warning('请先连接服务器')
+    return ElMessage.warning('请先连接主机')
   }
   if (!configDir.value) {
     fileList.value = []
@@ -234,8 +234,8 @@ const handleFileRename = (fileName: string) => {
 // 解析 Nginx 配置文件
 const parseNginxConfig = async (filePath: string): Promise<NginxConfigParams> => {
   if (!sessionId.value) {
-    ElMessage.warning('请先连接服务器')
-    throw new Error('请先连接服务器')
+    ElMessage.warning('请先连接主机')
+    throw new Error('请先连接主机')
   }
 
   try {
@@ -302,7 +302,7 @@ const parseNginxConfig = async (filePath: string): Promise<NginxConfigParams> =>
 // Nginx 测试配置
 const handleNginxTest = async () => {
   if (!sessionId.value) {
-    return ElMessage.warning('请先连接服务器')
+    return ElMessage.warning('请先连接主机')
   }
   if (!checkNginxInstalled()) return
   try {
@@ -320,7 +320,7 @@ const handleNginxTest = async () => {
 // Nginx 重载配置
 const handleNginxReload = async () => {
   if (!sessionId.value) {
-    return ElMessage.warning('请先连接服务器')
+    return ElMessage.warning('请先连接主机')
   }
   if (!checkNginxInstalled()) return
   try {
@@ -338,7 +338,7 @@ const handleNginxReload = async () => {
 // Nginx 启动服务
 const handleNginxStart = async () => {
   if (!sessionId.value) {
-    return ElMessage.warning('请先连接服务器')
+    return ElMessage.warning('请先连接主机')
   }
   if (!checkNginxInstalled()) return
   try {
@@ -356,7 +356,7 @@ const handleNginxStart = async () => {
 // Nginx 停止服务
 const handleNginxStop = async () => {
   if (!sessionId.value) {
-    return ElMessage.warning('请先连接服务器')
+    return ElMessage.warning('请先连接主机')
   }
   if (!checkNginxInstalled()) return
   try {
@@ -464,7 +464,7 @@ onActivated(async () => {
       <el-empty
         v-if="fileList.length === 0"
         class="file-list-empty"
-        :description="sessionId ? '当前目录为空' : '未选择服务器'"
+        :description="sessionId ? '当前目录为空' : '未选择主机'"
       />
       <el-table v-else height="100%" :data="fileList" highlight-current-row show-overflow-tooltip>
         <el-table-column prop="name" label="文件名" min-width="136px" />

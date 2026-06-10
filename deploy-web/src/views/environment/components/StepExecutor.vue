@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { SetupStep } from '@/types/environment'
-import type { ServerRecord } from '@/types/server'
+import type { HostRecord } from '@/types/host'
 import StepContent from './StepContent.vue'
 import { useWebSocketStore } from '@/stores/websocket'
 import { generateRandomId } from '@/utils/common'
@@ -13,7 +13,7 @@ const steps = ref<SetupStep[]>(props.initSteps)
 const websocketStore = useWebSocketStore()
 const sessionId = inject('sessionId') as Ref<string>
 const channelId = inject('channelId') as Ref<string>
-const currentServer = inject('currentServer') as Ref<ServerRecord>
+const currentHost = inject('currentHost') as Ref<HostRecord>
 const activeStep = ref(0)
 const stepLoading = ref(false)
 
@@ -95,8 +95,8 @@ const handleDownloadFile = (remotePath: string, localDir: string) =>
 
 // 执行当前步骤
 const handleExecuteCurrentStep = async () => {
-  if (!currentServer.value || Object.keys(currentServer.value).length === 0) {
-    return ElMessage.warning('请先选择服务器')
+  if (!currentHost.value || Object.keys(currentHost.value).length === 0) {
+    return ElMessage.warning('请先选择主机')
   }
 
   if (steps.value[activeStep.value].status === 'error') {

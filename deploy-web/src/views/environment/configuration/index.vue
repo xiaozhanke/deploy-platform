@@ -3,17 +3,17 @@ defineOptions({
   name: 'EnvironmentConfiguration',
 })
 
-import { type ServerRecord } from '@/types/server'
+import { type HostRecord } from '@/types/host'
 import type { ExecResult } from '@/types/environment'
 import NginxConfig from './NginxConfig.vue'
 import RedisConfig from './RedisConfig.vue'
 import type { TabPaneName } from 'element-plus'
-import ServerSidebar from '@/views/server/components/ServerSidebar.vue'
+import HostSidebar from '@/views/host/components/HostSidebar.vue'
 
 const sessionId = ref<string>('')
-const currentServer = ref<ServerRecord>({} as ServerRecord)
+const currentHost = ref<HostRecord>({} as HostRecord)
 const homeDir = computed(() => {
-  return currentServer.value?.homeDir || '~'
+  return currentHost.value?.homeDir || '~'
 })
 
 const nginxConfigRef = ref<InstanceType<typeof NginxConfig>>()
@@ -29,7 +29,7 @@ const handleTabChange = (name: TabPaneName) => {
 
 // 给子孙组件传递 sessionId
 provide('sessionId', sessionId)
-provide('currentServer', currentServer)
+provide('currentHost', currentHost)
 
 // 建立连接
 const handleConnect = async () => {
@@ -76,8 +76,8 @@ provide('environmentStatus', environmentStatus)
       </div>
     </div>
 
-    <aside class="server-panel">
-      <server-sidebar @connect="handleConnect" />
+    <aside class="host-panel">
+      <host-sidebar @connect="handleConnect" />
     </aside>
   </section>
 </template>
@@ -90,8 +90,8 @@ provide('environmentStatus', environmentStatus)
   gap: var(--layout-common-gap);
   min-height: 0;
 
-  // 选择服务器面板：右侧定宽、文档流内吸顶（与部署发布一致）
-  .server-panel {
+  // 选择主机面板：右侧定宽、文档流内吸顶（与部署发布一致）
+  .host-panel {
     flex: 0 0 var(--layout-right-sidebar-width);
     align-self: flex-start;
     position: sticky;
