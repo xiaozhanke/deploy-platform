@@ -50,3 +50,13 @@ export interface ServerParams {
   x11ForwardingEnabled?: boolean
   portForwardingEnabled?: boolean
 }
+
+/**
+ * 服务器查询参数
+ *
+ * 仅承载列表 / 分页查询的过滤字段，与写入用的 ServerParams 解耦
+ */
+export interface ServerQueryParams {
+  name?: string
+  host?: string
+}

@@ -6,14 +6,21 @@ import com.xiaozhanke.deploy.model.entity.ServerRecord;
 import com.xiaozhanke.deploy.model.mapper.ServerPoDtoMapper;
 import com.xiaozhanke.deploy.model.mapper.ServerPoVoMapper;
 import com.xiaozhanke.deploy.model.request.ServerParams;
+import com.xiaozhanke.deploy.model.request.ServerQueryParams;
+import com.xiaozhanke.deploy.model.response.PageResult;
 import com.xiaozhanke.deploy.model.vo.ServerRecordVo;
 import com.xiaozhanke.deploy.repository.ServerRepository;
+import jakarta.persistence.criteria.Predicate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -143,6 +150,20 @@ public class ServerService {
     }
 
     /**
+     * 分页查询服务器列表
+     *
+     * @param params   查询参数
+     * @param pageable 分页参数
+     * @return 分页结果
+     */
+    public PageResult<ServerRecordVo> queryPage(ServerQueryParams params, Pageable pageable) {
+        Specification<ServerRecord> specification = buildSpecification(params);
+        Page<ServerRecord> page = serverRepository.findAll(specification, pageable);
+        List<ServerRecordVo> serverRecordList = serverPoVoMapper.poListToVoList(page.getContent());
+        return new PageResult<>(serverRecordList, pageable, page.getTotalElements());
+    }
+
+    /**
      * 测试连接
      *
      * @param params 服务器信息参数
@@ -165,6 +186,33 @@ public class ServerService {
         if (!StringUtils.hasText(params.getHomeDir())) {
             params.setHomeDir("/home/" + params.getUsername());
         }
+    }
+
+    /**
+     * 构建动态查询条件
+     *
+     * <p>仅对 name / host 做模糊匹配（like），并强制过滤软删记录；查询条件均为可选，
+     * 任一为空则跳过对应谓词。
+     *
+     * @param params 服务器查询参数
+     * @return 查询条件
+     */
+    private Specification<ServerRecord> buildSpecification(ServerQueryParams params) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicateList = new ArrayList<>();
+
+            if (StringUtils.hasText(params.name())) {
+                predicateList.add(criteriaBuilder.like(root.get("name"), "%" + params.name() + "%"));
+            }
+
+            if (StringUtils.hasText(params.host())) {
+                predicateList.add(criteriaBuilder.like(root.get("host"), "%" + params.host() + "%"));
+            }
+
+            predicateList.add(criteriaBuilder.equal(root.get("deleted"), false));
+
+            return criteriaBuilder.and(predicateList.toArray(new Predicate[0]));
+        };
     }
 
 } 

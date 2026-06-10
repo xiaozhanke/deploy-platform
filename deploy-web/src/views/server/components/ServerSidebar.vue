@@ -193,7 +193,7 @@ onBeforeUnmount(async () => {
       </div>
     </div>
   </div>
-  <server-select v-model="selectVisible" @select="handleSelectComplete" />
+  <server-select v-if="selectVisible" v-model="selectVisible" @select="handleSelectComplete" />
 </template>
 
 <style lang="scss" scoped>

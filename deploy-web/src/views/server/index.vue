@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import type { ServerRecord, ServerParams } from '@/types/server'
-import ServerCard from './components/ServerCard.vue'
+import type { ServerRecord, ServerParams, ServerQueryParams } from '@/types/server'
 import ServerFormDialog from './components/ServerFormDialog.vue'
-import { serverQueryList, serverDelete, serverTestConnection, serverAdd, serverUpdate } from '@/api/api'
+import { serverQueryPage, serverDelete, serverTestConnection, serverAdd, serverUpdate } from '@/api/api'
 import { SshAuthTypeEnum } from '@/enums/platform'
 import TablePagination from '@/components/table-pagination/index.vue'
 import type { PageParams } from '@/types/api'
@@ -10,9 +9,6 @@ import type { PageParams } from '@/types/api'
 defineOptions({
   name: 'ServerIndex',
 })
-
-// 视图模式
-const viewMode = ref<'card' | 'list'>('card')
 
 // 对话框控制
 const dialogVisible = ref(false)
@@ -23,67 +19,24 @@ const currentServer = ref<ServerRecord>({} as ServerRecord)
 const tablePaginationRef = ref()
 
 // 搜索条件表单
-const form = reactive({
+const form = reactive<ServerQueryParams>({
   name: '',
   host: '',
 })
 
-// 全量列表缓存：服务器 CRUD 都在本页，故只拉一次缓存，翻页 / 排序 / 筛选纯前端处理、不再打接口；
-// 仅进入页面（onActivated）与增删改后（reloadData）作废缓存重新拉取，保证数据新鲜。
-let serverListCache: ServerRecord[] | null = null
+// 分页及条件查询：后端分页 + name / host 模糊匹配，错误由 table-pagination 内部统一处理（错误态 / 轻提示）
+const queryMethod = (queryParams: Record<string, unknown>, pageParams: PageParams) => serverQueryPage(form, pageParams)
 
-// 分页及条件查询方法（前端过滤、排序、分页，数据取自缓存）
-const queryMethod = async (queryParams: Record<string, unknown>, pageParams: PageParams) => {
-  // 首次（或缓存失效后）拉一次全量并缓存，之后翻页 / 排序 / 筛选复用缓存
-  const list = serverListCache ?? (serverListCache = await serverQueryList())
-  const qName = ((queryParams.name as string) || '').trim().toLowerCase()
-  const qHost = ((queryParams.host as string) || '').trim().toLowerCase()
-
-  const filtered = list.filter((item) => {
-    const matchName = !qName || (item.name ?? '').toLowerCase().includes(qName)
-    const matchHost = !qHost || (item.host ?? '').toLowerCase().includes(qHost)
-    return matchName && matchHost
-  })
-
-  // 排序支持
-  if (pageParams.sort) {
-    const [prop, order] = pageParams.sort.split(',')
-    filtered.sort((a: ServerRecord, b: ServerRecord) => {
-      const valA = String(a[prop as keyof ServerRecord] ?? '')
-      const valB = String(b[prop as keyof ServerRecord] ?? '')
-      const orderFactor = order === 'asc' ? 1 : -1
-      return valA.localeCompare(valB) * orderFactor
-    })
-  }
-
-  const page = pageParams.page ?? 0
-  const size = pageParams.size ?? 20
-  const start = page * size
-  const end = start + size
-  const pageData = filtered.slice(start, end)
-
-  return {
-    content: pageData,
-    totalElements: filtered.length,
-    totalPages: Math.ceil(filtered.length / size),
-    number: page,
-    size: size,
-  }
-}
-
-// 触发查询（错误由 table-pagination 内部统一处理：错误态 / 轻提示）
+// 触发查询
 const handleQuery = () => tablePaginationRef.value?.queryPage(form)
 
-// 重置查询
+// 重置：FilterBar 已 resetFields 复位字段，这里重新查询
 const handleReset = () => {
   handleQuery()
 }
 
-// 增删改后：作废缓存，从后端重新拉取并刷新当前页
-const reloadData = () => {
-  serverListCache = null
-  tablePaginationRef.value?.queryPage()
-}
+// 增删改后：刷新当前页（后端分页，无需缓存作废）
+const reloadData = () => tablePaginationRef.value?.queryPage()
 
 // 打开添加对话框
 const handleAdd = () => {
@@ -157,8 +110,7 @@ const handleSubmit = async (server: ServerParams) => {
 }
 
 onActivated(() => {
-  // 每次进入页面作废缓存拉最新；之后页内翻页 / 排序 / 筛选走缓存
-  serverListCache = null
+  // 每次进入页面重新查询，保证数据新鲜
   handleQuery()
 })
 </script>
@@ -180,36 +132,10 @@ onActivated(() => {
           <el-icon><Plus /></el-icon>
           添加服务器
         </el-button>
-        <!-- 视图切换 -->
-        <el-radio-group v-model="viewMode" class="view-mode-switch">
-          <el-radio-button value="card">
-            <el-icon><Grid /></el-icon>
-          </el-radio-button>
-          <el-radio-button value="list">
-            <el-icon><List /></el-icon>
-          </el-radio-button>
-        </el-radio-group>
       </template>
     </filter-bar>
 
     <table-pagination ref="tablePaginationRef" :query-method="queryMethod" highlight-current-row show-overflow-tooltip>
-      <!-- 卡片视图插槽：当且仅当 viewMode === 'card' 时渲染此插槽 -->
-      <template v-if="viewMode === 'card'" #content="{ data }">
-        <empty-state v-if="data.length === 0" description="暂无服务器，点击右上角「添加服务器」新增" />
-        <div v-else class="app-card-grid">
-          <server-card
-            v-for="server in data"
-            :key="server.id"
-            :server="server"
-            @view="handleView"
-            @edit="handleEdit"
-            @delete="handleDelete"
-            @test-connection="handleTestConnection"
-          />
-        </div>
-      </template>
-
-      <!-- 列表视图列：当且仅当 viewMode === 'list' 时作为默认插槽渲染到表格中 -->
       <el-table-column prop="name" label="服务器名称" min-width="150px" />
       <el-table-column prop="host" label="主机地址" min-width="120px" />
       <el-table-column prop="port" label="端口" min-width="64px" />
@@ -247,9 +173,5 @@ onActivated(() => {
   display: flex;
   flex-direction: column;
   gap: var(--layout-common-gap);
-
-  .view-mode-switch {
-    margin-left: auto;
-  }
 }
 </style>

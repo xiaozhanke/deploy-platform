@@ -1,6 +1,6 @@
 import type { ExecResult, NginxConfigParams } from '@/types/environment'
 import request from './request'
-import type { ServerRecord, ServerParams } from '@/types/server'
+import type { ServerRecord, ServerParams, ServerQueryParams } from '@/types/server'
 import type { PageParams, PageResult } from '@/types/api'
 import type { FileParams, FileRecord } from '@/types/file'
 import type { PasswordForm, UserProfile } from '@/types/auth'
@@ -26,7 +26,19 @@ export const testPing = (): Promise<string> => {
  * 获取服务器列表
  */
 export const serverQueryList = (): Promise<Array<ServerRecord>> => {
-  return request.get('/servers')
+  return request.get('/servers/list')
+}
+
+/**
+ * 分页查询服务器列表
+ * @param queryParams 查询参数
+ * @param pageParams 分页参数
+ */
+export const serverQueryPage = (
+  queryParams: ServerQueryParams,
+  pageParams?: PageParams,
+): Promise<PageResult<ServerRecord>> => {
+  return request.get('/servers/page', { params: { ...queryParams, ...pageParams } })
 }
 
 /**

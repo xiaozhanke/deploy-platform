@@ -3,11 +3,16 @@ package com.xiaozhanke.deploy.controller;
 import com.xiaozhanke.deploy.aspect.Auditable;
 import com.xiaozhanke.deploy.enums.AuditOperationTypeEnum;
 import com.xiaozhanke.deploy.model.request.ServerParams;
+import com.xiaozhanke.deploy.model.request.ServerQueryParams;
+import com.xiaozhanke.deploy.model.response.PageResult;
 import com.xiaozhanke.deploy.model.vo.ServerRecordVo;
 import com.xiaozhanke.deploy.service.ServerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -103,9 +108,26 @@ public class ServerController {
      * @return 服务器列表
      */
     @Operation(summary = "查询服务器列表", description = "查询服务器所有列表")
-    @GetMapping
+    @GetMapping("/list")
     public List<ServerRecordVo> queryList() {
         return serverService.queryList();
+    }
+
+    /**
+     * 分页查询服务器列表
+     *
+     * @param params   查询参数
+     * @param pageable 分页参数
+     * @return 分页结果
+     */
+    @Operation(summary = "分页查询服务器列表", description = "分页查询服务器列表")
+    @GetMapping("/page")
+    public PageResult<ServerRecordVo> queryPage(ServerQueryParams params,
+                                                @Parameter(description = "分页参数", example = "{\"page\": 0, \"size\": " +
+                                                        "20, \"sort\": \"updateTime,desc\"}")
+                                                @PageableDefault(size = 20, sort = "updateTime", direction =
+                                                        Sort.Direction.DESC) Pageable pageable) {
+        return serverService.queryPage(params, pageable);
     }
 
     /**
