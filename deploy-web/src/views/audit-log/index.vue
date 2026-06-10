@@ -3,7 +3,7 @@ import { auditLogQueryPage } from '@/api/api'
 import TablePagination from '@/components/table-pagination/index.vue'
 import { AuditOperationTypeEnum, AuditOutcomeEnum, auditOutcomeTagType } from '@/enums/platform'
 import type { PageParams } from '@/types/api'
-import type { AuditLog, AuditLogQueryParams } from '@/types/deployment'
+import type { AuditLogQueryParams } from '@/types/deployment'
 
 defineOptions({
   name: 'AuditLogIndex',
@@ -43,7 +43,7 @@ onActivated(() => {
   <section class="audit-log-index-section common-page-container">
     <filter-bar :model="filters" @query="handleQuery" @reset="handleReset">
       <filter-field label="操作人" prop="operator">
-        <el-input v-model="filters.operator" placeholder="请输入操作人" clearable />
+        <el-input v-model="filters.operator" placeholder="操作人" clearable />
       </filter-field>
       <filter-field label="操作类型" prop="operationType">
         <el-select v-model="filters.operationType" placeholder="全部" clearable>

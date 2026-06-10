@@ -14,7 +14,6 @@ import TablePagination from '@/components/table-pagination/index.vue'
 import type { Sort, TabPaneName } from 'element-plus'
 import { RefreshRight, Search } from '@element-plus/icons-vue'
 import FrontEndRun from './FrontEndRun.vue'
-// 注：行内「部署」操作为纯文字链（不配图标），故无需引入动作图标
 import BackEndRun from './BackEndRun.vue'
 
 const sessionId = ref<string>('')
@@ -96,7 +95,6 @@ onMounted(() => {
     <div class="content-container">
       <div class="content-wrapper">
         <div class="deployment-header">
-          <!-- 前后端切换：页内内容切换，保留在页头下方 -->
           <el-tabs v-model="activeTabName" class="deployment-tabs" @tab-change="handleTabChange">
             <el-tab-pane name="APPLICATION_BACKEND">
               <template #label>
@@ -116,17 +114,15 @@ onMounted(() => {
             </el-tab-pane>
           </el-tabs>
 
-          <!-- 筛选行：搜索框 + 中性刷新；紧凑同行布局 -->
           <div class="deployment-filter">
             <el-input
               v-model="form.fileName"
               :prefix-icon="Search"
-              placeholder="搜索包文件名"
+              placeholder="搜索部署包文件名..."
               clearable
               @change="handleQuery"
               @clear="handleQuery"
             />
-            <!-- 刷新为中性次操作（plain，非实色），loading 时图标旋转 -->
             <el-tooltip content="刷新" placement="top">
               <el-button plain :icon="RefreshRight" :loading="fileLoading" @click="handleQuery" />
             </el-tooltip>
@@ -184,7 +180,6 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <!-- 选择主机面板：HostSidebar 放进右侧文档流、吸顶常驻 -->
     <aside class="host-panel">
       <host-sidebar />
     </aside>
@@ -226,14 +221,13 @@ onMounted(() => {
           :deep(.el-tabs__header) {
             margin-bottom: 0 !important;
           }
-          // 保留自带的伪元素分割线，不进行隐藏
         }
 
         .deployment-filter {
           position: absolute;
           right: 0;
           top: 0;
-          height: 40px; // 与 el-tabs__header 默认高度一致，实现完美的垂直居中
+          height: 40px;
           display: flex;
           align-items: center;
           gap: var(--app-space-3);
@@ -269,10 +263,8 @@ onMounted(() => {
     }
   }
 
-  // HostSidebar 现默认即「文档流内吸顶卡片」（card 样式在组件内），本页只负责把它放右侧、定宽并吸顶
   .host-panel {
     flex: 0 0 var(--layout-right-sidebar-width);
-    // 跟随文件列表滚动时面板常驻可见，吸顶定位在页头内边距之下
     align-self: flex-start;
     position: sticky;
     top: var(--layout-common-padding);

@@ -47,7 +47,7 @@ const handleQuery = () => {
   }
 }
 
-// 重置：FilterBar 已 resetFields 复位字段，这里重新查询
+// 重置查询
 const handleReset = () => {
   handleQuery()
 }
@@ -95,7 +95,6 @@ onMounted(async () => {
 </script>
 
 <template>
-  <!-- 挂到 body 渲染：避免被外层 sticky 卡片创建的层叠上下文困住，导致全屏遮罩盖不住背景 -->
   <el-dialog
     title="选择文件"
     width="1000px"
@@ -107,17 +106,11 @@ onMounted(async () => {
   >
     <section class="file-select-section">
       <filter-bar :model="form" @query="handleQuery" @reset="handleReset">
-        <!-- 主操作：选择按钮，弹窗唯一实色 primary -->
-        <template #actions>
-          <el-button type="primary" :icon="Select" @click="handleSelect">选择</el-button>
-        </template>
-
-        <!-- 高频筛选字段：文件名 + 使用范围 -->
         <filter-field label="文件名" prop="fileName">
           <el-input v-model="form.fileName" placeholder="文件名" clearable />
         </filter-field>
         <filter-field label="使用范围" prop="scope">
-          <el-select v-model="form.scope" placeholder="使用范围" clearable>
+          <el-select v-model="form.scope" placeholder="全部" clearable>
             <el-option
               v-for="item in FileScopeEnum.options"
               :key="item.value"
@@ -127,7 +120,6 @@ onMounted(async () => {
           </el-select>
         </filter-field>
 
-        <!-- 低频字段：点「更多筛选」在主字段下方同栅格展开 -->
         <template #advanced>
           <filter-field label="分组 Id" prop="groupId">
             <el-input v-model="form.groupId" placeholder="分组 Id" clearable />
@@ -139,7 +131,7 @@ onMounted(async () => {
             <el-input v-model="form.version" placeholder="版本" clearable />
           </filter-field>
           <filter-field label="芯片架构" prop="architecture">
-            <el-select v-model="form.architecture" placeholder="芯片架构" clearable>
+            <el-select v-model="form.architecture" placeholder="全部" clearable>
               <el-option
                 v-for="item in ArchitectureEnum.options"
                 :key="item.value"
@@ -148,9 +140,13 @@ onMounted(async () => {
               />
             </el-select>
           </filter-field>
-          <filter-field label="文件描述" prop="description">
+          <filter-field label="文件描述" prop="description" :lg="12" :xl="8">
             <el-input v-model="form.description" placeholder="文件描述" clearable />
           </filter-field>
+        </template>
+
+        <template #actions>
+          <el-button type="primary" :icon="Select" @click="handleSelect">选择</el-button>
         </template>
       </filter-bar>
 

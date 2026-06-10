@@ -151,7 +151,7 @@ onActivated(() => {
         <el-input v-model="form.fileName" placeholder="文件名" clearable />
       </filter-field>
       <filter-field label="使用范围" prop="scope">
-        <el-select v-model="form.scope" placeholder="使用范围" clearable>
+        <el-select v-model="form.scope" placeholder="全部" clearable>
           <el-option v-for="item in FileScopeEnum.options" :key="item.value" :value="item.value" :label="item.label" />
         </el-select>
       </filter-field>
@@ -166,7 +166,7 @@ onActivated(() => {
           <el-input v-model="form.version" placeholder="版本" clearable />
         </filter-field>
         <filter-field label="芯片架构" prop="architecture">
-          <el-select v-model="form.architecture" placeholder="芯片架构" clearable>
+          <el-select v-model="form.architecture" placeholder="全部" clearable>
             <el-option
               v-for="item in ArchitectureEnum.options"
               :key="item.value"
@@ -175,7 +175,7 @@ onActivated(() => {
             />
           </el-select>
         </filter-field>
-        <filter-field label="文件描述" prop="description">
+        <filter-field label="文件描述" prop="description" :lg="12" :xl="8">
           <el-input v-model="form.description" placeholder="文件描述" clearable />
         </filter-field>
       </template>

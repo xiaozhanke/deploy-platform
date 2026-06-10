@@ -120,10 +120,10 @@ onActivated(() => {
     <!-- 筛选工具栏：栅格化字段 + 行内动作区 -->
     <filter-bar :model="form" @query="handleQuery" @reset="handleReset">
       <filter-field label="主机名称" prop="name">
-        <el-input v-model="form.name" placeholder="请输入主机名称" clearable />
+        <el-input v-model="form.name" placeholder="主机名称" clearable />
       </filter-field>
       <filter-field label="主机地址" prop="address">
-        <el-input v-model="form.address" placeholder="请输入主机地址" clearable />
+        <el-input v-model="form.address" placeholder="主机地址" clearable />
       </filter-field>
 
       <template #actions>
