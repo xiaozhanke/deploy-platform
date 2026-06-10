@@ -85,8 +85,8 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       // 下列前缀统一反代后端：API、OIDC discovery/授权/登出/userinfo、AS 自托管登录页与表单
-      // （/login 仅命中根路径，不命中 SPA 的 /ui/login/*，base 在 /ui）、CSRF 引导（/csrf，单独控制器、
-      // 脱离 /login 前缀）、Swagger UI 与 OpenAPI JSON。
+      // （/login 仅命中根路径，不命中 SPA 的 /ui/login/*，base 在 /ui）、登录页 favicon、CSRF 引导
+      // （/csrf，单独控制器、脱离 /login 前缀）、Swagger UI 与 OpenAPI JSON。
       proxy: {
         [env.VITE_API_ROOT]: apiProxy(),
         '/.well-known': apiProxy(),
@@ -94,6 +94,11 @@ export default defineConfig(({ mode }) => {
         '/connect': apiProxy(),
         '/userinfo': apiProxy(),
         '/login': apiProxy(),
+        // AS 自托管登录页用根路径 /favicon.svg 引图标；前端 base 在 /ui、vite public 落在 /ui/ 下不命中
+        // 此根路径，故一并反代到后端由其 static 提供（/favicon.ico 兜底浏览器默认请求）。SPA 自身用
+        // /ui/favicon.svg，不命中这两条精确前缀、仍由 vite public 提供，互不影响
+        '/favicon.svg': apiProxy(),
+        '/favicon.ico': apiProxy(),
         '/csrf': apiProxy(),
         '/swagger-ui': apiProxy(),
         '/v3/api-docs': apiProxy(),

@@ -146,9 +146,11 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/.well-known/**", "/login", "/login/**", "/csrf")
+                .securityMatcher("/.well-known/**", "/login", "/login/**", "/csrf", "/favicon.svg", "/favicon.ico")
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/.well-known/**", "/login", "/login/**", "/csrf").permitAll()
+                        .requestMatchers(
+                                "/.well-known/**", "/login", "/login/**", "/csrf", "/favicon.svg", "/favicon.ico"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 // 表单登录
