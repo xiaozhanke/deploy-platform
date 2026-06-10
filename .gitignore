@@ -23,3 +23,11 @@
 /deploy-server/secrets/
 # 运行时通过接口上传的文件存储目录
 /deploy-server/files/
+
+### Claude Code ###
+# 每位开发者各自的本地权限 / 设置覆盖，不入库
+.claude/settings.local.json
+
+### 其他本地工具缓存 ###
+.agent/
+__pycache__/
