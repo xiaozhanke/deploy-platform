@@ -41,7 +41,7 @@ onActivated(() => {
 
 <template>
   <section class="audit-log-index-section common-page-container">
-    <filter-bar :model="filters" layout="compact" @query="handleQuery" @reset="handleReset">
+    <filter-bar :model="filters" @query="handleQuery" @reset="handleReset">
       <filter-field label="操作人" prop="operator">
         <el-input v-model="filters.operator" placeholder="请输入操作人" clearable />
       </filter-field>

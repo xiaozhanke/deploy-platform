@@ -146,8 +146,7 @@ onActivated(() => {
 
 <template>
   <section class="file-index-section common-page-container">
-    <filter-bar layout="compact" :model="form" @query="handleQuery" @reset="handleReset">
-      <!-- 高频筛选字段：文件名 + 使用范围 -->
+    <filter-bar :model="form" @query="handleQuery" @reset="handleReset">
       <filter-field label="文件名" prop="fileName">
         <el-input v-model="form.fileName" placeholder="文件名" clearable />
       </filter-field>
@@ -156,11 +155,6 @@ onActivated(() => {
           <el-option v-for="item in FileScopeEnum.options" :key="item.value" :value="item.value" :label="item.label" />
         </el-select>
       </filter-field>
-      <!-- 主操作：唯一实色按钮，收入操作区最左侧 -->
-      <template #actions>
-        <el-button type="primary" :icon="Upload" @click="handleUpload">上传文件</el-button>
-      </template>
-      <!-- 低频字段：收纳于气泡/抽屉（桌面 popover / 移动 drawer） -->
       <template #advanced>
         <filter-field label="分组 Id" prop="groupId">
           <el-input v-model="form.groupId" placeholder="分组 Id" clearable />
@@ -185,6 +179,9 @@ onActivated(() => {
           <el-input v-model="form.description" placeholder="文件描述" clearable />
         </filter-field>
       </template>
+      <template #actions>
+        <el-button type="primary" :icon="Upload" @click="handleUpload">上传文件</el-button>
+      </template>
     </filter-bar>
 
     <table-pagination
@@ -195,7 +192,6 @@ onActivated(() => {
       :query-method="queryMethod"
       @selection-change="handleSelectionChange"
     >
-      <!-- 依赖选中的动作：勾选才浮现在选中条；下载 / 更新仍要求恰好选中 1 项 -->
       <template #selection-actions>
         <el-button :icon="Download" :disabled="fileSelection.length !== 1" @click="handleDownload">下载文件</el-button>
         <el-button :icon="Switch" :disabled="fileSelection.length !== 1" @click="handleUpdate">更新文件</el-button>

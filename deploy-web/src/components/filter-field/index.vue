@@ -1,17 +1,14 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue'
-import { filterBarLayoutKey } from '@/components/filter-bar/context'
-
 defineOptions({
   name: 'FilterField',
 })
 
 /**
- * 筛选行单字段：封装 el-form-item（label / prop），按父 FilterBar 下发的 layout
- * 决定是否套 el-col。栅格 span 默认值只在此定义一次（xs 1 → sm 2 → md 3 → lg 4 → xl 6 列，
- * 即默认 :sm=12 :md=8 :lg=6 :xl=4，xs 未设走 el-col 默认 span=24 占满）；
- * 宽字段（如 file「文件描述」）传对应断点 span 覆盖。
- * 一律用 label，废弃 placeholder 充当标签；placeholder 退回纯占位提示。
+ * 筛选行单字段：封装 el-form-item（label / prop）并套 el-col 做响应式栅格，
+ * 始终随父 FilterBar 的 el-row 栅格化排列。默认每行列数 xs 1 → sm 2 → md 3 → lg 4 → xl 6
+ * （即 :sm=12 :md=8 :lg=6 :xl=4，xs 未设走 el-col 默认 span=24 占满成 1 列）；
+ * 需更宽 / 更窄的字段可单独传 sm/md/lg/xl 覆盖默认 span（目前各视图均用默认值、未覆盖）。
+ * 一律用 label，不以 placeholder 充当标签；placeholder 退回纯占位提示。
  */
 
 withDefaults(
@@ -20,7 +17,7 @@ withDefaults(
     label: string
     /** 表单字段名，对应 FilterBar :model 的键，重置时据此复位 */
     prop?: string
-    /** 栅格各断点 span（仅 layout=grid 生效） */
+    /** 栅格各断点 span */
     sm?: number
     md?: number
     lg?: number
@@ -34,24 +31,12 @@ withDefaults(
     xl: 4,
   },
 )
-
-// 默认 inline：FilterBar 未提供（或 FilterField 单独使用）时退回内联，不抛缺 provide 的错
-const layout = inject(
-  filterBarLayoutKey,
-  computed(() => 'inline' as const),
-)
-const isGrid = computed(() => layout.value === 'grid')
 </script>
 
 <template>
-  <!-- 栅格：套 el-col 承 span；xs 未设 → el-col 默认 span=24 占满成 1 列 -->
-  <el-col v-if="isGrid" :sm="sm" :md="md" :lg="lg" :xl="xl">
+  <el-col :sm="sm" :md="md" :lg="lg" :xl="xl">
     <el-form-item :label="label" :prop="prop">
       <slot />
     </el-form-item>
   </el-col>
-  <!-- 内联：直接 el-form-item，随父级 flex-wrap 左聚 -->
-  <el-form-item v-else :label="label" :prop="prop">
-    <slot />
-  </el-form-item>
 </template>

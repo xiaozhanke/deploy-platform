@@ -320,7 +320,7 @@ onUnmounted(() => {
 
 <template>
   <section class="application-index-section common-page-container">
-    <filter-bar layout="compact" :model="form" @query="handleQuery" @reset="handleReset">
+    <filter-bar :model="form" @query="handleQuery" @reset="handleReset">
       <filter-field label="服务器">
         <el-input
           v-model="selectedServerName"

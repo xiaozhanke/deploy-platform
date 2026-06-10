@@ -158,8 +158,6 @@ defineExpose({
   queryPage,
   tableRef,
   clearSelection,
-  tableData,
-  isLoading,
 })
 </script>
 

@@ -106,7 +106,7 @@ onMounted(async () => {
     @close="handleClose"
   >
     <section class="file-select-section">
-      <filter-bar layout="compact" :model="form" @query="handleQuery" @reset="handleReset">
+      <filter-bar :model="form" @query="handleQuery" @reset="handleReset">
         <!-- 主操作：选择按钮，弹窗唯一实色 primary -->
         <template #actions>
           <el-button type="primary" :icon="Select" @click="handleSelect">选择</el-button>
@@ -127,7 +127,7 @@ onMounted(async () => {
           </el-select>
         </filter-field>
 
-        <!-- 低频字段：收纳于气泡/抽屉 -->
+        <!-- 低频字段：点「更多筛选」在主字段下方同栅格展开 -->
         <template #advanced>
           <filter-field label="分组 Id" prop="groupId">
             <el-input v-model="form.groupId" placeholder="分组 Id" clearable />
