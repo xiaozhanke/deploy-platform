@@ -28,15 +28,20 @@ const form = reactive({
   host: '',
 })
 
-// 分页及条件查询方法（前端过滤及分页）
-const queryMethod = async (queryParams: Record<string, unknown>, pageParams: PageParams) => {
-  const list = await serverQueryList()
-  const qName = (queryParams.name as string || '').trim().toLowerCase()
-  const qHost = (queryParams.host as string || '').trim().toLowerCase()
+// 全量列表缓存：服务器 CRUD 都在本页，故只拉一次缓存，翻页 / 排序 / 筛选纯前端处理、不再打接口；
+// 仅进入页面（onActivated）与增删改后（reloadData）作废缓存重新拉取，保证数据新鲜。
+let serverListCache: ServerRecord[] | null = null
 
-  const filtered = list.filter(item => {
-    const matchName = !qName || item.name.toLowerCase().includes(qName)
-    const matchHost = !qHost || item.host.toLowerCase().includes(qHost)
+// 分页及条件查询方法（前端过滤、排序、分页，数据取自缓存）
+const queryMethod = async (queryParams: Record<string, unknown>, pageParams: PageParams) => {
+  // 首次（或缓存失效后）拉一次全量并缓存，之后翻页 / 排序 / 筛选复用缓存
+  const list = serverListCache ?? (serverListCache = await serverQueryList())
+  const qName = ((queryParams.name as string) || '').trim().toLowerCase()
+  const qHost = ((queryParams.host as string) || '').trim().toLowerCase()
+
+  const filtered = list.filter((item) => {
+    const matchName = !qName || (item.name ?? '').toLowerCase().includes(qName)
+    const matchHost = !qHost || (item.host ?? '').toLowerCase().includes(qHost)
     return matchName && matchHost
   })
 
@@ -74,8 +79,9 @@ const handleReset = () => {
   handleQuery()
 }
 
-// 刷新当前页
+// 增删改后：作废缓存，从后端重新拉取并刷新当前页
 const reloadData = () => {
+  serverListCache = null
   tablePaginationRef.value?.queryPage()
 }
 
@@ -151,14 +157,16 @@ const handleSubmit = async (server: ServerParams) => {
 }
 
 onActivated(() => {
+  // 每次进入页面作废缓存拉最新；之后页内翻页 / 排序 / 筛选走缓存
+  serverListCache = null
   handleQuery()
 })
 </script>
 
 <template>
   <section class="server-index-section common-page-container">
-    <!-- 筛选工具栏：layout="compact" 合并高频字段和动作 -->
-    <filter-bar layout="compact" :model="form" @query="handleQuery" @reset="handleReset">
+    <!-- 筛选工具栏：栅格化字段 + 行内动作区 -->
+    <filter-bar :model="form" @query="handleQuery" @reset="handleReset">
       <filter-field label="服务器名称" prop="name">
         <el-input v-model="form.name" placeholder="请输入服务器名称" clearable />
       </filter-field>
@@ -184,12 +192,7 @@ onActivated(() => {
       </template>
     </filter-bar>
 
-    <table-pagination
-      ref="tablePaginationRef"
-      :query-method="queryMethod"
-      highlight-current-row
-      show-overflow-tooltip
-    >
+    <table-pagination ref="tablePaginationRef" :query-method="queryMethod" highlight-current-row show-overflow-tooltip>
       <!-- 卡片视图插槽：当且仅当 viewMode === 'card' 时渲染此插槽 -->
       <template v-if="viewMode === 'card'" #content="{ data }">
         <empty-state v-if="data.length === 0" description="暂无服务器，点击右上角「添加服务器」新增" />
