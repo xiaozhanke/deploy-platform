@@ -8,9 +8,10 @@ import type {
   UploadRequestOptions,
   UploadUserFile,
 } from 'element-plus'
-import type { FileParams, FileRecord } from '@/types/file'
-import { ArchitectureEnum, FileScopeEnum } from '@/enums/platform'
+
 import { fileUpload } from '@/api/api'
+import { ArchitectureEnum, FileScopeEnum } from '@/enums/platform'
+import type { FileParams, FileRecord } from '@/types/file'
 
 const props = defineProps<{
   currentPath: string

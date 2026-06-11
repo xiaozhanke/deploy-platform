@@ -1,19 +1,21 @@
 <script setup lang="ts">
 import {
-  Plus,
-  EditPen,
-  Refresh,
-  Odometer,
-  Loading,
-  SwitchButton,
-  MagicStick,
   DocumentCopy,
+  EditPen,
+  Loading,
+  MagicStick,
+  Odometer,
+  Plus,
+  Refresh,
+  SwitchButton,
 } from '@element-plus/icons-vue'
+
 import { sshExecCommand, sshWriteFile } from '@/api/api'
 import CodeEditor from '@/components/code-editor/index.vue'
 import type { File, NginxConfigParams } from '@/types/environment'
 import type { NginxLayout } from '@/utils/nginxLayout'
 import { detectNginxLayout, emptyNginxLayout, nginxCommand } from '@/utils/nginxLayout'
+
 import NginxConfigAdd from './NginxConfigAdd.vue'
 import NginxConfigEdit from './NginxConfigEdit.vue'
 

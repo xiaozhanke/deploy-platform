@@ -1,6 +1,26 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+
 import { useBreakpoint } from '@/composables/useBreakpoint'
+
+const props = withDefaults(
+  defineProps<{
+    /** 抽屉标题；缺省则不渲染标题文本（关闭按钮仍在） */
+    title?: string
+    /**
+     * 宽度档：sm≈420 / md≈720 / lg≈960，默认 md；
+     * 也可传裸数值或自定义字符串（如 '50%'），直接透传 el-drawer 的 size。
+     */
+    width?: 'sm' | 'md' | 'lg' | (string & {}) | number
+    /** 点击遮罩是否关闭，默认 false（避免误触丢失半填表单） */
+    closeOnClickModal?: boolean
+  }>(),
+  {
+    title: undefined,
+    width: 'md',
+    closeOnClickModal: false,
+  },
+)
 
 defineOptions({
   name: 'AppDrawer',
@@ -21,25 +41,6 @@ const WIDTH_PRESETS = {
 
 // 可见性由父级 v-model 显式接管（底层 el-drawer 非单根，必须显式绑定才会开合）
 const visible = defineModel<boolean>()
-
-const props = withDefaults(
-  defineProps<{
-    /** 抽屉标题；缺省则不渲染标题文本（关闭按钮仍在） */
-    title?: string
-    /**
-     * 宽度档：sm≈420 / md≈720 / lg≈960，默认 md；
-     * 也可传裸数值或自定义字符串（如 '50%'），直接透传 el-drawer 的 size。
-     */
-    width?: 'sm' | 'md' | 'lg' | string | number
-    /** 点击遮罩是否关闭，默认 false（避免误触丢失半填表单） */
-    closeOnClickModal?: boolean
-  }>(),
-  {
-    title: undefined,
-    width: 'md',
-    closeOnClickModal: false,
-  },
-)
 
 const { isMobile } = useBreakpoint()
 
@@ -63,7 +64,7 @@ const drawerSize = computed(() => {
     direction="rtl"
     :size="drawerSize"
     :title="title"
-    :append-to-body="true"
+    append-to-body
     :close-on-click-modal="closeOnClickModal"
   >
     <!-- 主体：撑满可用高度，供未来终端 / 表格类抽屉填满 -->

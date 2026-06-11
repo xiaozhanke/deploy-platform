@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import { useAuthStore } from '@/stores/auth'
-import { useWebSocketStore } from '@/stores/websocket'
-import { useRoute, useRouter } from 'vue-router'
 import {
   Box,
   DArrowLeft,
@@ -23,9 +20,14 @@ import {
   WarnTriangleFilled,
 } from '@element-plus/icons-vue'
 import type { Component } from 'vue'
-import { useTheme } from '@/composables/useTheme'
-import { useBreakpoint } from '@/composables/useBreakpoint'
+import { useRoute, useRouter } from 'vue-router'
+
 import StatusDot from '@/components/status-dot/index.vue'
+import { useBreakpoint } from '@/composables/useBreakpoint'
+import { useTheme } from '@/composables/useTheme'
+import { useAuthStore } from '@/stores/auth'
+import { useWebSocketStore } from '@/stores/websocket'
+
 import SidebarMenu from './SidebarMenu.vue'
 
 defineOptions({
@@ -239,8 +241,8 @@ const handleUserCommand = async (command: string | number | object) => {
       </el-scrollbar>
       <div class="toggle-collapse-button" :class="{ 'is-collapsed-btn': isMenuCollapsed }" @click="toggleCollapse">
         <el-icon>
-          <DArrowLeft v-show="!isCollapse" />
-          <DArrowRight v-show="isCollapse" />
+          <d-arrow-left v-show="!isCollapse" />
+          <d-arrow-right v-show="isCollapse" />
         </el-icon>
         <span class="collapse-text">{{ isCollapse ? '展开侧边栏' : '收起侧边栏' }}</span>
       </div>
@@ -273,7 +275,7 @@ const handleUserCommand = async (command: string | number | object) => {
           <!-- 离线横幅 -->
           <transition name="ws-banner">
             <div v-if="websocketStore.status === 'offline'" class="ws-offline-banner" role="status">
-              <el-icon class="ws-offline-banner__icon"><WarnTriangleFilled /></el-icon>
+              <el-icon class="ws-offline-banner__icon"><warn-triangle-filled /></el-icon>
               <span class="ws-offline-banner__text">实时连接已断开，数据可能不是最新</span>
               <el-button link type="primary" :icon="RefreshRight" @click="handleReconnect">重连</el-button>
             </div>
@@ -318,9 +320,9 @@ const handleUserCommand = async (command: string | number | object) => {
       </el-header>
       <el-main class="layout-main">
         <div class="main-wrapper">
-          <router-view v-slot="{ Component }">
+          <router-view v-slot="{ Component: RouteComponent }">
             <keep-alive :include="cachedViews">
-              <component :is="Component" :key="route.fullPath" class="main-container" />
+              <component :is="RouteComponent" :key="route.fullPath" class="main-container" />
             </keep-alive>
           </router-view>
         </div>

@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { useWebSocketStore } from '@/stores/websocket'
 import type { SetupStep } from '@/types/environment'
 import type { HostRecord } from '@/types/host'
-import StepContent from './StepContent.vue'
-import { useWebSocketStore } from '@/stores/websocket'
 import { generateRandomId } from '@/utils/common'
+
+import StepContent from './StepContent.vue'
 
 const props = defineProps<{
   initSteps: SetupStep[]
@@ -60,7 +61,7 @@ const handleSendShellCommand = async (commands: string[]) => {
         } catch (error) {
           // 连接已断时 send 抛错：退订并让步骤以错误结束，而非永久挂起
           subscription.unsubscribe()
-          reject(error)
+          reject(error instanceof Error ? error : new Error(String(error)))
         }
       }, 1000)
     })

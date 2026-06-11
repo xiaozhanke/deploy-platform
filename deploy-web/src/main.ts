@@ -4,15 +4,14 @@ import '@/styles/index.scss'
 import '@/styles/table.scss'
 import 'element-plus/theme-chalk/dark/css-vars.css'
 
-import { createApp } from 'vue'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { createPinia } from 'pinia'
+import { createApp } from 'vue'
 
 import App from './App.vue'
 import router from './router'
-import { registerGlobalFormat } from './utils'
-
-import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { useAuthStore } from './stores/auth'
+import { registerGlobalFormat } from './utils'
 
 const app = createApp(App)
 const pinia = createPinia()

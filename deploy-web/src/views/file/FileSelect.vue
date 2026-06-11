@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { fileQueryPage } from '@/api/api'
-import { ArchitectureEnum, FileScopeEnum } from '@/enums/platform'
-import type { FileParams, FileRecord } from '@/types/file'
+import { Document, Folder, Select } from '@element-plus/icons-vue'
 import type { Sort } from 'element-plus'
-import FileDetail from './FileDetail.vue'
-import { Select } from '@element-plus/icons-vue'
+
+import { fileQueryPage } from '@/api/api'
 import TablePagination from '@/components/table-pagination/index.vue'
+import { ArchitectureEnum, FileScopeEnum } from '@/enums/platform'
 import type { PageParams } from '@/types/api'
+import type { FileParams, FileRecord } from '@/types/file'
+
+import FileDetail from './FileDetail.vue'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
@@ -100,7 +102,7 @@ onMounted(async () => {
     width="1000px"
     top="5vh"
     draggable
-    :append-to-body="true"
+    append-to-body
     :close-on-click-modal="false"
     @close="handleClose"
   >
@@ -164,8 +166,8 @@ onMounted(async () => {
         <el-table-column prop="fileName" label="文件名" min-width="220px" sortable>
           <template #default="{ row }">
             <div class="file-name">
-              <el-icon v-if="row.directory"><Folder /></el-icon>
-              <el-icon v-else><Document /></el-icon>
+              <el-icon v-if="row.directory"><folder /></el-icon>
+              <el-icon v-else><document /></el-icon>
               <span class="file-name-label">{{ row.fileName }}</span>
               <el-tag v-if="row.architecture" class="file-name-tag">{{ row.architecture }}</el-tag>
             </div>

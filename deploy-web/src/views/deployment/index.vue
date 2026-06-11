@@ -3,18 +3,20 @@ defineOptions({
   name: 'DeploymentIndex',
 })
 
+import { Document, RefreshRight, Search } from '@element-plus/icons-vue'
+import type { Sort, TabPaneName } from 'element-plus'
+
 import { fileQueryPage } from '@/api/api'
+import TablePagination from '@/components/table-pagination/index.vue'
+import { FileScopeEnum } from '@/enums/platform'
 import type { PageParams } from '@/types/api'
 import type { ExecResult } from '@/types/environment'
 import type { FileParams, FileRecord } from '@/types/file'
-import { FileScopeEnum } from '@/enums/platform'
 import type { HostRecord } from '@/types/host'
 import HostSidebar from '@/views/host/components/HostSidebar.vue'
-import TablePagination from '@/components/table-pagination/index.vue'
-import type { Sort, TabPaneName } from 'element-plus'
-import { RefreshRight, Search } from '@element-plus/icons-vue'
-import FrontEndRun from './FrontEndRun.vue'
+
 import BackEndRun from './BackEndRun.vue'
+import FrontEndRun from './FrontEndRun.vue'
 
 const sessionId = ref<string>('')
 const currentHost = ref<HostRecord>({} as HostRecord)
@@ -30,7 +32,7 @@ provide('currentHost', currentHost)
 provide('environmentStatus', environmentStatus)
 
 const activeTabName = ref<TabPaneName>('APPLICATION_BACKEND')
-const handleTabChange = async (name: TabPaneName) => {
+const handleTabChange = (name: TabPaneName) => {
   form.scope = name as 'APPLICATION_BACKEND' | 'APPLICATION_FRONTEND'
   handleQuery()
 }
@@ -155,7 +157,7 @@ onMounted(() => {
             <el-table-column prop="fileName" label="部署包文件名" min-width="220px" sortable>
               <template #default="{ row }">
                 <div class="file-name">
-                  <el-icon><Document /></el-icon>
+                  <el-icon><document /></el-icon>
                   <span class="file-name-label">{{ row.fileName }}</span>
                   <el-tag v-if="row.architecture" class="file-name-tag">{{ row.architecture }}</el-tag>
                 </div>

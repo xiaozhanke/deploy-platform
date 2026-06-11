@@ -1,11 +1,4 @@
 <script setup lang="ts">
-defineOptions({
-  name: 'SoftLabel',
-})
-
-/** 状态意图，映射到 el-tag 的 type（浅底 + 色字，双主题自动适配） */
-type StatusIntent = 'primary' | 'success' | 'warning' | 'danger' | 'info'
-
 withDefaults(
   defineProps<{
     /** 颜色意图 */
@@ -18,6 +11,13 @@ withDefaults(
     muted: false,
   },
 )
+
+defineOptions({
+  name: 'SoftLabel',
+})
+
+/** 状态意图，映射到 el-tag 的 type（浅底 + 色字，双主题自动适配） */
+type StatusIntent = 'primary' | 'success' | 'warning' | 'danger' | 'info'
 </script>
 
 <template>

@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { Plus } from '@element-plus/icons-vue'
+import type { FormInstance, FormRules, UploadProps } from 'element-plus'
+
 import { userProfileUpdate } from '@/api/api'
 import { useAuthStore } from '@/stores/auth'
 import type { UserProfile } from '@/types/auth'
-import type { FormInstance, FormRules, UploadProps } from 'element-plus'
 
 const formRef = ref<FormInstance>()
 const form = reactive<UserProfile>({} as UserProfile)
@@ -96,14 +98,14 @@ const handleReset = () => {
     <el-form-item label="用户头像">
       <el-upload
         class="avatar-uploader"
-        :auto-upload="true"
+        auto-upload
         :show-file-list="false"
         :before-upload="beforeAvatarUpload"
         :http-request="handleAvatarUpload"
         accept="image/jpeg,image/png"
       >
         <img v-if="form.avatar" :src="form.avatar" class="avatar" />
-        <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+        <el-icon v-else class="avatar-uploader-icon"><plus /></el-icon>
       </el-upload>
     </el-form-item>
     <el-form-item label="用户名" prop="username">

@@ -1,10 +1,6 @@
 <script setup lang="ts">
-import type { Component } from 'vue'
 import { Box } from '@element-plus/icons-vue'
-
-defineOptions({
-  name: 'EmptyState',
-})
+import type { Component } from 'vue'
 
 withDefaults(
   defineProps<{
@@ -18,6 +14,10 @@ withDefaults(
     description: '暂无数据',
   },
 )
+
+defineOptions({
+  name: 'EmptyState',
+})
 </script>
 
 <template>

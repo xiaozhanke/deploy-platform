@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { Document, Download, Folder, Switch, Upload } from '@element-plus/icons-vue'
-import { fileDelete, fileQueryPage } from '@/api/api'
-import type { FileParams, FileRecord } from '@/types/file'
-import { ArchitectureEnum, FileScopeEnum } from '@/enums/platform'
 import type { Sort } from 'element-plus'
-import FileDetail from './FileDetail.vue'
-import FileUpload from './FileUpload.vue'
-import FileUpdate from './FileUpdate.vue'
-import { downloadFile } from '@/utils/download'
+
+import { fileDelete, fileQueryPage } from '@/api/api'
 import TablePagination from '@/components/table-pagination/index.vue'
+import { ArchitectureEnum, FileScopeEnum } from '@/enums/platform'
 import type { PageParams } from '@/types/api'
+import type { FileParams, FileRecord } from '@/types/file'
+import { downloadFile } from '@/utils/download'
+
+import FileDetail from './FileDetail.vue'
+import FileUpdate from './FileUpdate.vue'
+import FileUpload from './FileUpload.vue'
 
 defineOptions({
   name: 'FileIndex',
@@ -201,8 +203,8 @@ onActivated(() => {
       <el-table-column prop="fileName" label="文件名" min-width="220px" sortable>
         <template #default="{ row }">
           <div class="file-name">
-            <el-icon v-if="row.directory"><Folder /></el-icon>
-            <el-icon v-else><Document /></el-icon>
+            <el-icon v-if="row.directory"><folder /></el-icon>
+            <el-icon v-else><document /></el-icon>
             <span class="file-name-label">{{ row.fileName }}</span>
             <el-tag v-if="row.architecture" class="file-name-tag">{{ row.architecture }}</el-tag>
           </div>

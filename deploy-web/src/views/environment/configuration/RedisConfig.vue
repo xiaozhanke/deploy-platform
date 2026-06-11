@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { Plus, Refresh, Loading, SwitchButton, MagicStick, EditPen, DocumentCopy } from '@element-plus/icons-vue'
+import { DocumentCopy, EditPen, Loading, MagicStick, Plus, Refresh, SwitchButton } from '@element-plus/icons-vue'
+
 import { sshExecCommand } from '@/api/api'
-import type { ExecResult, File, RedisConfigParams } from '@/types/environment'
 import CodeEditor from '@/components/code-editor/index.vue'
+import type { ExecResult, File, RedisConfigParams } from '@/types/environment'
+
 import RedisConfigAdd from './RedisConfigAdd.vue'
 import RedisConfigEdit from './RedisConfigEdit.vue'
 
@@ -356,12 +358,8 @@ const handleDetectLayout = async () => {
   }
   detecting.value = true
   try {
-    const checkPaths = [
-      `${props.homeDir}/environment/redis/conf`,
-      '/etc/redis',
-      '/etc'
-    ]
-    
+    const checkPaths = [`${props.homeDir}/environment/redis/conf`, '/etc/redis', '/etc']
+
     let foundDir = ''
     for (const path of checkPaths) {
       const checkCmd = `[ -d "${path}" ] && echo "exists"`
@@ -414,7 +412,8 @@ const handleEditConfigDir = () => {
 // 复制配置目录路径到剪贴板
 const handleCopyConfigDir = () => {
   if (!configDir.value) return
-  navigator.clipboard.writeText(configDir.value)
+  navigator.clipboard
+    .writeText(configDir.value)
     .then(() => {
       ElMessage.success('已复制配置目录到剪贴板')
     })
@@ -437,6 +436,7 @@ onActivated(async () => {
   await handleRefresh()
 })
 </script>
+
 <template>
   <section class="config-section">
     <div class="config-header">

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { fileUpdateMetadata } from '@/api/api'
-import type { FileRecord, FileParams } from '@/types/file'
-import { ArchitectureEnum, FileScopeEnum } from '@/enums/platform'
 import type { FormInstance, FormRules } from 'element-plus'
+
+import { fileUpdateMetadata } from '@/api/api'
+import { ArchitectureEnum, FileScopeEnum } from '@/enums/platform'
+import type { FileParams, FileRecord } from '@/types/file'
 
 const props = defineProps<{
   file: FileRecord

@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import type { FormInstance, FormRules } from 'element-plus'
+
 import { deploymentRecordUpdate } from '@/api/api'
 import { ApplicationTypeEnum, DeploymentStatusEnum } from '@/enums/platform'
 import type { DeploymentParams, DeploymentRecord } from '@/types/deployment'
-import type { FormRules, FormInstance } from 'element-plus'
 
 const props = defineProps<{
   record: DeploymentRecord

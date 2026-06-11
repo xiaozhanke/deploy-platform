@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import type { RedisConfigParams } from '@/types/environment'
 import type { FormInstance, FormRules } from 'element-plus'
+
+import type { RedisConfigParams } from '@/types/environment'
 
 const props = defineProps<{
   params: RedisConfigParams
@@ -50,6 +51,7 @@ const handleClose = () => {
   visible.value = false
 }
 </script>
+
 <template>
   <app-drawer v-model="visible" title="Redis 配置参数" width="md">
     <el-form ref="formRef" :model="form" :rules="formRules" label-width="140px">

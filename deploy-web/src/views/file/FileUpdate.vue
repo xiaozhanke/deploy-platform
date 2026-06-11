@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import type { UploadFile, UploadFiles, UploadInstance, UploadRequestOptions, UploadUserFile } from 'element-plus'
+
 import { fileUpdateRaw } from '@/api/api'
 import type { FileRecord } from '@/types/file'
-import type { UploadFile, UploadFiles, UploadInstance, UploadRequestOptions, UploadUserFile } from 'element-plus'
 
 const props = defineProps<{
   record: FileRecord

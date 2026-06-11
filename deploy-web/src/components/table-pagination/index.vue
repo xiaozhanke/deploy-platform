@@ -1,13 +1,10 @@
 <script setup lang="ts" generic="T extends object">
-import type { PageParams, PageResult } from '@/types/api'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
-import type { PaginationProps, TableInstance, TableProps, Sort } from 'element-plus'
+import type { PaginationProps, Sort, TableInstance, TableProps } from 'element-plus'
+
 import EmptyState from '@/components/empty-state/index.vue'
 import ErrorState from '@/components/error-state/index.vue'
-
-defineOptions({
-  name: 'TablePagination',
-})
+import type { PageParams, PageResult } from '@/types/api'
 
 const props = defineProps<{
   /**
@@ -28,6 +25,10 @@ const emit = defineEmits<{
   /** 选中行变化：组件内部跟踪后再转发，使视图拿到选中的同时、组件能据此渲染选中条 */
   (e: 'selection-change', selection: T[]): void
 }>()
+
+defineOptions({
+  name: 'TablePagination',
+})
 
 // 组件参数
 const attrs = useAttrs()
@@ -210,7 +211,9 @@ defineExpose({
         <div class="pagination-bar__lead">
           <transition name="selection-fade">
             <div v-if="selectedRows.length > 0" class="selection-tools">
-              <span class="selection-tools__count">已选 <strong>{{ selectedRows.length }}</strong> 项</span>
+              <span class="selection-tools__count"
+                >已选 <strong>{{ selectedRows.length }}</strong> 项</span
+              >
               <el-button class="selection-tools__clear" link type="primary" @click="clearSelection">
                 取消选择
               </el-button>

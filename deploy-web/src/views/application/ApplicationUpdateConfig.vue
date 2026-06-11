@@ -1,17 +1,17 @@
 <script setup lang="ts">
-defineOptions({
-  name: 'ApplicationUpdateConfig',
-})
-import { sshConnect, sshDisconnect, sshExecCommand } from '@/api/api'
-import type { DeploymentRecord } from '@/types/deployment'
-import type { File } from '@/types/environment'
-import CodeEditor from '@/components/code-editor/index.vue'
-import { Document, Plus, RefreshRight } from '@element-plus/icons-vue'
-
 // 定义组件接收的 props
 const props = defineProps<{
   record: DeploymentRecord
 }>()
+defineOptions({
+  name: 'ApplicationUpdateConfig',
+})
+import { Document, Plus, RefreshRight } from '@element-plus/icons-vue'
+
+import { sshConnect, sshDisconnect, sshExecCommand } from '@/api/api'
+import CodeEditor from '@/components/code-editor/index.vue'
+import type { DeploymentRecord } from '@/types/deployment'
+import type { File } from '@/types/environment'
 
 const sessionId = ref('')
 const fileList = ref<File[]>([])
@@ -194,7 +194,7 @@ const handleFileRename = (filePath: string) => {
         <el-table-column prop="name" label="文件名" min-width="160px" sortable>
           <template #default="{ row }">
             <div class="file-name">
-              <el-icon><Document /></el-icon>
+              <el-icon><document /></el-icon>
               <span>{{ row.name }}</span>
             </div>
           </template>

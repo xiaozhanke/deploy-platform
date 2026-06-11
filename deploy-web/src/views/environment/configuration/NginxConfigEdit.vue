@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import type { FormInstance, FormRules } from 'element-plus'
+
 import { configNginxAdd } from '@/api/api'
 import type { NginxConfigParams } from '@/types/environment'
 import { generateRandomNumber } from '@/utils/common'
-import type { FormRules, FormInstance } from 'element-plus'
 
 const props = defineProps<{
   params: NginxConfigParams

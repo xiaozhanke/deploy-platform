@@ -1,13 +1,15 @@
 <script setup lang="ts">
+import { RefreshRight } from '@element-plus/icons-vue'
+import type { FormInstance, FormRules, UploadInstance, UploadUserFile } from 'element-plus'
+
 import { deploymentRecordAdd, deploymentRecordStart, fileQueryList, fileQueryPathById, sshExecCommand } from '@/api/api'
+import CodeEditor from '@/components/code-editor/index.vue'
+import { ApplicationTypeEnum, DeploymentStatusEnum, FileScopeEnum } from '@/enums/platform'
 import { useWebSocketStore } from '@/stores/websocket'
 import type { FileRecord } from '@/types/file'
 import type { HostRecord } from '@/types/host'
 import { generateRandomNumber } from '@/utils/common'
-import type { FormInstance, FormRules, UploadInstance, UploadUserFile } from 'element-plus'
-import CodeEditor from '@/components/code-editor/index.vue'
 import LogView from '@/views/log/components/LogView.vue'
-import { ApplicationTypeEnum, DeploymentStatusEnum, FileScopeEnum } from '@/enums/platform'
 
 const props = defineProps<{
   fileRecord: FileRecord
@@ -64,7 +66,11 @@ const runFormRules = reactive<FormRules>({
     },
   ],
   activeProfiles: [
-    { pattern: /^[a-zA-Z0-9-_,]*$/, message: '激活配置文件只能包含字母、数字、下划线、短横线和逗号', trigger: 'blur' },
+    {
+      pattern: /^[a-zA-Z0-9-_,]*$/,
+      message: '激活配置文件只能包含字母、数字、下划线、短横线和逗号',
+      trigger: 'blur',
+    },
   ],
 })
 
@@ -404,7 +410,7 @@ onMounted(async () => {
           <code>{{ configDir }}</code>
         </span>
         <el-icon :class="['refresh-button', { 'is-loading': fileLoading }]" :size="26" @click="fetchFileList">
-          <RefreshRight />
+          <refresh-right />
         </el-icon>
       </div>
 

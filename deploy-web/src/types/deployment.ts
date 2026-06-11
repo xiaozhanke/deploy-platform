@@ -1,6 +1,7 @@
 import type { ApplicationTypeEnum, DeploymentStatusEnum, JobStatusEnum, JobTypeEnum } from '@/enums/platform'
-import type { HostRecord } from './host'
+
 import type { FileRecord } from './file'
+import type { HostRecord } from './host'
 
 /**
  * 部署记录

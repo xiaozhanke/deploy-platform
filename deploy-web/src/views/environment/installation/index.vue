@@ -3,19 +3,20 @@ defineOptions({
   name: 'EnvironmentInstallation',
 })
 
-import { type HostRecord } from '@/types/host'
-import { useWebSocketStore } from '@/stores/websocket'
 import { fileQueryPath, sshShellAdd } from '@/api/api'
+import JavaIcon from '@/assets/icons/logo-java.svg'
+import NginxIcon from '@/assets/icons/logo-nginx.svg'
+import NodeIcon from '@/assets/icons/logo-nodejs.svg'
+import RedisIcon from '@/assets/icons/logo-redis.svg'
+import TerminalPanel from '@/components/terminal-panel/index.vue'
+import type { ArchitectureEnum, FileScopeEnum } from '@/enums/platform'
+import { useWebSocketStore } from '@/stores/websocket'
 import type { ExecResult, SetupStep } from '@/types/environment'
 import type { FileParams } from '@/types/file'
-import { ArchitectureEnum, FileScopeEnum } from '@/enums/platform'
-import TerminalPanel from '@/components/terminal-panel/index.vue'
-import StepExecutor from '../components/StepExecutor.vue'
-import JavaIcon from '@/assets/icons/logo-java.svg'
-import NodeIcon from '@/assets/icons/logo-nodejs.svg'
-import NginxIcon from '@/assets/icons/logo-nginx.svg'
-import RedisIcon from '@/assets/icons/logo-redis.svg'
+import { type HostRecord } from '@/types/host'
 import HostSidebar from '@/views/host/components/HostSidebar.vue'
+
+import StepExecutor from '../components/StepExecutor.vue'
 
 const websocketStore = useWebSocketStore()
 const terminalPanelRef = ref<InstanceType<typeof TerminalPanel>>()

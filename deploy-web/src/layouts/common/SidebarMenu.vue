@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import type { Component } from 'vue'
 
+defineProps<{
+  /** 分组后的菜单数据（ADR-0012 三组 + 仪表盘置顶） */
+  groups: MenuGroup[]
+  /** 折叠为图标条（窄态）：纯 CSS 收窄容器 + 裁切文字，不切换 el-menu 自身的 collapse 机制 */
+  collapse: boolean
+  /** 当前高亮项（通常取 route.path） */
+  activeIndex: string
+}>()
+
 defineOptions({
   name: 'SidebarMenu',
 })
@@ -20,15 +29,6 @@ interface MenuGroup {
   title: string
   items: MenuItem[]
 }
-
-defineProps<{
-  /** 分组后的菜单数据（ADR-0012 三组 + 仪表盘置顶） */
-  groups: MenuGroup[]
-  /** 折叠为图标条（窄态）：纯 CSS 收窄容器 + 裁切文字，不切换 el-menu 自身的 collapse 机制 */
-  collapse: boolean
-  /** 当前高亮项（通常取 route.path） */
-  activeIndex: string
-}>()
 </script>
 
 <template>

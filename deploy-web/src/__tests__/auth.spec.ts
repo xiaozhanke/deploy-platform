@@ -1,5 +1,6 @@
+import type { User } from 'oidc-client-ts'
+import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { setActivePinia, createPinia } from 'pinia'
 
 // 让 element-plus 别在 Node 环境里抛 DOM 相关警告
 vi.mock('element-plus', () => ({
@@ -58,11 +59,11 @@ describe('auth.handleUserLoaded WebSocket 重连', () => {
     const userBeforeRefresh = {
       access_token: 'token-A',
       expired: false,
-    } as unknown as import('oidc-client-ts').User
+    } as unknown as User
     const userAfterRefresh = {
       access_token: 'token-B',
       expired: false,
-    } as unknown as import('oidc-client-ts').User
+    } as unknown as User
 
     await authStore.handleUserLoaded(userBeforeRefresh)
     expect(wsConnect).toHaveBeenCalledTimes(1)
@@ -77,7 +78,7 @@ describe('auth.handleUserLoaded WebSocket 重连', () => {
     const authStore = useAuthStore()
 
     await authStore.handleUserLoaded(null)
-    const expired = { access_token: 'x', expired: true } as unknown as import('oidc-client-ts').User
+    const expired = { access_token: 'x', expired: true } as unknown as User
     await authStore.handleUserLoaded(expired)
 
     expect(wsConnect).not.toHaveBeenCalled()

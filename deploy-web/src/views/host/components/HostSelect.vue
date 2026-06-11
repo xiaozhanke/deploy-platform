@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { hostQueryPage } from '@/api/api'
-import { SshAuthTypeEnum } from '@/enums/platform'
-import type { HostQueryParams, HostRecord } from '@/types/host'
 import { Select } from '@element-plus/icons-vue'
+
+import { hostQueryPage } from '@/api/api'
 import TablePagination from '@/components/table-pagination/index.vue'
+import { SshAuthTypeEnum } from '@/enums/platform'
 import type { PageParams } from '@/types/api'
+import type { HostQueryParams, HostRecord } from '@/types/host'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
@@ -63,7 +64,7 @@ onMounted(async () => {
     width="1000px"
     top="5vh"
     draggable
-    :append-to-body="true"
+    append-to-body
     :close-on-click-modal="false"
     @close="handleClose"
   >

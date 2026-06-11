@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import router from '@/router'
 import type { TabPaneName } from 'element-plus'
 import { useRoute } from 'vue-router'
+
+import router from '@/router'
 
 defineOptions({
   name: 'UserIndex',

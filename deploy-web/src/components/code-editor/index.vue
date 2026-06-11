@@ -1,19 +1,20 @@
 <script setup lang="ts">
-import { Codemirror } from 'vue-codemirror'
-import { oneDark } from '@codemirror/theme-one-dark'
 import { yaml } from '@codemirror/lang-yaml'
-import { EditorView } from 'codemirror'
+import { oneDark } from '@codemirror/theme-one-dark'
 import { highlightWhitespace } from '@codemirror/view'
+import { EditorView } from 'codemirror'
+import { Codemirror } from 'vue-codemirror'
+
 import { sshExecCommand, sshWriteFile } from '@/api/api'
 import { useTheme } from '@/composables/useTheme'
-
-defineOptions({
-  name: 'CodeEditor',
-})
 
 const emit = defineEmits<{
   (e: 'close', value: void): void
 }>()
+
+defineOptions({
+  name: 'CodeEditor',
+})
 
 // 从父组件获取 sessionId；若未注入则给空字符串 Ref 兜底，避免 inject 返回 undefined 后续访问 .value 抛错
 const sessionId = inject<Ref<string>>('sessionId', ref(''))

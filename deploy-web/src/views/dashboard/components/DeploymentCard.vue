@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ApplicationTypeEnum } from '@/enums/platform'
-import type { DeploymentRecord } from '@/types/deployment'
-import { Monitor, Position, Guide, FolderOpened } from '@element-plus/icons-vue'
+import { FolderOpened, Guide, Monitor, Position } from '@element-plus/icons-vue'
+
 import SpringIcon from '@/assets/icons/logo-spring.svg'
 import VueIcon from '@/assets/icons/logo-vue.svg'
+import { ApplicationTypeEnum } from '@/enums/platform'
+import type { DeploymentRecord } from '@/types/deployment'
 
 const props = defineProps<{
   record: DeploymentRecord

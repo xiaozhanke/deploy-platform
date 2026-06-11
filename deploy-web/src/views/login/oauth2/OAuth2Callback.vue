@@ -1,13 +1,6 @@
-<template>
-  <div class="callback-content">
-    <div class="spinner"></div>
-    <p class="status-text">正在验证您的身份，请稍候...</p>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { useAuthStore } from '@/stores/auth'
 import { oidcService } from '@/services/oidcService'
+import { useAuthStore } from '@/stores/auth'
 
 onMounted(async () => {
   // 判断当前窗口是否在 iframe 中，这是 oidc-client-ts 进行静默刷新的方式
@@ -27,6 +20,13 @@ onMounted(async () => {
   }
 })
 </script>
+
+<template>
+  <div class="callback-content">
+    <div class="spinner"></div>
+    <p class="status-text">正在验证您的身份，请稍候...</p>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .callback-content {

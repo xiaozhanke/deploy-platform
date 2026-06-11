@@ -1,11 +1,4 @@
 <script setup lang="ts">
-defineOptions({
-  name: 'StatusDot',
-})
-
-/** 状态意图，直接映射到 Element Plus 的 --el-color-*（双主题自动适配） */
-type StatusIntent = 'primary' | 'success' | 'warning' | 'danger' | 'info'
-
 withDefaults(
   defineProps<{
     /** 颜色意图 */
@@ -24,6 +17,13 @@ withDefaults(
     muted: false,
   },
 )
+
+defineOptions({
+  name: 'StatusDot',
+})
+
+/** 状态意图，直接映射到 Element Plus 的 --el-color-*（双主题自动适配） */
+type StatusIntent = 'primary' | 'success' | 'warning' | 'danger' | 'info'
 </script>
 
 <template>

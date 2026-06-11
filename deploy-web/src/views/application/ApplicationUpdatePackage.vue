@@ -1,24 +1,25 @@
 <script setup lang="ts">
-import type { DeploymentRecord } from '@/types/deployment'
-import type { FormInstance, FormRules } from 'element-plus'
-import FileSelect from '@/views/file/FileSelect.vue'
 import { Document, Search } from '@element-plus/icons-vue'
-import type { FileRecord } from '@/types/file'
-import { useWebSocketStore } from '@/stores/websocket'
+import type { FormInstance, FormRules } from 'element-plus'
+
 import { deploymentRecordUpdatePackage, fileQueryPathById, sshConnect } from '@/api/api'
 import { ApplicationTypeEnum } from '@/enums/platform'
+import { useWebSocketStore } from '@/stores/websocket'
+import type { DeploymentRecord } from '@/types/deployment'
+import type { FileRecord } from '@/types/file'
+import FileSelect from '@/views/file/FileSelect.vue'
 import LogView from '@/views/log/components/LogView.vue'
 
 const props = defineProps<{
   recordSelection: Array<DeploymentRecord>
 }>()
 
-// 可见性由父级 v-model 显式接管（迁到 AppDrawer 后底层非单根，靠属性透传不再生效）
-const visible = defineModel<boolean>()
-
 const emit = defineEmits<{
   (e: 'complete'): void
 }>()
+
+// 可见性由父级 v-model 显式接管（迁到 AppDrawer 后底层非单根，靠属性透传不再生效）
+const visible = defineModel<boolean>()
 
 const websocketStore = useWebSocketStore()
 

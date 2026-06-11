@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
+import { reactive, ref } from 'vue'
+
 import { userPasswordUpdate } from '@/api/api'
-import type { PasswordForm } from '@/types/auth'
 import { useAuthStore } from '@/stores/auth'
+import type { PasswordForm } from '@/types/auth'
 
 const formRef = ref<FormInstance>()
 const form = reactive<PasswordForm>({

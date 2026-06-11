@@ -1,8 +1,4 @@
-import type { ExecResult, NginxConfigParams } from '@/types/environment'
-import request from './request'
-import type { HostRecord, HostParams, HostQueryParams } from '@/types/host'
 import type { PageParams, PageResult } from '@/types/api'
-import type { FileParams, FileRecord } from '@/types/file'
 import type { PasswordForm, UserProfile } from '@/types/auth'
 import type {
   AuditLog,
@@ -13,6 +9,11 @@ import type {
   DeploymentParams,
   DeploymentRecord,
 } from '@/types/deployment'
+import type { ExecResult, NginxConfigParams } from '@/types/environment'
+import type { FileParams, FileRecord } from '@/types/file'
+import type { HostParams, HostQueryParams, HostRecord } from '@/types/host'
+
+import request from './request'
 
 /**
  * 测试 API 可用性

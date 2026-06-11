@@ -1,4 +1,4 @@
-import { UserManager, WebStorageStateStore, type SigninRedirectArgs, type UserManagerSettings } from 'oidc-client-ts'
+import { type SigninRedirectArgs, UserManager, type UserManagerSettings, WebStorageStateStore } from 'oidc-client-ts'
 
 const oidcSettings: UserManagerSettings = {
   // 认证服务器的地址

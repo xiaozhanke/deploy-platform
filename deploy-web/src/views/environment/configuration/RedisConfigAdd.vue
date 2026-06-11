@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import type { FormInstance, FormRules } from 'element-plus'
+
 import type { RedisConfigParams } from '@/types/environment'
 import { generateRandomNumber } from '@/utils/common'
-import type { FormInstance, FormRules } from 'element-plus'
 
 const emit = defineEmits<{
   (e: 'submit', form: RedisConfigParams): void
@@ -38,6 +39,7 @@ const handleClose = () => {
   visible.value = false
 }
 </script>
+
 <template>
   <app-drawer v-model="visible" title="Redis 配置参数" width="md">
     <el-form ref="formRef" :model="form" :rules="formRules" label-width="140px">

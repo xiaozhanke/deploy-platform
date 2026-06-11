@@ -1,6 +1,7 @@
+import type { AxiosInstance } from 'axios'
 import AxiosMockAdapter from 'axios-mock-adapter'
+import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { setActivePinia, createPinia } from 'pinia'
 
 // request.ts 通过 AutoImport + ElementPlusResolver 隐式拿到 ElNotification，
 // 用 vi.mock 替换 'element-plus' 模块导出即可拦截全部用法
@@ -20,7 +21,7 @@ vi.mock('@/stores/auth', () => ({
 
 describe('request interceptor 401 处理', () => {
   let mockAdapter: AxiosMockAdapter
-  let instance: import('axios').AxiosInstance
+  let instance: AxiosInstance
 
   beforeEach(async () => {
     setActivePinia(createPinia())

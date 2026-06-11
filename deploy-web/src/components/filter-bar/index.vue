@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, useSlots } from 'vue'
 import { ArrowDown, Refresh, Search } from '@element-plus/icons-vue'
 import type { FormInstance } from 'element-plus'
-
-defineOptions({
-  name: 'FilterBar',
-})
+import { computed, ref, useSlots } from 'vue'
 
 /**
  * 共享筛选行外壳：el-form + FilterField 响应式栅格（el-row / el-col）+ 行内动作区。
@@ -29,6 +25,10 @@ const emit = defineEmits<{
   /** 点击重置：本组件已 resetFields() 复位字段，页面在此重新查询并清外部显示态 */
   (e: 'reset'): void
 }>()
+
+defineOptions({
+  name: 'FilterBar',
+})
 
 const formRef = ref<FormInstance>()
 
@@ -73,7 +73,7 @@ const handleReset = () => {
         <el-button v-if="hasAdvancedSlot" @click="advancedExpanded = !advancedExpanded">
           更多筛选
           <el-icon class="filter-bar__caret" :class="{ 'is-expanded': advancedExpanded }">
-            <ArrowDown />
+            <arrow-down />
           </el-icon>
         </el-button>
 

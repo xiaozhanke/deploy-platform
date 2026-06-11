@@ -3,12 +3,14 @@ defineOptions({
   name: 'EnvironmentConfiguration',
 })
 
-import { type HostRecord } from '@/types/host'
+import type { TabPaneName } from 'element-plus'
+
 import type { ExecResult } from '@/types/environment'
+import { type HostRecord } from '@/types/host'
+import HostSidebar from '@/views/host/components/HostSidebar.vue'
+
 import NginxConfig from './NginxConfig.vue'
 import RedisConfig from './RedisConfig.vue'
-import type { TabPaneName } from 'element-plus'
-import HostSidebar from '@/views/host/components/HostSidebar.vue'
 
 const sessionId = ref<string>('')
 const currentHost = ref<HostRecord>({} as HostRecord)

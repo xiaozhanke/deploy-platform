@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import type { DeploymentRecord } from '@/types/deployment'
-import DeploymentCard from './components/DeploymentCard.vue'
 import { deploymentRecordQueryList } from '@/api/api'
+import type { DeploymentRecord } from '@/types/deployment'
+
+import DeploymentCard from './components/DeploymentCard.vue'
 
 defineOptions({
   name: 'DashboardIndex',

@@ -1,4 +1,5 @@
 import axios from 'axios'
+
 import { useAuthStore } from '@/stores/auth'
 import { ApiError } from '@/types/error'
 
@@ -46,7 +47,6 @@ instance.interceptors.response.use(
     return response.data
   },
   async (error) => {
-
     // 优先处理中止错误
     if (axios.isCancel(error)) {
       return Promise.reject(error)

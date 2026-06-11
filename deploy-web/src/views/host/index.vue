@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import type { HostRecord, HostParams, HostQueryParams } from '@/types/host'
-import HostFormDialog from './components/HostFormDialog.vue'
-import { hostQueryPage, hostDelete, hostTestConnection, hostAdd, hostUpdate } from '@/api/api'
-import { SshAuthTypeEnum } from '@/enums/platform'
+import { Plus } from '@element-plus/icons-vue'
+
+import { hostAdd, hostDelete, hostQueryPage, hostTestConnection, hostUpdate } from '@/api/api'
 import TablePagination from '@/components/table-pagination/index.vue'
+import { SshAuthTypeEnum } from '@/enums/platform'
 import type { PageParams } from '@/types/api'
+import type { HostParams, HostQueryParams, HostRecord } from '@/types/host'
+
+import HostFormDialog from './components/HostFormDialog.vue'
 
 defineOptions({
   name: 'HostIndex',
@@ -129,7 +132,7 @@ onActivated(() => {
       <template #actions>
         <!-- 页面主操作：唯一实色 primary -->
         <el-button type="primary" @click="handleAdd">
-          <el-icon><Plus /></el-icon>
+          <el-icon><plus /></el-icon>
           添加主机
         </el-button>
       </template>

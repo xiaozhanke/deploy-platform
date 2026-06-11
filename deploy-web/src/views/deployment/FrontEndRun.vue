@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import type { FormInstance, FormRules } from 'element-plus'
+
 import { deploymentRecordAdd, fileQueryPathById, sshExecCommand } from '@/api/api'
 import { ApplicationTypeEnum, DeploymentStatusEnum } from '@/enums/platform'
 import { useWebSocketStore } from '@/stores/websocket'
 import type { FileRecord } from '@/types/file'
 import type { HostRecord } from '@/types/host'
 import { generateRandomNumber } from '@/utils/common'
-import type { FormInstance, FormRules } from 'element-plus'
 
 const props = defineProps<{
   fileRecord: FileRecord

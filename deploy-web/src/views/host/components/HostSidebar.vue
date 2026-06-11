@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { Close, Connection, Position, Refresh } from '@element-plus/icons-vue'
+
 import { sshConnect, sshDisconnect, sshExecCommand } from '@/api/api'
-import type { HostRecord } from '@/types/host'
-import type { ExecResult } from '@/types/environment'
 import JavaIcon from '@/assets/icons/logo-java.svg'
-import NodeIcon from '@/assets/icons/logo-nodejs.svg'
 import NginxIcon from '@/assets/icons/logo-nginx.svg'
+import NodeIcon from '@/assets/icons/logo-nodejs.svg'
 import RedisIcon from '@/assets/icons/logo-redis.svg'
+import type { ExecResult } from '@/types/environment'
+import type { HostRecord } from '@/types/host'
+
 import HostSelect from './HostSelect.vue'
 
 const emit = defineEmits<{

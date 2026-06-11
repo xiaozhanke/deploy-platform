@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import type { FormInstance, FormRules } from 'element-plus'
+
 import { configNginxAdd } from '@/api/api'
 import type { NginxConfigParams } from '@/types/environment'
 import { generateRandomNumber } from '@/utils/common'
-import type { FormRules, FormInstance } from 'element-plus'
 
 const emit = defineEmits<{
   (e: 'submit', fileName: string, fileContent: string, edit: boolean): void

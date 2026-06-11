@@ -1,8 +1,4 @@
 <script setup lang="ts">
-defineOptions({
-  name: 'FilterField',
-})
-
 /**
  * 筛选行单字段：封装 el-form-item（label / prop）并套 el-col 做响应式栅格，
  * 始终随父 FilterBar 的 el-row 栅格化排列。默认每行列数 xs 1 → sm 2 → md 3 → lg 4 → xl 6
@@ -31,6 +27,10 @@ withDefaults(
     xl: 4,
   },
 )
+
+defineOptions({
+  name: 'FilterField',
+})
 </script>
 
 <template>

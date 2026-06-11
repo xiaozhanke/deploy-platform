@@ -1,19 +1,20 @@
 <script setup lang="ts">
+import type { StompSubscription } from '@stomp/stompjs'
+
 import { deploymentJobCancel, deploymentJobQueryPage } from '@/api/api'
 import TablePagination from '@/components/table-pagination/index.vue'
 import { JobStatusEnum, JobTypeEnum } from '@/enums/platform'
+import { useWebSocketStore } from '@/stores/websocket'
 import type { PageParams } from '@/types/api'
 import type { DeploymentJob, DeploymentRecord } from '@/types/deployment'
-import { useWebSocketStore } from '@/stores/websocket'
-import type { StompSubscription } from '@stomp/stompjs'
-
-defineOptions({
-  name: 'JobHistory',
-})
 
 const props = defineProps<{
   record: DeploymentRecord
 }>()
+
+defineOptions({
+  name: 'JobHistory',
+})
 
 // 可见性由父级 v-model 显式接管（AppDrawer 底层 el-drawer 非单根，必须显式绑定才会开合）
 const visible = defineModel<boolean>()

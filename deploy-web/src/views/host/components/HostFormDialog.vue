@@ -1,25 +1,26 @@
 <script setup lang="ts">
-import type { HostRecord, HostParams } from '@/types/host'
-import type { FormInstance, FormRules } from 'element-plus'
 import type { InternalRuleItem } from 'async-validator/dist-types/interface'
-import { SshAuthTypeEnum } from '@/enums/platform'
+import type { FormInstance, FormRules } from 'element-plus'
 
-defineOptions({
-  name: 'HostFormDialog',
-})
+import { SshAuthTypeEnum } from '@/enums/platform'
+import type { HostParams, HostRecord } from '@/types/host'
 
 const props = defineProps<{
   type: 'add' | 'edit' | 'view'
   host?: Partial<HostRecord>
 }>()
 
-// 可见性由父级 v-model 显式接管（迁到 AppDrawer 后底层非单根，靠属性透传不再生效）
-const visible = defineModel<boolean>()
-
 const emit = defineEmits<{
   (e: 'test', host: HostParams): void
   (e: 'submit', host: HostParams): void
 }>()
+
+defineOptions({
+  name: 'HostFormDialog',
+})
+
+// 可见性由父级 v-model 显式接管（迁到 AppDrawer 后底层非单根，靠属性透传不再生效）
+const visible = defineModel<boolean>()
 
 const formRef = ref<FormInstance>()
 

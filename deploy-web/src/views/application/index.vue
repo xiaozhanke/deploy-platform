@@ -3,24 +3,26 @@ defineOptions({
   name: 'ApplicationIndex',
 })
 
+import { Loading, Search, Switch, SwitchButton } from '@element-plus/icons-vue'
+import type { StompSubscription } from '@stomp/stompjs'
+
 import { deploymentJobCancel, deploymentJobCreate, deploymentRecordDelete, deploymentRecordQueryPage } from '@/api/api'
 import TablePagination from '@/components/table-pagination/index.vue'
 import { ApplicationTypeEnum, DeploymentStatusEnum, JobStatusEnum, JobTypeEnum } from '@/enums/platform'
+import { useWebSocketStore } from '@/stores/websocket'
 import type { PageParams } from '@/types/api'
 import type { DeploymentJob, DeploymentParams, DeploymentRecord } from '@/types/deployment'
-import { Search, SwitchButton, Loading, Switch } from '@element-plus/icons-vue'
-import ApplicationDetails from './ApplicationDetails.vue'
-import ApplicationUpdate from './ApplicationUpdate.vue'
-import JobHistory from './JobHistory.vue'
-import HostSelect from '@/views/host/components/HostSelect.vue'
-import FileSelect from '@/views/file/FileSelect.vue'
 import type { FileRecord } from '@/types/file'
 import type { HostRecord } from '@/types/host'
+import FileSelect from '@/views/file/FileSelect.vue'
+import HostSelect from '@/views/host/components/HostSelect.vue'
 import LogView from '@/views/log/components/LogView.vue'
-import ApplicationUpdatePackage from './ApplicationUpdatePackage.vue'
+
+import ApplicationDetails from './ApplicationDetails.vue'
+import ApplicationUpdate from './ApplicationUpdate.vue'
 import ApplicationUpdateConfig from './ApplicationUpdateConfig.vue'
-import { useWebSocketStore } from '@/stores/websocket'
-import type { StompSubscription } from '@stomp/stompjs'
+import ApplicationUpdatePackage from './ApplicationUpdatePackage.vue'
+import JobHistory from './JobHistory.vue'
 
 // StatusDot 的颜色意图，映射到 --el-color-*
 type StatusIntent = 'primary' | 'success' | 'warning' | 'danger' | 'info'

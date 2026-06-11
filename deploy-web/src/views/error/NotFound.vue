@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+
 import ErrorState from '@/components/error-state/index.vue'
 
 defineOptions({

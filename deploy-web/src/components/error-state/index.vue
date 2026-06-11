@@ -1,10 +1,6 @@
 <script setup lang="ts">
-import type { Component } from 'vue'
 import { Warning } from '@element-plus/icons-vue'
-
-defineOptions({
-  name: 'ErrorState',
-})
+import type { Component } from 'vue'
 
 withDefaults(
   defineProps<{
@@ -28,6 +24,10 @@ withDefaults(
 const emit = defineEmits<{
   action: []
 }>()
+
+defineOptions({
+  name: 'ErrorState',
+})
 </script>
 
 <template>
