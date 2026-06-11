@@ -9,9 +9,12 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
-    "lint": "eslint . --fix",
+    "lint": "eslint . --cache",
+    "lint:fix": "eslint . --fix --cache",
+    "lint:ci": "eslint . --max-warnings=0",
     "format": "prettier --write src/",
-    "test": "vitest",
+    "test:unit": "vitest",
+    "test:e2e": "playwright test",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
@@ -37,17 +40,24 @@
   },
   "devDependencies": {
     "@pinia/testing": "^1.0.0",
+    "@playwright/test": "^1.60.0",
     "@tsconfig/node22": "^22.0.1",
+    "@types/jsdom": "^28.0.3",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-basic-ssl": "^2.3.0",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vitest/coverage-v8": "^3.0.0",
+    "@vitest/eslint-plugin": "^1.6.20",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.5.0",
     "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.7.0",
     "axios-mock-adapter": "^2.1.0",
     "eslint": "^9.22.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-playwright": "^2.10.4",
+    "eslint-plugin-simple-import-sort": "^13.0.0",
+    "eslint-plugin-unused-imports": "^4.4.1",
     "eslint-plugin-vue": "~10.0.0",
     "jiti": "^2.4.2",
     "jsdom": "^26.0.0",
@@ -61,5 +71,8 @@
     "vite-plugin-vue-devtools": "^7.7.9",
     "vitest": "^3.0.0",
     "vue-tsc": "^2.2.8"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
   }
 }
