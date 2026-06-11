@@ -26,7 +26,7 @@ public class ConfigChangeProducer {
 
     private final RocketMQTemplate rocketMQTemplate;
 
-    @Value("${deploy-tool.mq.config-broadcast-topic:config-broadcast}")
+    @Value("${deploy-platform.mq.config-broadcast-topic:config-broadcast}")
     private String configBroadcastTopic;
 
     /**

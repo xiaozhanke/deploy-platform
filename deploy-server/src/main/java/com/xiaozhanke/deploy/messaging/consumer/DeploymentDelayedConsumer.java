@@ -32,8 +32,8 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RocketMQMessageListener(
-        topic = "${deploy-tool.mq.delayed-topic:deploy-job-delayed}",
-        consumerGroup = "${deploy-tool.mq.delayed-consumer-group:deploy-job-delayed-consumer}",
+        topic = "${deploy-platform.mq.delayed-topic:deploy-job-delayed}",
+        consumerGroup = "${deploy-platform.mq.delayed-consumer-group:deploy-job-delayed-consumer}",
         consumeMode = ConsumeMode.CONCURRENTLY,
         messageModel = MessageModel.CLUSTERING
 )

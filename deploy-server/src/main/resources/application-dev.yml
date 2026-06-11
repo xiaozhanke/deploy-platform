@@ -20,8 +20,8 @@ app:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    # 本地默认指向 localhost:3306/deploy_tool；部署时通过 MYSQL_* 环境变量覆盖
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DB:deploy_tool}?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+    # 本地默认指向 localhost:3306/deploy_platform；部署时通过 MYSQL_* 环境变量覆盖
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DB:deploy_platform}?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PASSWORD:123456}
   jpa:
@@ -67,7 +67,7 @@ rocketmq:
     send-message-timeout: 3000
     retry-times-when-send-failed: 2
     retry-times-when-send-async-failed: 2
-deploy-tool:
+deploy-platform:
   mq:
     # 部署作业事务消息 Topic / Consumer Group(场景 1 + 场景 2)
     deploy-job-topic: deploy-job

@@ -1,4 +1,4 @@
--- deploy-tool 种子数据：仅覆盖 ADMIN 角色 + admin 账号 + 用户角色关联，保证管理员可登录
+-- deploy-platform 种子数据：仅覆盖 ADMIN 角色 + admin 账号 + 用户角色关联，保证管理员可登录
 --
 -- 默认账号 admin / 123456（密码字段已用 BCrypt 加密；前缀 {bcrypt} 提示 DelegatingPasswordEncoder 选编码器）
 -- 业务表（file_record / host_record / deployment_record）保持为空，由用户登录后通过 UI 录入

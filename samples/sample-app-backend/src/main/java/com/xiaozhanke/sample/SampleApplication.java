@@ -10,13 +10,13 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
- * deploy-tool 部署测试用最简后端应用。
+ * deploy-platform 部署测试用最简后端应用。
  *
  * <p>启动方式:{@code java -jar sample-app-backend-1.0.0.jar --server.port=8080 --spring.profiles.active=test}
  *
  * <p>探活接口:
  * <ul>
- *   <li>{@code GET /hello} — 返回端口/profile/启动时间(供 deploy-tool 端到端验证用)</li>
+ *   <li>{@code GET /hello} — 返回端口/profile/启动时间(供 deploy-platform 端到端验证用)</li>
  *   <li>{@code GET /actuator/health} — Spring Boot Actuator 标准探活</li>
  * </ul>
  */

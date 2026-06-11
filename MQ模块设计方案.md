@@ -1,7 +1,7 @@
-# deploy-tool MQ 模块设计方案
+# deploy-platform MQ 模块设计方案
 
 > **创建日期**：2026-05-23
-> **目的**：在 deploy-tool（独立开发项目）中引入 RocketMQ + Kafka 双引擎，弥补简历上"无 MQ 生产实战"短板;通过 6 个生产级场景覆盖 Java 后端面试 MQ 高频考点。
+> **目的**：在 deploy-platform（独立开发项目）中引入 RocketMQ + Kafka 双引擎，弥补简历上"无 MQ 生产实战"短板;通过 6 个生产级场景覆盖 Java 后端面试 MQ 高频考点。
 > **预期效果**：简历可写"MQ 深度实践";目标薪资从 26-32K 拉到 30-38K（互联网中厂可面）。
 
 ---
@@ -233,7 +233,7 @@ services:
 
 ---
 
-## 五、简历话术(直接写进 `deploy-tool/项目经历总结.md`)
+## 五、简历话术(直接写进 `deploy-platform/项目经历总结.md`)
 
 > **6. 消息中间件深度实践**
 >
@@ -312,7 +312,7 @@ services:
 - [ ] KRaft 模式 vs ZK 模式的区别
 
 ### 选型对比
-- [ ] 为什么 deploy-tool 业务消息选 RocketMQ,日志流选 Kafka
+- [ ] 为什么 deploy-platform 业务消息选 RocketMQ,日志流选 Kafka
 - [ ] RocketMQ 事务消息 vs Seata + TCC vs 本地消息表
 - [ ] RocketMQ 顺序消息 vs Kafka 单分区
 - [ ] 都用过的场景下,日常 OPS 哪个更省心
@@ -325,13 +325,13 @@ services:
 2. **第 2 周**:完成 Phase 2(场景 2/5 顺序消息 + DLQ)+ Kafka 场景 4
 3. **第 3 周**:完成场景 3/6(延迟 + 广播)+ 压测 + 文档
 4. **完成后**:
-   - 更新 `deploy-tool/项目经历总结.md` 加上"MQ 深度实践"段落
-   - 更新 `deploy-tool/项目技术分析报告.md` 加上 MQ 章节
-   - 更新顶层 `interview/CLAUDE.md` 的"跨工程技术故事"加上 MQ 主题(可以串 new_posp 的"评估过未引入" + deploy-tool 的"独立设计")
-   - 在 GitHub 上把 deploy-tool 仓库整理一下,README 加上"MQ 模块"的截图/动图
+   - 更新 `deploy-platform/项目经历总结.md` 加上"MQ 深度实践"段落
+   - 更新 `deploy-platform/项目技术分析报告.md` 加上 MQ 章节
+   - 更新顶层 `interview/CLAUDE.md` 的"跨工程技术故事"加上 MQ 主题(可以串 new_posp 的"评估过未引入" + deploy-platform 的"独立设计")
+   - 在 GitHub 上把 deploy-platform 仓库整理一下,README 加上"MQ 模块"的截图/动图
 
 ---
 
 ## 参考
 
-- deploy-tool 现有架构详见 `deploy-tool/CLAUDE.md`
+- deploy-platform 现有架构详见 `deploy-platform/CLAUDE.md`

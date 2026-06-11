@@ -1,6 +1,6 @@
 # deploy-web
 
-deploy-tool 的 Vue 3 前端：单页应用，通过 OIDC 公开客户端 + PKCE 登录到后端 Authorization Server，调用 REST API 管理主机、部署作业、文件、Nginx 配置，并通过 STOMP / WebSocket 提供浏览器内 SSH 终端。
+deploy-platform 的 Vue 3 前端：单页应用，通过 OIDC 公开客户端 + PKCE 登录到后端 Authorization Server，调用 REST API 管理主机、部署作业、文件、Nginx 配置，并通过 STOMP / WebSocket 提供浏览器内 SSH 终端。
 
 > 项目背景、双子工程关系、与后端的协作约定见仓库根 [README.md](../README.md) 与 [CLAUDE.md](../CLAUDE.md)。
 

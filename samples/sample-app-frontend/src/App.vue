@@ -4,7 +4,7 @@ import { ref } from 'vue'
 const app = ref({
     name: 'sample-app-frontend',
     version: '1.0.0',
-    message: 'Hello, deployed by deploy-tool',
+    message: 'Hello, deployed by deploy-platform',
 })
 const buildTime = new Date().toISOString()
 </script>

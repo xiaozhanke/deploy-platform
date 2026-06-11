@@ -8,7 +8,7 @@
         "MYSQL_PORT": "${MYSQL_PORT:-3306}",
         "MYSQL_USER": "${MYSQL_USER:-root}",
         "MYSQL_PASS": "${MYSQL_PASSWORD:-123456}",
-        "MYSQL_DB": "${MYSQL_DB:-deploy_tool}",
+        "MYSQL_DB": "${MYSQL_DB:-deploy_platform}",
         "ALLOW_INSERT_OPERATION": "false",
         "ALLOW_UPDATE_OPERATION": "false",
         "ALLOW_DELETE_OPERATION": "false"

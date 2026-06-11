@@ -18,4 +18,4 @@
 - 简历/面试叙事更高级:能讲"为什么放弃 `maxReconsumeTimes`"——三段(机制层:retry topic 延迟投回破顺序;业务层:不区分故障性质;运维层:DLQ 时机由应用决定更可观测)。
 - **若未来需要演示 RocketMQ 内置重试 + 自动 DLQ 机制**(纯面试用),可以在不需要顺序约束的 topic 上(如审计日志旁路、配置广播)单独配置,作为对比演示,不污染主流程。
 - CONTEXT.md 的 Flagged ambiguities #2(顺序消息与失败重试的冲突)和 #3(死信处理流程)由本 ADR 一并 resolve。
-- **DLQ Topic 命名(实现修正)**:本 ADR 初稿写的 `%DLQ%deploy-job` 实际不可用——`%DLQ%` 是 RocketMQ 为每个 consumerGroup 自动创建的系统死信 Topic 的**保留前缀**,这类 Topic 默认权限只读(`PERM_READ`),producer 手动 `syncSend` 会被 broker 拒绝。落地改用纯业务名 `deploy-job-dlq`(配 `deploy-tool.mq.dead-letter-topic`),由 broker `autoCreateTopicEnable` 建成可读写 Topic;消费方 `DeadLetterConsumer` 以 `CONCURRENTLY` 普通并发消费、落 `dead_letter_message` 表(`existsByJobId` 去重)。
+- **DLQ Topic 命名(实现修正)**:本 ADR 初稿写的 `%DLQ%deploy-job` 实际不可用——`%DLQ%` 是 RocketMQ 为每个 consumerGroup 自动创建的系统死信 Topic 的**保留前缀**,这类 Topic 默认权限只读(`PERM_READ`),producer 手动 `syncSend` 会被 broker 拒绝。落地改用纯业务名 `deploy-job-dlq`(配 `deploy-platform.mq.dead-letter-topic`),由 broker `autoCreateTopicEnable` 建成可读写 Topic;消费方 `DeadLetterConsumer` 以 `CONCURRENTLY` 普通并发消费、落 `dead_letter_message` 表(`existsByJobId` 去重)。

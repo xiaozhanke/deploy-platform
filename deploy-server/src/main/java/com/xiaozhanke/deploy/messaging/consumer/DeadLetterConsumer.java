@@ -23,8 +23,8 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RocketMQMessageListener(
-        topic = "${deploy-tool.mq.dead-letter-topic}",
-        consumerGroup = "${deploy-tool.mq.dead-letter-consumer-group}",
+        topic = "${deploy-platform.mq.dead-letter-topic}",
+        consumerGroup = "${deploy-platform.mq.dead-letter-consumer-group}",
         messageModel = MessageModel.CLUSTERING
 )
 @RequiredArgsConstructor

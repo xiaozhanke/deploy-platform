@@ -6,7 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # - openssh-server：SSH + SFTP（SFTP 是 OpenSSH 内置子系统，无需额外配置）
 # - openjdk-17-jre-headless：Java 17 运行时，向下兼容 Java 8 编译的 jar
 # - nginx：前端部署目标
-# - unzip：deploy-tool 部署前端 zip 包后解压到站点目录
+# - unzip：deploy-platform 部署前端 zip 包后解压到站点目录
 # - supervisor：进程管理，同时拉起 sshd 与 nginx
 # - procps / sudo / ca-certificates：常用工具
 RUN apt-get update && \

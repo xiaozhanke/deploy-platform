@@ -1,4 +1,4 @@
-# deploy-tool
+# deploy-platform
 
 基于 Web 控制台的 Java 应用部署工具：通过 SSH/SFTP 把 jar 包推送到远程 Linux 主机并管理启停、把前端 dist 推送到 nginx 站点目录。同时提供环境管理（Java/Node/Nginx/Redis 一键安装）、Nginx 配置文件管理、浏览器内 SSH 终端等辅助功能。
 
@@ -7,7 +7,7 @@
 ## 仓库结构
 
 ```text
-deploy-tool/
+deploy-platform/
 ├── deploy-server/         # Spring Boot 3.5 / Java 21 后端
 ├── deploy-web/            # Vue 3 / Vite 6 / TypeScript 前端
 ├── samples/               # 端到端部署测试用的示例应用（后端 jar + 前端 dist）
@@ -60,14 +60,14 @@ deploy-tool/
 
 最小可跑通的链路：
 
-1. 起 MySQL 8（默认 `jdbc:mysql://localhost:3306/deploy_tool`，账号 `root` / `123456`，可用环境变量覆盖）
+1. 起 MySQL 8（默认 `jdbc:mysql://localhost:3306/deploy_platform`，账号 `root` / `123456`，可用环境变量覆盖）
 2. `cd deploy-server && mvn spring-boot:run` → API 起在 `https://localhost:6060`
 3. `cd deploy-web && npm install && npm run dev` → 前端起在 `https://localhost:5173/ui`
 4. 起部署目标容器 + 把 `samples/` 里的 jar / dist 推过去做端到端验证
 
 ## 开发约定
 
-- IDEA 工程根目录开 `/deploy-tool`；VSCode 推荐单独开 `/deploy-tool/deploy-web`
+- IDEA 工程根目录开 `/deploy-platform`；VSCode 推荐单独开 `/deploy-platform/deploy-web`
 - Git 在仓库根目录提交（commit 用中文 Conventional Commits 风格：`feat:` / `fix:` / `refactor:` / `build:` …）
 - 后端、前端、`application.yml` 三处的版本号始终一致（当前 `1.2.4`），改版本要一起改
 - 后端遵循阿里巴巴 Java 开发规约；实体不直接暴露，走 DTO/VO 隔离

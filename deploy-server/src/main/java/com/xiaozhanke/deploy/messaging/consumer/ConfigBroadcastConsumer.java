@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
  * <p>广播模式下<b>不支持消费失败重试</b>——失败即丢(或由应用层自行补偿)。本 consumer
  * 把变更写入日志,生产环境可扩展为刷新本地缓存 / 触发重载。
  *
- * <p>通过 {@code deploy-tool.mq.config-broadcast-enabled=false} 可在测试环境禁用本
+ * <p>通过 {@code deploy-platform.mq.config-broadcast-enabled=false} 可在测试环境禁用本
  * consumer,避免多个 @SpringBootTest 上下文同时注册 BROADCASTING 消费者触发的
  * "consumer group already created" 冲突。
  *
@@ -25,10 +25,10 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "deploy-tool.mq.config-broadcast-enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "deploy-platform.mq.config-broadcast-enabled", havingValue = "true", matchIfMissing = true)
 @RocketMQMessageListener(
-        topic = "${deploy-tool.mq.config-broadcast-topic:config-broadcast}",
-        consumerGroup = "${deploy-tool.mq.config-broadcast-consumer-group:config-broadcast-consumer}",
+        topic = "${deploy-platform.mq.config-broadcast-topic:config-broadcast}",
+        consumerGroup = "${deploy-platform.mq.config-broadcast-consumer-group:config-broadcast-consumer}",
         messageModel = MessageModel.BROADCASTING
 )
 public class ConfigBroadcastConsumer implements RocketMQListener<ConfigChangeMessage> {

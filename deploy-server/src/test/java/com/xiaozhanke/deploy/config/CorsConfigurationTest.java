@@ -23,7 +23,7 @@ import org.springframework.web.context.WebApplicationContext;
  * 在白名单内的 origin 应被允许；不在的 origin 应被 Spring CORS 拒绝。
  *
  * <p>连独立 MySQL 测试库 cors_test（createDatabaseIfNotExist 自动建、ddl-auto=create-drop 用完即弃）
- * 避免污染开发态 deploy_tool；JWT keystore 路径指到 target/，由 mvn clean 兜底清理。
+ * 避免污染开发态 deploy_platform；JWT keystore 路径指到 target/，由 mvn clean 兜底清理。
  *
  * @author xiaozhanke
  */

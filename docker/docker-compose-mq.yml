@@ -1,5 +1,5 @@
 # RocketMQ 5.x + Kafka 3.x 单机开发环境
-# 用途:deploy-tool MQ 模块开发与本地验证
+# 用途:deploy-platform MQ 模块开发与本地验证
 # 启动:cd docker && docker compose -f docker-compose-mq.yml up -d
 #
 # RocketMQ Dashboard: http://localhost:8180
@@ -9,7 +9,7 @@ services:
   # ==================== RocketMQ ====================
   rmqnamesrv:
     image: apache/rocketmq:5.3.2
-    container_name: deploy-tool-rmqnamesrv
+    container_name: deploy-platform-rmqnamesrv
     command: sh mqnamesrv
     ports:
       - "9876:9876"
@@ -24,7 +24,7 @@ services:
 
   rmqbroker:
     image: apache/rocketmq:5.3.2
-    container_name: deploy-tool-rmqbroker
+    container_name: deploy-platform-rmqbroker
     depends_on:
       rmqnamesrv:
         condition: service_healthy
@@ -41,7 +41,7 @@ services:
 
   rmqdashboard:
     image: apacherocketmq/rocketmq-dashboard:1.0.0
-    container_name: deploy-tool-rmqdashboard
+    container_name: deploy-platform-rmqdashboard
     depends_on:
       - rmqnamesrv
     ports:
@@ -52,7 +52,7 @@ services:
   # ==================== Kafka (KRaft 模式, 无需 Zookeeper) ====================
   kafka:
     image: apache/kafka:3.9.0
-    container_name: deploy-tool-kafka
+    container_name: deploy-platform-kafka
     ports:
       - "9092:9092"
     environment:
@@ -80,13 +80,13 @@ services:
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
-    container_name: deploy-tool-kafka-ui
+    container_name: deploy-platform-kafka-ui
     depends_on:
       kafka:
         condition: service_healthy
     ports:
       - "8080:8080"
     environment:
-      KAFKA_CLUSTERS_0_NAME: deploy-tool-local
+      KAFKA_CLUSTERS_0_NAME: deploy-platform-local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
       DYNAMIC_CONFIG_ENABLED: "true"

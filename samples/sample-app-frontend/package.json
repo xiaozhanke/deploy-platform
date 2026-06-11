@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "deploy-tool 部署测试用最简 Vue 3 前端",
+  "description": "deploy-platform 部署测试用最简 Vue 3 前端",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

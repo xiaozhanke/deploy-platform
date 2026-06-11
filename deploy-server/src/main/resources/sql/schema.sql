@@ -1,4 +1,4 @@
--- deploy-tool 数据库初始化脚本（MySQL 8.0+，utf8mb4）
+-- deploy-platform 数据库初始化脚本（MySQL 8.0+，utf8mb4）
 --
 -- 平时由 JPA `ddl-auto: update` 在应用启动时自动维护，本文件用于：
 -- 1. 全新环境手动 `source` 重建一份干净的库

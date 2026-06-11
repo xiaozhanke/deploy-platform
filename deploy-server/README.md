@@ -1,6 +1,6 @@
 # deploy-server
 
-deploy-tool 的 Spring Boot 后端：通过 REST + WebSocket 暴露主机管理、部署作业、文件传输、SSH 终端、配置生成等能力。Spring Authorization Server 与 Resource Server **同进程内**部署，API 自己签发 OIDC token。
+deploy-platform 的 Spring Boot 后端：通过 REST + WebSocket 暴露主机管理、部署作业、文件传输、SSH 终端、配置生成等能力。Spring Authorization Server 与 Resource Server **同进程内**部署，API 自己签发 OIDC token。
 
 > 项目背景、双子工程关系与开发约定见仓库根 [README.md](../README.md) 与 [CLAUDE.md](../CLAUDE.md)；领域术语见 [CONTEXT.md](../CONTEXT.md)。
 
@@ -43,13 +43,13 @@ deploy-server/src/main/java/com/xiaozhanke/deploy/
 
 ### 1. 准备 MySQL 8
 
-后端默认连接 `jdbc:mysql://localhost:3306/deploy_tool`，账号 `root` / 密码 `123456`，可通过环境变量覆盖：
+后端默认连接 `jdbc:mysql://localhost:3306/deploy_platform`，账号 `root` / 密码 `123456`，可通过环境变量覆盖：
 
 | 变量 | 默认值 |
 | --- | --- |
 | `MYSQL_HOST` | `localhost` |
 | `MYSQL_PORT` | `3306` |
-| `MYSQL_DB` | `deploy_tool` |
+| `MYSQL_DB` | `deploy_platform` |
 | `MYSQL_USER` | `root` |
 | `MYSQL_PASSWORD` | `123456` |
 

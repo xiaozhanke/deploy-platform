@@ -35,7 +35,7 @@ import org.springframework.test.context.TestPropertySource;
 // 项目已从 H2 迁到 MySQL:@DataJpaTest 默认会把数据源替换成内嵌库,而 classpath 上已无 H2,
 // 替换必失败(Failed to replace DataSource with an embedded database)。关掉替换、连独立 MySQL
 // 测试库 user_fetch_test(createDatabaseIfNotExist 自动建、ddl-auto=create-drop 用完即弃),与其它
-// @SpringBootTest 用例的隔离方式一致:既不污染开发态 deploy_tool,又能跑真实 SQL 统计验证 N+1。
+// @SpringBootTest 用例的隔离方式一致:既不污染开发态 deploy_platform,又能跑真实 SQL 统计验证 N+1。
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import({JpaConfig.class, AuthenticationHelper.class})
 @TestPropertySource(properties = {

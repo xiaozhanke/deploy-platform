@@ -463,7 +463,7 @@ public class SshService {
      * 写 {@code /etc/nginx/conf.d} 这类 root 目录时纯 SFTP 直写必定 Permission denied。
      * useSudo=true 时改走两步：
      * <ol>
-     *   <li>SFTP put 到 {@code /tmp/deploy-tool-write-<uuid>.tmp}（deploy 对 /tmp 有写权限，无需 sudo）</li>
+     *   <li>SFTP put 到 {@code /tmp/deploy-platform-write-<uuid>.tmp}（deploy 对 /tmp 有写权限，无需 sudo）</li>
      *   <li>exec {@code sudo -n mv <tmp> <target>} 提权移动到目标位置；命令只含两个固定路径，
      *   内容不进 shell，路径已校验，无注入面</li>
      * </ol>
@@ -509,7 +509,7 @@ public class SshService {
         }
 
         // sudo 路径：SFTP 临时文件 → exec sudo mv
-        String tmpPath = "/tmp/deploy-tool-write-" + UUID.randomUUID() + ".tmp";
+        String tmpPath = "/tmp/deploy-platform-write-" + UUID.randomUUID() + ".tmp";
         String putDesc = String.format("写入临时文件 '%s' (%d bytes)", tmpPath, bytes.length);
         executeSftpOperation(sessionId, putDesc, channel -> {
             try (InputStream in = new ByteArrayInputStream(bytes)) {

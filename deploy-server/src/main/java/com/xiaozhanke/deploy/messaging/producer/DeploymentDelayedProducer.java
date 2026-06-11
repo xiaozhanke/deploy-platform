@@ -40,7 +40,7 @@ public class DeploymentDelayedProducer {
     private static final long[] LEVEL_SECONDS = {
             0, 1, 5, 10, 30, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600, 1200, 1800, 3600, 7200};
     private final RocketMQTemplate rocketMQTemplate;
-    @Value("${deploy-tool.mq.delayed-topic:deploy-job-delayed}")
+    @Value("${deploy-platform.mq.delayed-topic:deploy-job-delayed}")
     private String delayedTopic;
 
     /**

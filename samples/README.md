@@ -1,6 +1,6 @@
-# samples — deploy-tool 部署测试用的目标产物
+# samples — deploy-platform 部署测试用的目标产物
 
-本目录托管两个**最简化**的应用,用作 deploy-tool 端到端测试的部署目标:
+本目录托管两个**最简化**的应用,用作 deploy-platform 端到端测试的部署目标:
 
 | 子项目 | 类型 | 产物 | 部署目的 |
 |---|---|---|---|
@@ -34,12 +34,12 @@ ls dist/
 
 产物可打成 zip:`cd dist && zip -r ../sample-app-frontend-1.0.0.zip .`
 
-部署:deploy-tool 把 zip 上传到目标机后 `unzip -o sample-app-frontend-1.0.0.zip` 到 nginx 站点目录(默认 `/var/www/html`)。
+部署:deploy-platform 把 zip 上传到目标机后 `unzip -o sample-app-frontend-1.0.0.zip` 到 nginx 站点目录(默认 `/var/www/html`)。
 
-## 在 deploy-tool 里关联这两个产物
+## 在 deploy-platform 里关联这两个产物
 
 1. 起部署目标容器:`docker build -t deploy-target docker/ && docker run -d -p 2222:22 -p 8080:8080 -p 80:80 --name deploy-target deploy-target`
-2. 在 deploy-tool Web 控制台依次创建:
+2. 在 deploy-platform Web 控制台依次创建:
    - **ServerRecord**:host=`127.0.0.1` port=`2222` username=`root` password=`root`(或 `deploy` / `deploy`)
    - **FileRecord(后端)**:上传 `sample-app-backend-1.0.0.jar`
    - **FileRecord(前端)**:上传 `sample-app-frontend-1.0.0.zip`

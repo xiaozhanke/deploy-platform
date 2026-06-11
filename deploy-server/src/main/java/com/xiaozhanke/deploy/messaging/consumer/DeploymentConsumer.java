@@ -31,8 +31,8 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RocketMQMessageListener(
-        topic = "${deploy-tool.mq.deploy-job-topic}",
-        consumerGroup = "${deploy-tool.mq.deploy-job-consumer-group}",
+        topic = "${deploy-platform.mq.deploy-job-topic}",
+        consumerGroup = "${deploy-platform.mq.deploy-job-consumer-group}",
         consumeMode = ConsumeMode.ORDERLY,
         messageModel = MessageModel.CLUSTERING
 )

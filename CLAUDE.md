@@ -71,7 +71,7 @@ WebSocket(STOMP) 经 vite 升级代理（`/websocket`，`ws: true`）到后端 `
 - `security/`、`filter/`、`interceptor/`、`validation/`、`exception/`、`config/`、`constant/`、`enums/`、`util/`
 
 ### 持久化
-- **MySQL 8** 是当前真实使用的数据库。`application-dev.yml` 把连接默认指向 `jdbc:mysql://localhost:3306/deploy_tool`（用户名 `root`，密码默认 `123456`，可通过 `MYSQL_HOST` / `MYSQL_PORT` / `MYSQL_USER` / `MYSQL_PASSWORD` / `MYSQL_DB` 环境变量覆盖）。生产构建（`-Ppro`）走同一连接 URL 但要求强制通过 env 提供凭据
+- **MySQL 8** 是当前真实使用的数据库。`application-dev.yml` 把连接默认指向 `jdbc:mysql://localhost:3306/deploy_platform`（用户名 `root`，密码默认 `123456`，可通过 `MYSQL_HOST` / `MYSQL_PORT` / `MYSQL_USER` / `MYSQL_PASSWORD` / `MYSQL_DB` 环境变量覆盖）。生产构建（`-Ppro`）走同一连接 URL 但要求强制通过 env 提供凭据
 - JPA：`ddl-auto: update`（dev）/ `none`（pro）、`open-in-view: false`
 - 构建期启用 Hibernate 字节码增强（`hibernate-enhance-maven-plugin`：lazy init、dirty tracking、association management）。不要在不理解后果的情况下禁用 —— commit `2047dfd` 就是修一个因为这套增强而暴露出来的 JPA 审计 bug
 - 可选的 SQL 种子初始化在 `classpath:/sql/data.sql`（当前在 `application-dev.yml` 里被注释掉了）

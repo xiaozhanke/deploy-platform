@@ -15,7 +15,7 @@
     <artifactId>sample-app-backend</artifactId>
     <version>1.0.0</version>
     <name>sample-app-backend</name>
-    <description>deploy-tool 部署测试用最简后端应用</description>
+    <description>deploy-platform 部署测试用最简后端应用</description>
 
     <properties>
         <!-- 部署目标容器 (docker/Dockerfile) 装的是 JRE 17 -->

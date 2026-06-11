@@ -16,28 +16,28 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param fallbackFile      Kafka 不可用时的本地兜底文件路径(恢复后由 replay job 回放)
  * @author xiaozhanke
  */
-@ConfigurationProperties(prefix = "deploy-tool.audit")
+@ConfigurationProperties(prefix = "deploy-platform.audit")
 public record KafkaAuditProperties(String bootstrapServers, String consumerGroup, String topic, int partitions,
                                    long sendTimeoutMillis, String fallbackFile) {
 
     public KafkaAuditProperties {
         if (bootstrapServers == null || bootstrapServers.isBlank()) {
-            throw new IllegalArgumentException("deploy-tool.audit.bootstrap-servers must be set");
+            throw new IllegalArgumentException("deploy-platform.audit.bootstrap-servers must be set");
         }
         if (consumerGroup == null || consumerGroup.isBlank()) {
-            throw new IllegalArgumentException("deploy-tool.audit.consumer-group must be set");
+            throw new IllegalArgumentException("deploy-platform.audit.consumer-group must be set");
         }
         if (topic == null || topic.isBlank()) {
-            throw new IllegalArgumentException("deploy-tool.audit.topic must be set");
+            throw new IllegalArgumentException("deploy-platform.audit.topic must be set");
         }
         if (partitions <= 0) {
-            throw new IllegalArgumentException("deploy-tool.audit.partitions must be positive");
+            throw new IllegalArgumentException("deploy-platform.audit.partitions must be positive");
         }
         if (sendTimeoutMillis <= 0) {
-            throw new IllegalArgumentException("deploy-tool.audit.send-timeout-millis must be positive");
+            throw new IllegalArgumentException("deploy-platform.audit.send-timeout-millis must be positive");
         }
         if (fallbackFile == null || fallbackFile.isBlank()) {
-            throw new IllegalArgumentException("deploy-tool.audit.fallback-file must be set");
+            throw new IllegalArgumentException("deploy-platform.audit.fallback-file must be set");
         }
     }
 }

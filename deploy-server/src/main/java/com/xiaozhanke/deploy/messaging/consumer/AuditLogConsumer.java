@@ -25,8 +25,8 @@ public class AuditLogConsumer {
     private final AuditLogRepository auditLogRepository;
 
     @KafkaListener(
-            topics = "${deploy-tool.audit.topic}",
-            groupId = "${deploy-tool.audit.consumer-group}",
+            topics = "${deploy-platform.audit.topic}",
+            groupId = "${deploy-platform.audit.consumer-group}",
             containerFactory = "auditKafkaListenerContainerFactory"
     )
     public void onMessage(AuditLogMessage message) {

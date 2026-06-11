@@ -30,9 +30,9 @@ public class AuditFallbackReplayJob {
     private final KafkaAuditProperties properties;
 
     /**
-     * 周期回放(默认 60s 一次,可配 {@code deploy-tool.audit.replay-interval-millis})。
+     * 周期回放(默认 60s 一次,可配 {@code deploy-platform.audit.replay-interval-millis})。
      */
-    @Scheduled(fixedDelayString = "${deploy-tool.audit.replay-interval-millis:60000}")
+    @Scheduled(fixedDelayString = "${deploy-platform.audit.replay-interval-millis:60000}")
     public void replay() {
         List<String> rawLines = fallbackWriter.drainRawLines();
         if (rawLines.isEmpty()) {

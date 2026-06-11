@@ -59,7 +59,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
  * <p>第一关靠真实 MySQL 唯一索引、第三关靠真实 SQL 的 affected rows 语义,均无法用 mock 替代,
  * 故沿用 {@code DeploymentServiceRestartTransactionTest} 的做法连专用测试库
  * {@code idempotency_test}({@code createDatabaseIfNotExist} + {@code ddl-auto=create-drop},
- * 不污染开发态 {@code deploy_tool});JWT keystore 指向 target/ 由 mvn clean 兜底清理。
+ * 不污染开发态 {@code deploy_platform});JWT keystore 指向 target/ 由 mvn clean 兜底清理。
  * 仅第二关需要避开真实 broker,用 {@link MockitoBean} 桩掉 {@link DeploymentMQProducer}。
  *
  * @author xiaozhanke

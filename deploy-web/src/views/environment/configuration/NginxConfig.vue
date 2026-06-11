@@ -65,7 +65,7 @@ const handleDetectLayout = async () => {
       configDir.value = layout.preferredIncludeDir
       ElNotification.success(`检测到 Nginx (${layout.binary})，配置目录 ${configDir.value}`)
     } else {
-      // fallback 到 deploy-tool 自编译安装的默认路径
+      // fallback 到 deploy-platform 自编译安装的默认路径
       configDir.value = `${props.homeDir}/environment/nginx/conf/conf.d`
       ElMessage.warning(`未检测到 Nginx，回退到默认目录 ${configDir.value}`)
     }
