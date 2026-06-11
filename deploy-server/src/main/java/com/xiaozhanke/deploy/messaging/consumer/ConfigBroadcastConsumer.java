@@ -25,7 +25,11 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "deploy-platform.mq.config-broadcast-enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(
+        name = "deploy-platform.mq.config-broadcast-enabled",
+        havingValue = "true",
+        matchIfMissing = true
+)
 @RocketMQMessageListener(
         topic = "${deploy-platform.mq.config-broadcast-topic:config-broadcast}",
         consumerGroup = "${deploy-platform.mq.config-broadcast-consumer-group:config-broadcast-consumer}",
