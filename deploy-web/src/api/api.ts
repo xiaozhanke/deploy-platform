@@ -76,11 +76,19 @@ export const hostQueryById = (id: string): Promise<HostRecord> => {
 }
 
 /**
- * 测试主机连接
+ * 测试主机连接（请求体携带连接信息，供新增等尚未保存的场景使用）
  * @param host 主机信息
  */
 export const hostTestConnection = (host: HostParams): Promise<boolean> => {
   return request.post('/hosts/test-connection', host)
+}
+
+/**
+ * 测试已保存主机连接（按 Id，凭据由后端取出，分页数据不含密码）
+ * @param id 主机 Id
+ */
+export const hostTestConnectionById = (id: string): Promise<boolean> => {
+  return request.post(`/hosts/${id}/test-connection`)
 }
 
 /**

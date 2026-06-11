@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Plus } from '@element-plus/icons-vue'
 
-import { hostAdd, hostDelete, hostQueryPage, hostTestConnection, hostUpdate } from '@/api/api'
+import { hostAdd, hostDelete, hostQueryPage, hostTestConnection, hostTestConnectionById, hostUpdate } from '@/api/api'
 import TablePagination from '@/components/table-pagination/index.vue'
 import { SshAuthTypeEnum } from '@/enums/platform'
 import type { PageParams } from '@/types/api'
@@ -81,17 +81,39 @@ const handleDelete = (host: HostRecord) => {
     .catch(() => {})
 }
 
-// 测试连接
+// 统一处理测试连接结果提示
+const reportTestResult = (isSuccess: boolean) => {
+  if (isSuccess) {
+    ElMessage.success('主机连通性测试成功')
+  } else {
+    ElMessage.error('主机连通性测试失败')
+  }
+}
+
+// 表单参数测试连接：用于新增时尚未保存、凭据由表单直接携带的配置
 const handleTestConnection = async (host: HostParams) => {
   try {
-    const isSuccess = await hostTestConnection(host)
-    if (isSuccess) {
-      ElMessage.success('主机连通性测试成功')
-    } else {
-      ElMessage.error('主机连通性测试失败')
-    }
+    reportTestResult(await hostTestConnection(host))
   } catch (error) {
     ElNotification.error('主机测试连接失败: ' + extractErrorMessage(error))
+  }
+}
+
+// 已保存主机测试连接：分页数据不含密码，按 Id 让后端用存储凭据测试
+const handleTestConnectionById = async (id: string) => {
+  try {
+    reportTestResult(await hostTestConnectionById(id))
+  } catch (error) {
+    ElNotification.error('主机测试连接失败: ' + extractErrorMessage(error))
+  }
+}
+
+// 抽屉内"测试连接"：新增态凭据由表单现填，走参数式；编辑态凭据不在表单里，按 Id 用后端存储凭据测
+const handleDialogTest = (host: HostParams) => {
+  if (dialogType.value === 'edit') {
+    handleTestConnectionById(currentHost.value.id)
+  } else {
+    handleTestConnection(host)
   }
 }
 
@@ -155,7 +177,7 @@ onActivated(() => {
           <el-button type="primary" link @click="handleView(row)">详情</el-button>
           <el-button type="warning" link @click="handleEdit(row)">编辑</el-button>
           <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
-          <el-button link @click="handleTestConnection(row)">测试连接</el-button>
+          <el-button link @click="handleTestConnectionById(row.id)">测试连接</el-button>
         </template>
       </el-table-column>
     </table-pagination>
@@ -165,7 +187,7 @@ onActivated(() => {
       v-model="dialogVisible"
       :type="dialogType"
       :host="currentHost"
-      @test="handleTestConnection"
+      @test="handleDialogTest"
       @submit="handleSubmit"
     />
   </section>

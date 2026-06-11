@@ -1,6 +1,7 @@
 package com.xiaozhanke.deploy.model.request;
 
 import com.xiaozhanke.deploy.enums.SshAuthTypeEnum;
+import com.xiaozhanke.deploy.model.validation.ValidationGroups;
 import com.xiaozhanke.deploy.validation.ConditionalNotBlank;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
@@ -12,6 +13,11 @@ import lombok.Data;
 /**
  * 主机信息参数
  *
+ * <p>password 与 privateKeyPassword 的非空约束只挂在 {@link ValidationGroups.Create} 组上：新增（及参数式
+ * 测试连接）按 {@code {Default, Create}} 校验、必填；更新只按 {@code Default} 校验，因列表/详情 VO 不回传这两个
+ * 凭据，编辑表单里它们恒为空，留空表示沿用库里原值（合并逻辑见 HostService#updateHost）。privateKeyPath 不是
+ * 秘密、VO 会回传，故留在 Default 组、新增与更新都校验。
+ *
  * @author xiaozhanke
  */
 @Data
@@ -20,6 +26,7 @@ import lombok.Data;
         selected = "authType",
         values = {"PASSWORD"},
         required = {"password"},
+        groups = ValidationGroups.Create.class,
         message = "密码认证方式下密码不能为空"
 )
 @ConditionalNotBlank(
@@ -32,6 +39,7 @@ import lombok.Data;
         selected = "authType",
         values = {"KEY_WITH_PASS"},
         required = {"privateKeyPassword"},
+        groups = ValidationGroups.Create.class,
         message = "带密码的密钥认证方式下私钥密码不能为空"
 )
 public class HostParams {

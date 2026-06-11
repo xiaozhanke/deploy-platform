@@ -5,11 +5,13 @@ import com.xiaozhanke.deploy.enums.AuditOperationTypeEnum;
 import com.xiaozhanke.deploy.model.request.HostParams;
 import com.xiaozhanke.deploy.model.request.HostQueryParams;
 import com.xiaozhanke.deploy.model.response.PageResult;
+import com.xiaozhanke.deploy.model.validation.ValidationGroups;
 import com.xiaozhanke.deploy.model.vo.HostRecordVo;
 import com.xiaozhanke.deploy.service.HostService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.groups.Default;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -55,7 +57,7 @@ public class HostController {
     @Operation(summary = "添加主机", description = "添加主机信息")
     @Auditable(operationType = AuditOperationTypeEnum.HOST_CREATE, target = "#params.address")
     @PostMapping
-    public ResponseEntity<HostRecordVo> addHost(@Validated @RequestBody HostParams params) {
+    public ResponseEntity<HostRecordVo> addHost(@Validated({Default.class, ValidationGroups.Create.class}) @RequestBody HostParams params) {
         HostRecordVo createdRecord = hostService.addHost(params);
         URI location =
                 ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(createdRecord.getId()).toUri();
@@ -73,7 +75,9 @@ public class HostController {
     @Auditable(operationType = AuditOperationTypeEnum.HOST_UPDATE, target = "#id")
     @PutMapping("/{id}")
     public HostRecordVo updateHost(@Parameter(description = "主机 Id", required = true) @PathVariable String id,
-                                   @Validated @RequestBody HostParams params) {
+                                   // 仅 Default 组：刻意不校验 Create 组的 password / privateKeyPassword 必填，
+                                   // 允许编辑时留空沿用原凭据，合并与有效性兜底在 HostService#updateHost
+                                   @Validated(Default.class) @RequestBody HostParams params) {
         return hostService.updateHost(id, params);
     }
 
@@ -136,9 +140,22 @@ public class HostController {
      * @param params 主机信息参数
      * @return 连接测试结果
      */
-    @Operation(summary = "测试主机连接", description = "测试主机连接")
+    @Operation(summary = "测试主机连接", description = "用请求体携带的连接信息测试连接，供新增等尚未保存的场景使用")
     @PostMapping("/test-connection")
-    public boolean testConnection(@Parameter(description = "主机信息") @Validated @RequestBody HostParams params) {
+    public boolean testConnection(@Parameter(description = "主机信息") @Validated({Default.class,
+            ValidationGroups.Create.class}) @RequestBody HostParams params) {
         return hostService.testConnection(params);
+    }
+
+    /**
+     * 测试已保存主机的连接
+     *
+     * @param id 主机 Id
+     * @return 连接测试结果
+     */
+    @Operation(summary = "测试已保存主机连接", description = "按主机 Id 用后端存储的凭据测试连接，无需前端回传密码")
+    @PostMapping("/{id}/test-connection")
+    public boolean testConnectionById(@Parameter(description = "主机 Id", required = true) @PathVariable String id) {
+        return hostService.testConnectionById(id);
     }
 }

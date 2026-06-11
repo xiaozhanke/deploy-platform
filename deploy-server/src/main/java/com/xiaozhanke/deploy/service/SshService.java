@@ -112,21 +112,37 @@ public class SshService {
     /**
      * 测试 SSH 连接详情是否有效, 不建立持久会话
      *
+     * <p>供"新增主机"等尚未落库、凭据由前端表单直接携带的场景使用。
+     *
      * @param params 连接详情
      * @return 如果连接测试成功则返回 true
      * @throws BusinessException 如果连接测试失败, 包含详细信息
      */
     public boolean testConnection(HostParams params) {
+        HostRecordDto hostRecordDto = new HostRecordDto();
+        BeanUtils.copyProperties(params, hostRecordDto);
+        return testConnection(hostRecordDto);
+    }
+
+    /**
+     * 测试 SSH 连接详情是否有效, 不建立持久会话
+     *
+     * <p>已保存主机走此重载：分页 / 详情 VO 不再回传 password 与 privateKeyPassword，
+     * 凭据由后端按 ID 取出装入 {@link HostRecordDto} 后直接传入，不经前端往返。
+     *
+     * @param host 连接详情（含凭据）
+     * @return 如果连接测试成功则返回 true
+     * @throws BusinessException 如果连接测试失败, 包含详细信息
+     */
+    public boolean testConnection(HostRecordDto host) {
         Session testSession = null;
         try {
-            log.info("开始测试 SSH 连接到服务器 {}@{} -p {}", params.getUsername(), params.getAddress(), params.getPort());
-            HostRecordDto hostRecordDto = new HostRecordDto();
-            BeanUtils.copyProperties(params, hostRecordDto);
-            testSession = createSession(hostRecordDto);
-            int connectTimeout = params.getConnectionTimeout() != null ? params.getConnectionTimeout() :
+            log.info("开始测试 SSH 连接到服务器 {}@{} -p {}", host.getUsername(), host.getAddress(), host.getPort());
+            testSession = createSession(host);
+            int connectTimeout = host.getConnectionTimeout() != null ? host.getConnectionTimeout() :
                     SshConstants.DEFAULT_CONNECT_TIMEOUT;
             testSession.connect(connectTimeout);
-            log.info("测试 SSH 连接成功, 连接到服务器 {}@{} -p {}", params.getUsername(), params.getAddress(), params.getPort());
+            log.info("测试 SSH 连接成功, 连接到服务器 {}@{} -p {}", host.getUsername(), host.getAddress(), host.getPort());
             return true;
         } catch (JSchException e) {
             String errorMessage = String.format("测试 SSH 连接失败: %s", e.getMessage());
@@ -633,7 +649,7 @@ public class SshService {
     /**
      * 设置认证方式
      *
-     * @param jsch   JSch 对象
+     * @param jsch JSch 对象
      * @param host 主机连接信息
      * @throws JSchException 认证设置失败时抛出
      */
@@ -676,7 +692,7 @@ public class SshService {
      * 应用 Session 配置
      *
      * @param session Session 对象
-     * @param host  主机连接信息
+     * @param host    主机连接信息
      */
     private void applySessionConfig(Session session, HostRecordDto host) throws JSchException {
         log.debug("开始应用会话配置");
@@ -1232,7 +1248,7 @@ public class SshService {
     /**
      * 执行命令并返回结果
      *
-     * @param host  主机信息
+     * @param host    主机信息
      * @param command 要执行的命令
      * @return 命令执行结果
      * @throws BusinessException 如果执行失败

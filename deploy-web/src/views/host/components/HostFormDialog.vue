@@ -64,7 +64,16 @@ watch(
   { immediate: true, deep: true },
 )
 
-const formRules = reactive<FormRules<HostParams>>({
+// 编辑态且认证方式与原主机一致时，密码 / 私钥密码可留空沿用原值（列表/详情不回显凭据）；
+// 新增、或编辑时切换到该认证方式（库里没有对应凭据）时仍需填写
+const keepPasswordOnEdit = computed(
+  () => props.type === 'edit' && props.host?.authType === SshAuthTypeEnum.PASSWORD.value,
+)
+const keepPrivateKeyPasswordOnEdit = computed(
+  () => props.type === 'edit' && props.host?.authType === SshAuthTypeEnum.KEY_WITH_PASS.value,
+)
+
+const formRules = computed<FormRules<HostParams>>(() => ({
   name: [{ required: false, message: '主机名称不能为空', trigger: 'blur' }],
   address: [{ required: true, message: '主机地址不能为空', trigger: 'blur' }],
   port: [{ required: true, message: '端口号不能为空', trigger: 'blur' }],
@@ -72,11 +81,11 @@ const formRules = reactive<FormRules<HostParams>>({
   authType: [{ required: true, message: '认证方式不能为空', trigger: 'change' }],
   password: [
     {
-      required: true,
+      required: !keepPasswordOnEdit.value,
       message: '密码不能为空',
       trigger: 'blur',
       validator: (rule: InternalRuleItem, value: string, callback: (error?: string | Error) => void) => {
-        if (form.authType === SshAuthTypeEnum.PASSWORD.value && !value) {
+        if (form.authType === SshAuthTypeEnum.PASSWORD.value && !value && !keepPasswordOnEdit.value) {
           callback(new Error('密码认证方式下密码不能为空'))
         } else {
           callback()
@@ -103,11 +112,11 @@ const formRules = reactive<FormRules<HostParams>>({
   ],
   privateKeyPassword: [
     {
-      required: true,
+      required: !keepPrivateKeyPasswordOnEdit.value,
       message: '私钥密码不能为空',
       trigger: 'blur',
       validator: (rule: InternalRuleItem, value: string, callback: (error?: string | Error) => void) => {
-        if (form.authType === SshAuthTypeEnum.KEY_WITH_PASS.value && !value) {
+        if (form.authType === SshAuthTypeEnum.KEY_WITH_PASS.value && !value && !keepPrivateKeyPasswordOnEdit.value) {
           callback(new Error('带密码的密钥认证方式下私钥密码不能为空'))
         } else {
           callback()
@@ -115,7 +124,7 @@ const formRules = reactive<FormRules<HostParams>>({
       },
     },
   ],
-})
+}))
 
 const dialogTitle = computed(() => {
   switch (props.type) {
@@ -210,7 +219,13 @@ const handleClosed = () => {
             </el-select>
           </el-form-item>
           <el-form-item v-if="form.authType === SshAuthTypeEnum.PASSWORD.value" label="密码" prop="password">
-            <el-input v-model="form.password" type="password" placeholder="密码" show-password clearable />
+            <el-input
+              v-model="form.password"
+              type="password"
+              :placeholder="keepPasswordOnEdit ? '留空则保持原密码不变' : '密码'"
+              show-password
+              clearable
+            />
           </el-form-item>
           <el-form-item
             v-if="form.authType === SshAuthTypeEnum.KEY.value || form.authType === SshAuthTypeEnum.KEY_WITH_PASS.value"
@@ -227,7 +242,7 @@ const handleClosed = () => {
             <el-input
               v-model="form.privateKeyPassword"
               type="password"
-              placeholder="私钥密码"
+              :placeholder="keepPrivateKeyPasswordOnEdit ? '留空则保持原私钥密码不变' : '私钥密码'"
               show-password
               clearable
             />
