@@ -16,7 +16,7 @@ export const downloadFile = async (id: string, filename?: string) => {
     if (contentDisposition) {
       // 尝试从 Content-Disposition 中提取文件名
       const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition)
-      if (matches != null && matches[1]) {
+      if (matches !== null && matches[1]) {
         defaultFilename = matches[1].replace(/['"]/g, '')
         // 处理 MIME 编码
         defaultFilename = decodeMimeEncodedString(defaultFilename)
@@ -24,7 +24,10 @@ export const downloadFile = async (id: string, filename?: string) => {
     }
 
     // 创建下载链接
-    const blob = new Blob([response.data], { type: contentType || 'application/octet-stream' })
+    // contentType 来自 axios 响应头，类型是联合（可能为数组 / AxiosHeaders 等），仅当确为字符串时才用作 Blob 的 MIME
+    const blob = new Blob([response.data], {
+      type: typeof contentType === 'string' ? contentType : 'application/octet-stream',
+    })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url

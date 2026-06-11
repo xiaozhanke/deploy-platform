@@ -1,10 +1,12 @@
-import router from '@/router'
-import { defineStore } from 'pinia'
-import { useWebSocketStore } from './websocket'
 import type { User } from 'oidc-client-ts'
+import { defineStore } from 'pinia'
+
+import { authUserCurrent } from '@/api/api'
+import router from '@/router'
 import { oidcService } from '@/services/oidcService'
 import type { UserProfile } from '@/types/auth'
-import { authUserCurrent } from '@/api/api'
+
+import { useWebSocketStore } from './websocket'
 
 interface AuthStore {
   oidcUser: User | null
@@ -15,9 +17,6 @@ interface AuthStore {
 }
 
 const getWebSocketUrl = () => {
-  if (import.meta.env.VITE_WEBSOCKET_URL) {
-    return import.meta.env.VITE_WEBSOCKET_URL
-  }
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
   const host = window.location.host
   return `${protocol}//${host}/websocket`
@@ -79,13 +78,11 @@ export const useAuthStore = defineStore('auth', {
 
       // 静默刷新或通过回调获取到新用户时触发
       oidcService.events.addUserLoaded(async (user) => {
-        console.log('OIDC 事件：用户加载完成')
         await this.handleUserLoaded(user)
       })
 
       // 用户登出或会话丢失时触发
       oidcService.events.addUserUnloaded(async () => {
-        console.log('OIDC 事件：用户卸载')
         await this.handleUserUnloaded()
       })
 

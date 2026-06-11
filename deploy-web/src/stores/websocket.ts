@@ -1,6 +1,7 @@
 import { Client, type IMessage, type StompHeaders, type StompSubscription } from '@stomp/stompjs'
 import { defineStore } from 'pinia'
 import { ref, shallowRef } from 'vue'
+
 import { useAuthStore } from './auth'
 
 /**
@@ -145,16 +146,14 @@ export const useWebSocketStore = defineStore('websocket', () => {
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
       connectionTimeout: 5000,
-      debug: (str) => console.debug('[STOMP]', str),
       onConnect: () => {
         clearGiveUpTimer()
         pausedByHidden = false
         status.value = 'connected'
         replaySubscriptions()
       },
-      onStompError: (frame) => {
+      onStompError: () => {
         // 传输 / 协议层错误折进状态机、不弹 toast；随后的 close 会驱动 reconnecting
-        console.debug('[STOMP] error', frame.headers?.message)
       },
       onWebSocketClose: () => {
         if (intentional) return // 主动断开（续签 / 登出 / 放弃 / 暂停），不报警
@@ -281,7 +280,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
         send(sendDestination, payload)
       } catch (error) {
         subscription.unsubscribe()
-        reject(error)
+        reject(error instanceof Error ? error : new Error(String(error)))
       }
     })
   }
