@@ -2,7 +2,7 @@
 import type { FormInstance, FormRules } from 'element-plus'
 
 import { fileUpdateMetadata } from '@/api/api'
-import { ArchitectureEnum, FileScopeEnum } from '@/enums/platform'
+import { FileScopeEnum } from '@/enums/platform'
 import type { FileParams, FileRecord } from '@/types/file'
 
 const props = defineProps<{
@@ -32,7 +32,6 @@ watch(
     form.groupId = newVal.groupId
     form.artifactId = newVal.artifactId
     form.version = newVal.version
-    form.architecture = newVal.architecture
     form.description = newVal.description
   },
   { immediate: true },
@@ -100,17 +99,6 @@ const handleClose = () => {
       <el-form-item label="版本" prop="version">
         <el-input v-if="editable" v-model="form.version" placeholder="版本" clearable />
         <span v-else>{{ file.version }}</span>
-      </el-form-item>
-      <el-form-item label="芯片架构">
-        <el-select v-if="editable" v-model="form.architecture" placeholder="芯片架构" clearable>
-          <el-option
-            v-for="item in ArchitectureEnum.options"
-            :key="item.value"
-            :value="item.value"
-            :label="item.label"
-          />
-        </el-select>
-        <el-tag v-else-if="file.architecture">{{ ArchitectureEnum.getLabel(file.architecture) }}</el-tag>
       </el-form-item>
       <el-form-item label="文件描述">
         <el-input

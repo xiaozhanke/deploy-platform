@@ -21,7 +21,6 @@ import FrontEndRun from './FrontEndRun.vue'
 const sessionId = ref<string>('')
 const currentHost = ref<HostRecord>({} as HostRecord)
 const environmentStatus = ref<Record<string, ExecResult>>({
-  arch: { result: '', exitCode: -1 },
   Java: { result: '', exitCode: -1 },
   Nginx: { result: '', exitCode: -1 },
   Redis: { result: '', exitCode: -1 },
@@ -159,7 +158,6 @@ onMounted(() => {
                 <div class="file-name">
                   <el-icon><document /></el-icon>
                   <span class="file-name-label">{{ row.fileName }}</span>
-                  <el-tag v-if="row.architecture" class="file-name-tag">{{ row.architecture }}</el-tag>
                 </div>
               </template>
             </el-table-column>

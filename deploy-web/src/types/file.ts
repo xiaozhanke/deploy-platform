@@ -1,4 +1,4 @@
-import type { ArchitectureEnum, FileScopeEnum } from '@/enums/platform'
+import type { FileScopeEnum } from '@/enums/platform'
 
 /**
  * 文件记录
@@ -50,11 +50,6 @@ export interface FileRecord {
   version: string
 
   /**
-   * 芯片架构
-   */
-  architecture: keyof typeof ArchitectureEnum
-
-  /**
    * 文件描述
    */
   description: string
@@ -103,11 +98,6 @@ export interface FileParams {
    * 版本
    */
   version?: string
-
-  /**
-   * 芯片架构
-   */
-  architecture?: keyof typeof ArchitectureEnum
 
   /**
    * 文件描述

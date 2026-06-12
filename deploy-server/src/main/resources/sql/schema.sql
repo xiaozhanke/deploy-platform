@@ -22,7 +22,6 @@ CREATE TABLE `file_record` (
   `is_deleted` bit(1) DEFAULT NULL COMMENT '已删除',
   `update_time` datetime(6) NOT NULL COMMENT '更新时间',
   `update_user` varchar(255) NOT NULL COMMENT '更新用户',
-  `architecture` enum('AARCH64','ARM','UNKNOWN','X64','X86') DEFAULT NULL COMMENT '芯片架构',
   `artifact_id` varchar(255) DEFAULT NULL COMMENT '构件 Id',
   `content_type` varchar(255) DEFAULT NULL COMMENT '内容类型',
   `description` varchar(255) DEFAULT NULL COMMENT '文件描述',

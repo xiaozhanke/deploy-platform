@@ -10,7 +10,7 @@ import type {
 } from 'element-plus'
 
 import { fileUpload } from '@/api/api'
-import { ArchitectureEnum, FileScopeEnum } from '@/enums/platform'
+import { FileScopeEnum } from '@/enums/platform'
 import type { FileParams, FileRecord } from '@/types/file'
 
 const props = defineProps<{
@@ -33,7 +33,6 @@ const form = reactive<FileParams>({
   groupId: undefined,
   artifactId: undefined,
   version: undefined,
-  architecture: undefined,
   description: undefined,
 })
 const formRules = reactive<FormRules<FileParams>>({
@@ -126,16 +125,6 @@ const handleClose = () => {
       </el-form-item>
       <el-form-item label="版本" prop="version">
         <el-input v-model="form.version" placeholder="版本" clearable />
-      </el-form-item>
-      <el-form-item label="芯片架构" prop="architecture">
-        <el-select v-model="form.architecture" placeholder="芯片架构" clearable>
-          <el-option
-            v-for="item in ArchitectureEnum.options"
-            :key="item.value"
-            :value="item.value"
-            :label="item.label"
-          />
-        </el-select>
       </el-form-item>
       <el-form-item label="文件描述" prop="description">
         <el-input v-model="form.description" type="textarea" :autosize="{ minRows: 1 }" placeholder="文件描述" />

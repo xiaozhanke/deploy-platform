@@ -1,6 +1,5 @@
 package com.xiaozhanke.deploy.model.vo;
 
-import com.xiaozhanke.deploy.enums.ArchitectureEnum;
 import com.xiaozhanke.deploy.enums.FileScopeEnum;
 import com.xiaozhanke.deploy.model.base.BaseVo;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -72,12 +71,6 @@ public class FileRecordVo extends BaseVo {
      */
     @Schema(description = "版本")
     private String version;
-
-    /**
-     * 芯片架构
-     */
-    @Schema(description = "芯片架构")
-    private ArchitectureEnum architecture;
 
     /**
      * 文件描述

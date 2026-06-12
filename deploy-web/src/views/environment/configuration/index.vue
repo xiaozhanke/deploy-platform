@@ -43,7 +43,6 @@ const handleConnect = async () => {
 
 // 环境状态
 const environmentStatus = ref<Record<string, ExecResult>>({
-  arch: { result: '', exitCode: -1 },
   Nginx: { result: '', exitCode: -1 },
   Redis: { result: '', exitCode: -1 },
 })

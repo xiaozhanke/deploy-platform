@@ -4,7 +4,7 @@ import type { Sort } from 'element-plus'
 
 import { fileDelete, fileQueryPage } from '@/api/api'
 import TablePagination from '@/components/table-pagination/index.vue'
-import { ArchitectureEnum, FileScopeEnum } from '@/enums/platform'
+import { FileScopeEnum } from '@/enums/platform'
 import type { PageParams } from '@/types/api'
 import type { FileParams, FileRecord } from '@/types/file'
 import { downloadFile } from '@/utils/download'
@@ -167,16 +167,6 @@ onActivated(() => {
         <filter-field label="版本" prop="version">
           <el-input v-model="form.version" placeholder="版本" clearable />
         </filter-field>
-        <filter-field label="芯片架构" prop="architecture">
-          <el-select v-model="form.architecture" placeholder="全部" clearable>
-            <el-option
-              v-for="item in ArchitectureEnum.options"
-              :key="item.value"
-              :value="item.value"
-              :label="item.label"
-            />
-          </el-select>
-        </filter-field>
         <filter-field label="文件描述" prop="description" :lg="12" :xl="8">
           <el-input v-model="form.description" placeholder="文件描述" clearable />
         </filter-field>
@@ -206,7 +196,6 @@ onActivated(() => {
             <el-icon v-if="row.directory"><folder /></el-icon>
             <el-icon v-else><document /></el-icon>
             <span class="file-name-label">{{ row.fileName }}</span>
-            <el-tag v-if="row.architecture" class="file-name-tag">{{ row.architecture }}</el-tag>
           </div>
         </template>
       </el-table-column>

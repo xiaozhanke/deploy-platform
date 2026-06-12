@@ -1,6 +1,5 @@
 package com.xiaozhanke.deploy.model.entity;
 
-import com.xiaozhanke.deploy.enums.ArchitectureEnum;
 import com.xiaozhanke.deploy.enums.FileScopeEnum;
 import com.xiaozhanke.deploy.model.base.BasePo;
 import jakarta.persistence.Column;
@@ -95,14 +94,6 @@ public class FileRecord extends BasePo {
     @Comment("版本")
     @Column
     private String version;
-
-    /**
-     * 芯片架构
-     */
-    @Comment("芯片架构")
-    @Column
-    @Enumerated(EnumType.STRING)
-    private ArchitectureEnum architecture;
 
     /**
      * 文件描述

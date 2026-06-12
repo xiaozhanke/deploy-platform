@@ -4,7 +4,6 @@ import { Close, Connection, Position, Refresh } from '@element-plus/icons-vue'
 import { sshConnect, sshDisconnect, sshExecCommand } from '@/api/api'
 import JavaIcon from '@/assets/icons/logo-java.svg'
 import NginxIcon from '@/assets/icons/logo-nginx.svg'
-import NodeIcon from '@/assets/icons/logo-nodejs.svg'
 import RedisIcon from '@/assets/icons/logo-redis.svg'
 import type { ExecResult } from '@/types/environment'
 import type { HostRecord } from '@/types/host'
@@ -31,7 +30,6 @@ const handleSelectComplete = async (host: HostRecord) => {
 
 const environmentIcons: Record<string, string> = {
   Java: JavaIcon,
-  Node: NodeIcon,
   Nginx: NginxIcon,
   Redis: RedisIcon,
 }
@@ -39,15 +37,13 @@ const environmentIcons: Record<string, string> = {
 const environmentStatus = inject('environmentStatus') as Ref<Record<string, ExecResult>>
 // 查询环境的命令
 const environmentCommands: Record<string, string> = {
-  arch: 'uname -m',
   Java: 'java -version',
-  Node: 'node -v',
   Nginx: 'nginx -v',
   Redis: 'redis-server -v',
 }
 // 显示的环境
 const showEnvironments = computed(() => {
-  return Object.keys(environmentStatus.value).filter((key) => key !== 'arch')
+  return Object.keys(environmentStatus.value)
 })
 
 // 建立连接
@@ -101,9 +97,6 @@ const fetchEnvironmentStatus = async (environment: string) => {
     switch (environment) {
       case 'Java':
         version = rawResult.match(/version "([\d._]+)"/)?.[1] || '未检测到 Java 环境'
-        break
-      case 'Node':
-        version = rawResult.match(/v([\d.]+)/)?.[1] || '未检测到 Node 环境'
         break
       case 'Nginx':
         version = rawResult.match(/nginx\/([\d.]+)/)?.[1] || '未检测到 Nginx 环境'
@@ -165,10 +158,6 @@ onBeforeUnmount(async () => {
       <div class="info-row">
         <div class="label">主目录</div>
         <div class="value">{{ currentHost?.homeDir }}</div>
-      </div>
-      <div class="info-row">
-        <div class="label">芯片架构</div>
-        <div class="value">{{ environmentStatus['arch']?.result }}</div>
       </div>
     </div>
     <!-- 环境状态 -->

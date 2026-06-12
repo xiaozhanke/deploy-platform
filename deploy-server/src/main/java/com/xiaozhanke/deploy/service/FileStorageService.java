@@ -255,7 +255,6 @@ public class FileStorageService {
         fileRecord.setGroupId(fileParams.getGroupId());
         fileRecord.setArtifactId(fileParams.getArtifactId());
         fileRecord.setVersion(fileParams.getVersion());
-        fileRecord.setArchitecture(fileParams.getArchitecture());
         fileRecord.setDescription(fileParams.getDescription());
         return fileRecordPoVoMapper.poToVo(fileRecordRepository.save(fileRecord));
     }
@@ -421,10 +420,6 @@ public class FileStorageService {
 
             if (StringUtils.hasText(params.getVersion())) {
                 predicateList.add(criteriaBuilder.equal(root.get("version"), params.getVersion()));
-            }
-
-            if (params.getArchitecture() != null) {
-                predicateList.add(criteriaBuilder.equal(root.get("architecture"), params.getArchitecture()));
             }
 
             if (StringUtils.hasText(params.getDescription())) {

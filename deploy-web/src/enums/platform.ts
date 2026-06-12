@@ -9,17 +9,6 @@ export const ApplicationTypeEnum = createEnum({
 } as const)
 
 /**
- * 芯片架构枚举
- */
-export const ArchitectureEnum = createEnum({
-  X86: { value: 'X86', label: 'X86 架构' },
-  X64: { value: 'X64', label: 'x64 架构' },
-  ARM: { value: 'ARM', label: 'ARM 架构' },
-  AARCH64: { value: 'AARCH64', label: 'AARCH64 架构' },
-  UNKNOWN: { value: 'UNKNOWN', label: '未知架构' },
-} as const)
-
-/**
  * 部署状态枚举
  */
 export const DeploymentStatusEnum = createEnum({

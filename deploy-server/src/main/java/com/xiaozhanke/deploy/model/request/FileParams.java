@@ -1,6 +1,5 @@
 package com.xiaozhanke.deploy.model.request;
 
-import com.xiaozhanke.deploy.enums.ArchitectureEnum;
 import com.xiaozhanke.deploy.enums.FileScopeEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -49,12 +48,6 @@ public class FileParams {
      */
     @Schema(description = "版本")
     private String version;
-
-    /**
-     * 芯片架构
-     */
-    @Schema(description = "芯片架构")
-    private ArchitectureEnum architecture;
 
     /**
      * 文件描述

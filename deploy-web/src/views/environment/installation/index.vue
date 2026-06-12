@@ -4,12 +4,10 @@ defineOptions({
 })
 
 import { fileQueryPath, sshShellAdd } from '@/api/api'
-import JavaIcon from '@/assets/icons/logo-java.svg'
 import NginxIcon from '@/assets/icons/logo-nginx.svg'
-import NodeIcon from '@/assets/icons/logo-nodejs.svg'
 import RedisIcon from '@/assets/icons/logo-redis.svg'
 import TerminalPanel from '@/components/terminal-panel/index.vue'
-import type { ArchitectureEnum, FileScopeEnum } from '@/enums/platform'
+import type { FileScopeEnum } from '@/enums/platform'
 import { useWebSocketStore } from '@/stores/websocket'
 import type { ExecResult, SetupStep } from '@/types/environment'
 import type { FileParams } from '@/types/file'
@@ -34,20 +32,6 @@ provide('currentHost', currentHost)
 
 // 页签数据
 const tabs = [
-  {
-    name: 'java',
-    icon: JavaIcon,
-    label: 'Java 安装',
-    steps: () => javaSteps(),
-    stepExecutorRef: ref<InstanceType<typeof StepExecutor>>(),
-  },
-  {
-    name: 'node',
-    icon: NodeIcon,
-    label: 'Node 安装',
-    steps: () => nodeSteps(),
-    stepExecutorRef: ref<InstanceType<typeof StepExecutor>>(),
-  },
   {
     name: 'nginx',
     icon: NginxIcon,
@@ -107,59 +91,21 @@ onUnmounted(() => {
 
 // 环境状态
 const environmentStatus = ref<Record<string, ExecResult>>({
-  arch: { result: '', exitCode: -1 },
-  Java: { result: '', exitCode: -1 },
-  Node: { result: '', exitCode: -1 },
   Nginx: { result: '', exitCode: -1 },
   Redis: { result: '', exitCode: -1 },
 })
 provide('environmentStatus', environmentStatus)
 
-// 将 uname -m 的输出结果转换为 ArchitectureEnum
-const mapUnameToArchitecture = (unameResult: string): keyof typeof ArchitectureEnum => {
-  // 转换为小写方便比较
-  const arch = unameResult.toLowerCase().trim()
-
-  // X86 架构判断
-  if (['i386', 'i486', 'i586', 'i686'].includes(arch)) {
-    return 'X86'
-  }
-
-  // X64 架构判断
-  if (['x86_64', 'amd64'].includes(arch)) {
-    return 'X64'
-  }
-
-  // ARM 架构判断
-  if (['armv5te', 'armv6l', 'armv7l'].includes(arch)) {
-    return 'ARM'
-  }
-
-  // AARCH64 架构判断
-  if (['aarch64', 'arm64'].includes(arch)) {
-    return 'AARCH64'
-  }
-
-  // 其他情况返回未知
-  return 'UNKNOWN'
-}
-
 // 文件路径
 const filePaths = ref<Record<string, string>>({
-  java: '',
-  node: '',
   nginx: '',
   redis: '',
 })
 // 获取文件路径
-const getFilePath = async (artifactId: string, scope: keyof typeof FileScopeEnum, useArchitecture: boolean) => {
+const getFilePath = async (artifactId: string, scope: keyof typeof FileScopeEnum) => {
   const params: FileParams = {
     artifactId,
     scope,
-  }
-  // 是否需要传芯片架构参数
-  if (useArchitecture) {
-    params.architecture = mapUnameToArchitecture(environmentStatus.value.arch.result)
   }
   try {
     const data = await fileQueryPath(params)
@@ -171,117 +117,17 @@ const getFilePath = async (artifactId: string, scope: keyof typeof FileScopeEnum
 
 // 获取所有文件路径
 const getAllFilePaths = async () => {
-  if (!environmentStatus.value.arch.result) {
-    return
-  }
-  await Promise.all([
-    getFilePath('java', 'ENVIRONMENT', true),
-    getFilePath('node', 'ENVIRONMENT', true),
-    getFilePath('nginx', 'ENVIRONMENT', false),
-    getFilePath('redis', 'ENVIRONMENT', false),
-  ])
+  await Promise.all([getFilePath('nginx', 'ENVIRONMENT'), getFilePath('redis', 'ENVIRONMENT')])
 }
 
-// 监听架构变化
-watch(
-  () => environmentStatus.value.arch.result,
-  async () => {
-    await getAllFilePaths()
-  },
-)
+onMounted(async () => {
+  await getAllFilePaths()
+})
 
 // 获取文件名
 const getFileName = (path: string) => {
   if (!path) return ''
   return path.split('/').pop() || ''
-}
-
-// Java 安装步骤
-const javaSteps = (): SetupStep[] => {
-  const fileName = getFileName(filePaths.value.java)
-  return [
-    {
-      title: '上传安装包',
-      type: 'upload',
-      localPath: filePaths.value.java,
-      remoteDir: homeDir.value,
-      percentage: 0,
-      status: 'process',
-    },
-    {
-      title: '解压安装包',
-      type: 'command',
-      commands: [
-        `cd ${homeDir.value}`,
-        'mkdir -p environment',
-        fileName ? `mv ${fileName} environment && cd environment` : '',
-        fileName ? `tar -xzf ${fileName} && rm -f ${fileName} && mv jdk* java` : '',
-      ].filter(Boolean),
-      status: 'wait',
-    },
-    {
-      title: '配置环境变量',
-      type: 'command',
-      commands: [`echo 'export PATH=${homeDir.value}/environment/java/bin:$PATH' >> ${homeDir.value}/.bashrc`],
-      status: 'wait',
-    },
-    {
-      title: '生效配置',
-      type: 'command',
-      commands: [`source ${homeDir.value}/.bashrc`],
-      status: 'wait',
-    },
-    {
-      title: '验证安装',
-      type: 'command',
-      commands: ['java -version'],
-      status: 'wait',
-    },
-  ]
-}
-
-// Node 安装步骤
-const nodeSteps = (): SetupStep[] => {
-  const fileName = getFileName(filePaths.value.node)
-  return [
-    {
-      title: '上传安装包',
-      type: 'upload',
-      localPath: filePaths.value.node,
-      remoteDir: homeDir.value,
-      percentage: 0,
-      status: 'process',
-    },
-    {
-      title: '解压安装包',
-      type: 'command',
-      commands: [
-        `cd ${homeDir.value}`,
-        'mkdir -p environment',
-        fileName ? `mv ${fileName} environment && cd environment` : '',
-        fileName ? `tar -xzf ${fileName} && rm -f ${fileName} && mv node* node` : '',
-      ].filter(Boolean),
-      status: 'wait',
-    },
-    {
-      title: '配置环境变量',
-      type: 'command',
-      commands: [`echo 'export PATH=${homeDir.value}/environment/node/bin:$PATH' >> ${homeDir.value}/.bashrc`],
-      status: 'wait',
-    },
-    {
-      title: '生效配置',
-      type: 'command',
-      commands: [`source ${homeDir.value}/.bashrc`],
-      status: 'wait',
-    },
-    {
-      title: '验证安装',
-      type: 'command',
-      commands: ['node -v && npm -v'],
-      status: 'wait',
-    },
-  ]
 }
 
 // Nginx 安装步骤

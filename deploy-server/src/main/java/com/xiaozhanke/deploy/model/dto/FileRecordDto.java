@@ -1,6 +1,5 @@
 package com.xiaozhanke.deploy.model.dto;
 
-import com.xiaozhanke.deploy.enums.ArchitectureEnum;
 import com.xiaozhanke.deploy.enums.FileScopeEnum;
 import com.xiaozhanke.deploy.model.base.BaseDto;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -71,12 +70,6 @@ public class FileRecordDto extends BaseDto {
      */
     @Schema(description = "版本")
     private String version;
-
-    /**
-     * 芯片架构
-     */
-    @Schema(description = "芯片架构")
-    private ArchitectureEnum architecture;
 
     /**
      * 文件描述
