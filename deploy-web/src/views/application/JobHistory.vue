@@ -86,7 +86,11 @@ const unsubscribe = () => {
   subscription = null
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // AppDrawer 底层 el-drawer 懒渲染抽屉主体：挂载时 rendered 才置真，TablePagination
+  // 要等下一轮 flush 才挂载。须等一个 nextTick，tablePaginationRef 才有值，否则 refresh()
+  // 里的 ?. 会把首查静默吞掉，抽屉永远空。
+  await nextTick()
   refresh()
   subscribe()
 })
@@ -141,13 +145,12 @@ onUnmounted(() => {
           </template>
         </el-table-column>
         <el-table-column prop="errorMessage" label="错误信息" min-width="200px" />
-        <el-table-column label="操作" width="80px" fixed="right">
+        <el-table-column label="操作" width="62px" fixed="right">
           <template #default="{ row }">
             <el-button
-              v-if="row.status === JobStatusEnum.PENDING.value"
               type="danger"
-              size="small"
               link
+              :disabled="row.status !== JobStatusEnum.PENDING.value"
               @click="handleCancel(row)"
             >
               撤销

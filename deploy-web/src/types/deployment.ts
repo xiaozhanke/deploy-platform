@@ -23,6 +23,8 @@ export interface DeploymentRecord {
   lastStopTime: string
   processId: string
   running: boolean
+  /** 最近一次作业(按 createTime 取最新);该记录从未执行过作业时为空 */
+  latestJob?: DeploymentJob
 }
 
 /**

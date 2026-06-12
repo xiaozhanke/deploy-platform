@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -61,4 +62,19 @@ public interface DeploymentJobRepository extends JpaRepository<DeploymentJob, St
      * 查指定部署记录下处于 PENDING 状态的所有作业(供"待执行作业"列表使用,场景 3 延迟作业)。
      */
     List<DeploymentJob> findByDeploymentRecordIdAndStatus(String deploymentRecordId, JobStatusEnum status);
+
+    /**
+     * 批量查一组部署记录各自「最近一次作业」(按 createTime 取最新),供部署记录列表的「最近作业」列回填。
+     *
+     * <p>相关子查询取每条记录的 {@code MAX(createTime)},一次查出整页记录的最新作业,避免逐条 N+1。
+     * 同一记录的作业彼此串行(ADR-0006),createTime 为 datetime(6),理论上不会并列;若极端并列由
+     * 调用方按 recordId 去重兜底。
+     *
+     * <p>外层与子查询都过滤 {@code deleted = false},与全系统软删约定一致,避免软删作业被当成「最新」。
+     */
+    @Query("SELECT j FROM DeploymentJob j WHERE j.deploymentRecord.id IN :recordIds " +
+            "AND j.deleted = false " +
+            "AND j.createTime = (SELECT MAX(j2.createTime) FROM DeploymentJob j2 " +
+            "WHERE j2.deploymentRecord.id = j.deploymentRecord.id AND j2.deleted = false)")
+    List<DeploymentJob> findLatestByDeploymentRecordIdIn(@Param("recordIds") Collection<String> recordIds);
 }

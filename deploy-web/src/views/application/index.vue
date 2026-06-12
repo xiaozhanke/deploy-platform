@@ -114,6 +114,16 @@ const subscribeJobs = (records: DeploymentRecord[]) => {
 const queryMethod = async (queryParams: Record<string, unknown>, pageParams: PageParams) => {
   const result = await deploymentRecordQueryPage(queryParams as Partial<DeploymentRecord>, pageParams)
   subscribeJobs(result.content)
+  // 用后端回填的「最近作业」初始化 latestJobMap：否则该列只有「提交时乐观写入 + WS 实时推送」
+  // 两个来源，刷新或重进页面后会全部回落成「-」。仅当不会用更旧快照覆盖 WS 刚推送的更新态时才写入。
+  result.content.forEach((record) => {
+    const latestJob = record.latestJob
+    if (!latestJob) return
+    const existing = latestJobMap[record.id]
+    if (!existing || (latestJob.updateTime ?? '') >= (existing.updateTime ?? '')) {
+      latestJobMap[record.id] = latestJob
+    }
+  })
   return result
 }
 

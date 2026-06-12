@@ -115,4 +115,11 @@ public class DeploymentRecordVo extends BaseVo {
      */
     @Schema(description = "是否正在运行")
     private Boolean running;
+
+    /**
+     * 最近一次作业(按 createTime 取最新,可能为空表示该记录从未执行过作业)。
+     * 由 service 单独批量查询后回填,实体上无对应字段。
+     */
+    @Schema(description = "最近一次作业")
+    private DeploymentJobVo latestJob;
 }

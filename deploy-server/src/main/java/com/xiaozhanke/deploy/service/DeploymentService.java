@@ -10,10 +10,13 @@ import com.xiaozhanke.deploy.model.dto.HostRecordDto;
 import com.xiaozhanke.deploy.model.entity.DeploymentRecord;
 import com.xiaozhanke.deploy.model.entity.FileRecord;
 import com.xiaozhanke.deploy.model.entity.HostRecord;
+import com.xiaozhanke.deploy.model.mapper.DeploymentJobPoVoMapper;
 import com.xiaozhanke.deploy.model.mapper.DeploymentRecordPoVoMapper;
 import com.xiaozhanke.deploy.model.request.DeploymentParams;
 import com.xiaozhanke.deploy.model.response.PageResult;
+import com.xiaozhanke.deploy.model.vo.DeploymentJobVo;
 import com.xiaozhanke.deploy.model.vo.DeploymentRecordVo;
+import com.xiaozhanke.deploy.repository.DeploymentJobRepository;
 import com.xiaozhanke.deploy.repository.DeploymentRecordRepository;
 import com.xiaozhanke.deploy.util.ShellArgEscaper;
 import jakarta.persistence.criteria.Predicate;
@@ -29,6 +32,8 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 部署服务类
@@ -41,6 +46,8 @@ public class DeploymentService {
 
     private final DeploymentRecordRepository deploymentRecordRepository;
     private final DeploymentRecordPoVoMapper deploymentRecordPoVoMapper;
+    private final DeploymentJobRepository deploymentJobRepository;
+    private final DeploymentJobPoVoMapper deploymentJobPoVoMapper;
     private final SshService sshService;
     private final HostService hostService;
     private final FileStorageService fileStorageService;
@@ -48,12 +55,16 @@ public class DeploymentService {
 
     public DeploymentService(DeploymentRecordRepository deploymentRecordRepository,
                              DeploymentRecordPoVoMapper deploymentRecordPoVoMapper,
+                             DeploymentJobRepository deploymentJobRepository,
+                             DeploymentJobPoVoMapper deploymentJobPoVoMapper,
                              SshService sshService,
                              HostService hostService,
                              FileStorageService fileStorageService,
                              SshOperationExecutor sshOperationExecutor) {
         this.deploymentRecordRepository = deploymentRecordRepository;
         this.deploymentRecordPoVoMapper = deploymentRecordPoVoMapper;
+        this.deploymentJobRepository = deploymentJobRepository;
+        this.deploymentJobPoVoMapper = deploymentJobPoVoMapper;
         this.sshService = sshService;
         this.hostService = hostService;
         this.fileStorageService = fileStorageService;
@@ -116,7 +127,27 @@ public class DeploymentService {
         Specification<DeploymentRecord> specification = buildSpecification(params);
         Page<DeploymentRecord> page = deploymentRecordRepository.findAll(specification, pageable);
         List<DeploymentRecordVo> deploymentList = deploymentRecordPoVoMapper.poListToVoList(page.getContent());
+        populateLatestJobs(deploymentList);
         return new PageResult<>(deploymentList, pageable, page.getTotalElements());
+    }
+
+    /**
+     * 为当前页每条部署记录回填「最近一次作业」。
+     *
+     * <p>前端列表「最近作业」列原本只有「提交时乐观写入 + WebSocket 实时推送」两个来源,刷新或重进页面后
+     * 该列会全部回落成空。此处一次性批量查出整页记录各自最新的作业,作为权威初值下发,使该列在刷新后也能持久展示。
+     */
+    private void populateLatestJobs(List<DeploymentRecordVo> deploymentList) {
+        if (deploymentList.isEmpty()) {
+            return;
+        }
+        List<String> recordIds = deploymentList.stream().map(DeploymentRecordVo::getId).toList();
+        Map<String, DeploymentJobVo> latestJobByRecordId = deploymentJobRepository
+                .findLatestByDeploymentRecordIdIn(recordIds).stream()
+                .map(deploymentJobPoVoMapper::poToVo)
+                // 同一记录极端并列时按先到者去重,避免 toMap 抛 IllegalStateException
+                .collect(Collectors.toMap(DeploymentJobVo::getDeploymentRecordId, vo -> vo, (first, second) -> first));
+        deploymentList.forEach(record -> record.setLatestJob(latestJobByRecordId.get(record.getId())));
     }
 
     /**
