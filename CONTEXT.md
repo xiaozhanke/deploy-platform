@@ -47,7 +47,12 @@ HTTP 入口的"操作意图"标识，由前端在每次按钮点击时生成（U
 **主机在线性（HostLiveness）**：
 对一台 Host 执行 `echo 1` 的 SSH 连通性检测结果。检测成功（连通且在超时 `1500ms` 内响应）则该主机视为**在线**；与该主机上所有 DeploymentRecord 的 `running` 状态无关。控制台 KPI「在线主机数」展示的是本指标。
 _Avoid_: 用应用进程存活率代替主机在线性（两者分属不同 KPI，职责不重叠）。
-_调度独立性_: HostLiveness 检测（60s 常驻）与资源监控采样（5s 惰性）是**两个独立定时任务**，后者订阅者为 0 时休眠，前者不受影响。两者共享同一 JSch Session Pool，但调度逻辑完全解耦。
+_调度独立性_: HostLiveness 检测（60s 常驻）与资源监控采样（5s 惰性）是**两个独立定时任务**，且**不共享连接**：HostLiveness 用短连接（每周期 connect→执行→断开，与部署作业同款，60s 一次握手成本可忽略），常驻运行；资源采样独占一个 per-host JSch Session Pool（池化的理由仅在于 5s 高频），订阅者为 0 时**整池拆光**休眠，实现「0 采样开销」。两者职责与生命周期完全解耦，互不影响。
+
+**应用实例存活性（InstanceLiveness）**：
+对一份 [[部署记录]] 的 `processId` 执行 `ps -p PID` 探测得到的**瞬时观测态**（ALIVE / DEAD / 未知）。必须与 `running` 投影严格区分：`running` 是「最后一次成功作业留下的**意图投影**」（消费者在作业成功后写库），InstanceLiveness 是「此刻进程是否真的活着」（定时探测得出）。**探测结果只进内存缓存、绝不持久化**——它每分钟变、无历史价值，写库会与消费者抢 `running` 列、并刷脏 `updateUser` 等审计字段。
+_三态派生_: UI 的 ✅运行中 / 🔴已停止 / ⚠️状态未知 在**读取时**由 `(running, processId, 探测缓存)` 派生，不落任何新字段：`running=false`→已停止；`running=true & processId=null`→状态未知；`running=true & 探测=ALIVE`→运行中；`running=true & 探测=DEAD`→已停止（崩溃）；`running=true & 探测缺失/首轮`→状态未知。KPI「运行中实例」仅计 `running=true 且 探测=ALIVE`。
+_Avoid_: 把 InstanceLiveness 与 `running` 混为一谈；把探测结果写回 DB。
 
 **文件资源（FileResource）**：
 在控制台托管和发布的前端静态包（`.zip`）或后端应用包（`.jar`）等具体制品。在 UI 层表现为「文件资源」管理列表。
