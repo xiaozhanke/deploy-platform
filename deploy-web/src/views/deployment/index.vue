@@ -181,7 +181,7 @@ onMounted(() => {
       </div>
     </div>
     <aside class="host-panel">
-      <host-sidebar />
+      <host-sidebar :show-environment="false" />
     </aside>
 
     <front-end-run v-if="frontEndRunVisible" v-model="frontEndRunVisible" :file-record="currentFile" />
