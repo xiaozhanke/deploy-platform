@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 /**
- * 操作审计日志持久化接口(对应 MQ 方案稿场景 4)。
+ * 操作审计日志持久化接口。
  *
  * <p>{@link JpaSpecificationExecutor} 支撑按操作人 / 类型 / 结果的动态过滤查询。
  *

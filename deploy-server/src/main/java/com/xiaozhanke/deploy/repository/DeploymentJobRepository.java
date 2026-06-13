@@ -25,13 +25,13 @@ public interface DeploymentJobRepository extends JpaRepository<DeploymentJob, St
         JpaSpecificationExecutor<DeploymentJob> {
 
     /**
-     * 按 (recordId, jobType, clientRequestId) 三元组查已有作业,用于 HTTP 入口防重(见 CONTEXT.md「客户端请求 Id」)。
+     * 按 (recordId, jobType, clientRequestId) 三元组查已有作业,用于 HTTP 入口防重。
      */
     Optional<DeploymentJob> findByDeploymentRecordIdAndJobTypeAndClientRequestId(
             String deploymentRecordId, JobTypeEnum jobType, String clientRequestId);
 
     /**
-     * 幂等 + 串行 CAS UPDATE:消费者首行占据作业(ADR-0002 幂等 + ADR-0006 记录串行)。
+     * 幂等 + 串行 CAS UPDATE:消费者首行占据作业。
      *
      * <p>一条 SQL 同时满足两个条件:本作业仍为 {@code PENDING}(消费幂等),且所属记录此刻无其他
      * {@code IN_PROGRESS} 作业(记录串行)。受影响行数为 1 即占据成功。派生表 {@code busy} 绕开
@@ -49,7 +49,7 @@ public interface DeploymentJobRepository extends JpaRepository<DeploymentJob, St
                                @Param("now") LocalDateTime now);
 
     /**
-     * 取消作业 CAS:仅当状态为 PENDING 时才允许转入 CANCELLED(ADR-0004 取消语义)。
+     * 取消作业 CAS:仅当状态为 PENDING 时才允许转入 CANCELLED。
      *
      * <p>受影响行数为 1 表示取消成功;为 0 表示作业已开始执行(IN_PROGRESS)或已终态,不可撤销。
      */
@@ -59,7 +59,7 @@ public interface DeploymentJobRepository extends JpaRepository<DeploymentJob, St
     int cancelIfPending(@Param("jobId") String jobId, @Param("now") LocalDateTime now);
 
     /**
-     * 查指定部署记录下处于 PENDING 状态的所有作业(供"待执行作业"列表使用,场景 3 延迟作业)。
+     * 查指定部署记录下处于 PENDING 状态的所有作业(供"待执行作业"列表使用)。
      */
     List<DeploymentJob> findByDeploymentRecordIdAndStatus(String deploymentRecordId, JobStatusEnum status);
 
@@ -67,7 +67,7 @@ public interface DeploymentJobRepository extends JpaRepository<DeploymentJob, St
      * 批量查一组部署记录各自「最近一次作业」(按 createTime 取最新),供部署记录列表的「最近作业」列回填。
      *
      * <p>相关子查询取每条记录的 {@code MAX(createTime)},一次查出整页记录的最新作业,避免逐条 N+1。
-     * 同一记录的作业彼此串行(ADR-0006),createTime 为 datetime(6),理论上不会并列;若极端并列由
+     * 同一记录的作业彼此串行,createTime 为 datetime(6),理论上不会并列;若极端并列由
      * 调用方按 recordId 去重兜底。
      *
      * <p>外层与子查询都过滤 {@code deleted = false},与全系统软删约定一致,避免软删作业被当成「最新」。

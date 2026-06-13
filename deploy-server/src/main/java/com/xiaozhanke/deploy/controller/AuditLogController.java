@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 操作审计日志接口(对应 MQ 方案稿场景 4)。
+ * 操作审计日志接口。
  *
  * @author xiaozhanke
  */

@@ -29,10 +29,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 
 /**
- * 部署作业接口(MQ 异步化主入口)
+ * 部署作业接口(异步主入口)
  *
- * <p>对应 MQ 方案稿场景 1 的异步化改造。旧的 {@code /deployments/{id}/actions/*} 同步接口
- * 标记 {@code @Deprecated},Phase 2 清理后由本 controller 完全承接。
+ * <p>启动 / 停止 / 重启 / 更新统一由 {@code POST /deployments/{id}/jobs} 异步承接,经 MQ 驱动执行。
  *
  * @author xiaozhanke
  */
@@ -85,7 +84,7 @@ public class DeploymentJobController {
     }
 
     /**
-     * 取消 PENDING 状态的作业(场景 3 延迟作业取消,ADR-0004)。
+     * 取消 PENDING 状态的作业(延迟作业取消)。
      *
      * <p>仅 PENDING 作业可撤销;已开始执行(IN_PROGRESS)的作业撤销会被拒绝。
      * 取消是终态——延迟消息到期后 CAS 不命中,链条自然终止。

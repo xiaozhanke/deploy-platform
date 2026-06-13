@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 操作审计日志 VO 类(对应 MQ 方案稿场景 4)。
+ * 操作审计日志 VO 类。
  *
  * <p>有意不继承 {@code BaseVo}:审计日志无 updateUser/updateTime 等审计字段,操作人与时间
  * 是一等业务字段(见 {@code AuditLog} 实体的说明)。

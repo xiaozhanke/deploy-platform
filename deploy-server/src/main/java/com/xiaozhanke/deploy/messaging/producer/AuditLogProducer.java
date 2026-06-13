@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 审计日志 Kafka 生产者(对应 MQ 方案稿场景 4、ADR-0005)。
+ * 审计日志 Kafka 生产者。
  *
  * <p>同步发送(等 {@code acks=all} 确认,超时 {@code send-timeout-millis})。发送失败<b>不回滚业务</b>、
  * 不阻断主响应,而是落兜底文件 + 告警——审计是旁路,业务 SLA 不被 Kafka 抖动牵连。这正是与 RocketMQ

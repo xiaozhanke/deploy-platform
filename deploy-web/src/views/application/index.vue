@@ -214,7 +214,7 @@ const handleEdit = (row: DeploymentRecord) => {
   updateVisible.value = true
 }
 
-// 取消 PENDING 作业(场景 3 延迟作业取消)
+// 取消 PENDING 作业(延迟作业取消)
 const handleJobCancel = async (row: DeploymentRecord) => {
   const job = latestJobMap[row.id]
   if (!job || job.status !== JobStatusEnum.PENDING.value) return

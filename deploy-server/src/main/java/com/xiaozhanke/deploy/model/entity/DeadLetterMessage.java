@@ -20,7 +20,7 @@ import org.hibernate.annotations.Comment;
 import java.time.LocalDateTime;
 
 /**
- * 死信消息 PO 类(对应 MQ 方案稿场景 5、ADR-0003)。
+ * 死信消息 PO 类。
  *
  * <p>部署作业经瞬时重试耗尽或业务失败后,由 {@code DeploymentConsumer} 显式投递到自定义死信队列
  * {@code deploy-job-dlq},再由 {@code DeadLetterConsumer} 落到本表,供 {@code MQMonitorController}
@@ -92,7 +92,7 @@ public class DeadLetterMessage extends BasePo {
     private LocalDateTime deadLetteredAt;
 
     /**
-     * 是否已人工重试(重试 = 新建一份新 jobId 的作业,见 ADR-0003)
+     * 是否已人工重试(重试 = 新建一份新 jobId 的作业)
      */
     @Comment("是否已人工重试")
     @Column(nullable = false)

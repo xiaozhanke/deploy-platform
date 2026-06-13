@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 审计兜底文件回放任务(对应 MQ 方案稿场景 4、ADR-0005)。
+ * 审计兜底文件回放任务。
  *
  * <p>定时抽干兜底文件并尝试重新发往 Kafka:成功的丢弃,仍失败的(Kafka 未恢复)原样回写等下一轮。
  * 与 {@code AuditFallbackWriter} 共用同一把文件锁,抽干是原子的"读 + 删",新写入不会丢。

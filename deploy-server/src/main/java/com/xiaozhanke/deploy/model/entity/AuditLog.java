@@ -18,7 +18,7 @@ import org.hibernate.annotations.Comment;
 import java.time.LocalDateTime;
 
 /**
- * 操作审计日志 PO 类(对应 MQ 方案稿场景 4、ADR-0005)。
+ * 操作审计日志 PO 类。
  *
  * <p><b>有意不继承 {@code BasePo}</b>:审计日志是只读旁路数据,语义上不需要 {@code updateUser /
  * updateTime / is_deleted}。更关键的是,本表由 {@code AuditLogConsumer} 在 <b>Kafka 消费线程</b>

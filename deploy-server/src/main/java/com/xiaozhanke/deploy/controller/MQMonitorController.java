@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * MQ 监控接口(死信查看与人工重试,对应 MQ 方案稿场景 5)。
+ * MQ 监控接口(死信查看与人工重试)。
  *
  * @author xiaozhanke
  */
@@ -51,7 +51,7 @@ public class MQMonitorController {
     }
 
     /**
-     * 人工重试死信(新建一份新 jobId 的作业,见 ADR-0003)。
+     * 人工重试死信(新建一份新 jobId 的作业)。
      */
     @Operation(summary = "重试死信", description = "用死信里的 (recordId, jobType) 新建一份新作业,不复投原消息")
     @PostMapping("/mq/dead-letters/{id}/retry")

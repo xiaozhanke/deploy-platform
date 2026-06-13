@@ -95,7 +95,7 @@ export const jobStatusTagType = (status?: string): 'success' | 'warning' | 'info
   (status && JOB_STATUS_TAG_TYPE[status]) || 'info'
 
 /**
- * 审计操作类型枚举(对应后端 AuditOperationTypeEnum,场景 4)
+ * 审计操作类型枚举(对应后端 AuditOperationTypeEnum)
  */
 export const AuditOperationTypeEnum = createEnum({
   SSH_EXEC: { value: 'SSH_EXEC', label: 'SSH 命令执行' },
@@ -121,7 +121,7 @@ export const AuditOperationTypeEnum = createEnum({
 } as const)
 
 /**
- * 审计操作结果枚举(对应后端 AuditOutcomeEnum,场景 4)
+ * 审计操作结果枚举(对应后端 AuditOutcomeEnum)
  */
 export const AuditOutcomeEnum = createEnum({
   SUCCESS: { value: 'SUCCESS', label: '成功' },
@@ -129,7 +129,7 @@ export const AuditOutcomeEnum = createEnum({
 } as const)
 
 /**
- * 审计操作结果标签类型映射(场景 4)
+ * 审计操作结果标签类型映射
  */
 const AUDIT_OUTCOME_TAG_TYPE: Record<string, 'success' | 'danger'> = {
   SUCCESS: 'success',

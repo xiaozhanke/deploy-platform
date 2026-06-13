@@ -36,7 +36,7 @@ public class ConfigService {
     }
 
     /**
-     * 生成 Nginx 配置文件,并通过 MQ 广播配置变更(场景 6:BROADCASTING 模式演示)。
+     * 生成 Nginx 配置文件,并通过 MQ 广播配置变更(BROADCASTING 模式)。
      *
      * <p>广播在 Service 层完成而非 Controller:保证所有触发入口(CLI/定时任务/内部 API)
      * 都能统一广播,避免遗漏。
@@ -56,7 +56,7 @@ public class ConfigService {
             // 灌进日志体系；完整配置仍以接口返回值形式回给调用方落盘
             log.info("生成 Nginx 配置完成, 模板=[{}], 行数={}, 字符数={}",
                     templateName, countLines(content), content.length());
-            // 广播配置变更,通知所有实例(场景 6 的广播消费演示)
+            // 广播配置变更,通知所有实例
             String operator = authenticationHelper.getCurrentUserName().orElse("anonymous");
             configChangeProducer.broadcast(new ConfigChangeMessage(
                     "nginx.conf", "[generated]", ConfigChangeMessage.ChangeType.UPDATED,

@@ -20,10 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 /**
- * 死信查询与人工重试服务(对应 MQ 方案稿场景 5、ADR-0003)。
+ * 死信查询与人工重试服务。
  *
  * <p>人工重试的语义是**新建一份新 jobId 的作业**(走 {@link DeploymentJobService#createJob} HTTP 入口),
- * **不**是把死信消息复投回原 Topic——后者会破坏顺序消息的串行保证(详见 ADR-0003)。
+ * **不**是把死信消息复投回原 Topic——后者会破坏顺序消息的串行保证。
  *
  * @author xiaozhanke
  */

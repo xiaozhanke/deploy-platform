@@ -3,7 +3,7 @@ package com.xiaozhanke.deploy.messaging.dto;
 import java.time.LocalDateTime;
 
 /**
- * 配置变更广播消息体(对应 MQ 方案稿场景 6)。
+ * 配置变更广播消息体。
  *
  * <p>管理员修改全局配置后,producer 把变更广播给所有实例;各实例的 consumer 据此
  * 刷新本地缓存或重新加载配置。与部署作业走 CLUSTERING 相对,配置变更 Topic 使用

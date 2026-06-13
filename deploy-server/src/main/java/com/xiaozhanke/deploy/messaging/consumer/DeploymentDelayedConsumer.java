@@ -21,7 +21,7 @@ import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Component;
 
 /**
- * 延迟部署作业消费者(对应 MQ 方案稿场景 3、ADR-0004)。
+ * 延迟部署作业消费者。
  *
  * <p>本类只负责长延迟接力链管理(status 检查/CANCELLED 短路/续发链节);
  * 到期执行(SSH 分发+混合重试+死信投递)委托给 {@link JobExecutionDelegate},
@@ -57,7 +57,7 @@ public class DeploymentDelayedConsumer implements RocketMQListener<DelayedJobMes
         log.info("收到延迟作业消息: jobId=[{}] hop=[{}] 剩余=[{}s] executeAt=[{}]",
                 msg.jobId(), msg.relayHop(), msg.remainingDelaySeconds(), msg.executeAt());
 
-        // 第一步:检查是否已取消(ADR-0004:消息不可靠撤回 + 业务可靠仲裁)
+        // 第一步:检查是否已取消(消息不可靠撤回,业务状态机做可靠仲裁)
         JobStatusEnum status = deploymentJobRepository.findById(msg.jobId())
                 .map(DeploymentJob::getStatus)
                 .orElse(null);

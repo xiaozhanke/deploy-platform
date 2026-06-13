@@ -6,12 +6,12 @@ import lombok.Getter;
 /**
  * 部署作业状态枚举
  *
- * <p>对应 CONTEXT.md「部署作业」词条的状态机。状态转换约束:
+ * <p>部署作业的状态机。状态转换约束:
  * <ul>
- *   <li>PENDING → IN_PROGRESS:消费者 CAS UPDATE 占据(ADR-0002)</li>
+ *   <li>PENDING → IN_PROGRESS:消费者 CAS UPDATE 占据</li>
  *   <li>IN_PROGRESS → SUCCESS / FAILED:SSH 执行结束</li>
- *   <li>FAILED → DEAD:超过应用层重试次数后进入死信(ADR-0003)</li>
- *   <li>PENDING → CANCELLED:延迟作业的用户撤销(ADR-0004,Phase 3 启用)</li>
+ *   <li>FAILED → DEAD:超过应用层重试次数后进入死信</li>
+ *   <li>PENDING → CANCELLED:延迟作业的用户撤销</li>
  * </ul>
  *
  * @author xiaozhanke
@@ -45,7 +45,7 @@ public enum JobStatusEnum {
     DEAD("死信"),
 
     /**
-     * 已取消(延迟作业被用户撤销,见 ADR-0004)
+     * 已取消(延迟作业被用户撤销)
      */
     CANCELLED("已取消");
 

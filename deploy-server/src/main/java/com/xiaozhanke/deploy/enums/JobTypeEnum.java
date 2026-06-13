@@ -6,7 +6,7 @@ import lombok.Getter;
 /**
  * 部署作业类型枚举
  *
- * <p>对应 CONTEXT.md「作业类型」词条。RESTART 在执行层等价于 STOP→START,但作为独立类型存在以承载用户意图。
+ * <p>RESTART 在执行层等价于 STOP→START,但作为独立类型存在以承载用户意图。
  *
  * @author xiaozhanke
  */
@@ -29,7 +29,7 @@ public enum JobTypeEnum {
     RESTART("重启"),
 
     /**
-     * 更新版本(详见 CONTEXT.md「作业类型」对 UPDATE 的说明)
+     * 更新版本(换目标应用包后重启/解压)
      */
     UPDATE("更新");
 

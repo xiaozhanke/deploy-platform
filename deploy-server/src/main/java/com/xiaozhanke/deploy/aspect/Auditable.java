@@ -8,7 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 操作审计注解(对应 MQ 方案稿场景 4)。
+ * 操作审计注解。
  *
  * <p>标注在 Controller / Service 方法上,由 {@code AuditAspect} 的 {@code @AfterReturning} +
  * {@code @AfterThrowing} 双切面拦截,异步采集到 Kafka。{@link #target} / {@link #operator} 支持 SpEL,

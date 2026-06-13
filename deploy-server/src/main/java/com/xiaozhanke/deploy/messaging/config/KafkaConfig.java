@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Kafka 审计模块配置(对应 MQ 方案稿场景 4)。
+ * Kafka 审计模块配置。
  *
  * <p>有意手工构建 producer/consumer 配置(而非复用 {@code spring.kafka.*} 自动装配),把
  * <b>{@code acks=all} + {@code retries=3}</b> 这些"不丢审计"的关键参数显式钉在代码里,作为面试抓手。
@@ -35,7 +35,7 @@ import java.util.Map;
  *
  * <p>单机开发 broker 副本因子为 1,故 {@code min.insync.replicas} 实际为 1;<b>生产环境</b>应为
  * 3 broker + {@code replication.factor=3} + {@code min.insync.replicas=2},此时 {@code acks=all}
- * 才能真正提供"多数派落盘"保证(详见 ADR-0005)。
+ * 才能真正提供"多数派落盘"保证。
  *
  * @author xiaozhanke
  */

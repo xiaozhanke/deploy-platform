@@ -6,7 +6,7 @@ import com.xiaozhanke.deploy.enums.AuditOutcomeEnum;
 import java.time.LocalDateTime;
 
 /**
- * 审计日志 Kafka 消息体(对应 MQ 方案稿场景 4)。
+ * 审计日志 Kafka 消息体。
  *
  * <p>由 {@code AuditAspect} 在请求线程构造(此时 SecurityContext 仍在,能拿到真实
  * {@link #operator} 与 {@link #clientIp}),经 {@code AuditLogProducer} 发往 Kafka;消费端

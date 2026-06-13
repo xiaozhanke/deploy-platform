@@ -5,7 +5,7 @@ import com.xiaozhanke.deploy.enums.JobTypeEnum;
 import java.time.LocalDateTime;
 
 /**
- * 延迟部署作业 MQ 消息体(对应 MQ 方案稿场景 3、ADR-0004)。
+ * 延迟部署作业 MQ 消息体。
  *
  * <p>与 {@link DeploymentJobMessage} 的区别在于携带了 {@link #executeAt} 和
  * {@link #remainingDelaySeconds},供长延迟接力链使用——consumer 每次收到后根据剩余时长

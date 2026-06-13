@@ -43,7 +43,7 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 /**
- * 防重三道关的端到端单测(对应 ADR-0002 与 docs/mq-phase1-verify.md 第 8 节)。
+ * 防重三道关的端到端单测。
  *
  * <p>把"同一次部署作业被重复触发/重投"时三层防御逐一锁死,任何一层被后续改动削弱都会让本类变红:
  * <ol>
@@ -251,7 +251,7 @@ class DeploymentJobIdempotencyGuardTest {
     }
 
     /**
-     * 场景 2(ADR-0006):同一份部署记录的第二个作业在前一个仍 IN_PROGRESS 时占据失败,返回
+     * 同一份部署记录的第二个作业在前一个仍 IN_PROGRESS 时占据失败,返回
      * {@code RECORD_BUSY}(让 ORDERLY 稍后重投),且自身仍为 PENDING——保证记录级串行、不并发。
      */
     @Test

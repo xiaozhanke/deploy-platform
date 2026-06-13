@@ -11,7 +11,7 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 /**
- * 配置变更广播生产者(对应 MQ 方案稿场景 6)。
+ * 配置变更广播生产者。
  *
  * <p>向 Topic 发送配置变更消息,由各实例的 {@code ConfigBroadcastConsumer}
  * 以 BROADCASTING 模式消费——每条消息送达所有订阅实例,实现配置实时同步。

@@ -95,8 +95,8 @@ instance.interceptors.response.use(
             break
           }
           // sessionAbortController 已经在 handleSessionExpired 内取消了后续请求；
-          // 走标准 reject 让调用方的 .catch 与 finally 执行完毕，之前用 new Promise(() => {})
-          // 永不结算阻塞了外部组件自己的 loading 计数器。
+          // 走标准 reject 让调用方的 .catch 与 finally 执行完毕，避免用永不结算的 Promise
+          // 阻塞外部组件自己的 loading 计数器。
           errorInfo.title = '登录失效'
           errorInfo.message = backendMessage || '登录状态已失效，请重新登录'
           await useAuthStore().handleSessionExpired()

@@ -4,7 +4,6 @@ import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.ChannelShell;
-import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpATTRS;
@@ -12,9 +11,9 @@ import com.jcraft.jsch.SftpException;
 import com.xiaozhanke.deploy.constant.SshConstants;
 import com.xiaozhanke.deploy.core.ssh.CommandResultCallback;
 import com.xiaozhanke.deploy.core.ssh.ShellCommandTask;
+import com.xiaozhanke.deploy.core.ssh.SshSessionFactory;
 import com.xiaozhanke.deploy.core.websocket.WebSocketSftpProgressMonitor;
 import com.xiaozhanke.deploy.enums.FileOperationEnum;
-import com.xiaozhanke.deploy.enums.SshAuthTypeEnum;
 import com.xiaozhanke.deploy.exception.BusinessException;
 import com.xiaozhanke.deploy.model.dto.HostRecordDto;
 import com.xiaozhanke.deploy.model.dto.SshExecResult;
@@ -76,9 +75,12 @@ public class SshService {
     private final ReentrantLock sessionLock = new ReentrantLock();
     // WebSocket消息模板, 用于向前端推送消息
     private final SimpMessagingTemplate messagingTemplate;
+    // JSch 会话工厂, 统一会话构建逻辑（与监控组件共享，见 SshSessionFactory）
+    private final SshSessionFactory sshSessionFactory;
 
-    public SshService(SimpMessagingTemplate messagingTemplate) {
+    public SshService(SimpMessagingTemplate messagingTemplate, SshSessionFactory sshSessionFactory) {
         this.messagingTemplate = messagingTemplate;
+        this.sshSessionFactory = sshSessionFactory;
     }
 
     /**
@@ -92,7 +94,7 @@ public class SshService {
         sessionLock.lock();
         try {
             log.info("开始 SSH 连接到服务器 {}@{} -p {}", host.getUsername(), host.getAddress(), host.getPort());
-            Session session = createSession(host);
+            Session session = sshSessionFactory.createSession(host);
             int connectTimeout = host.getConnectionTimeout() != null ? host.getConnectionTimeout() :
                     SshConstants.DEFAULT_CONNECT_TIMEOUT;
             session.connect(connectTimeout);
@@ -138,7 +140,7 @@ public class SshService {
         Session testSession = null;
         try {
             log.info("开始测试 SSH 连接到服务器 {}@{} -p {}", host.getUsername(), host.getAddress(), host.getPort());
-            testSession = createSession(host);
+            testSession = sshSessionFactory.createSession(host);
             int connectTimeout = host.getConnectionTimeout() != null ? host.getConnectionTimeout() :
                     SshConstants.DEFAULT_CONNECT_TIMEOUT;
             testSession.connect(connectTimeout);
@@ -263,8 +265,8 @@ public class SshService {
             startOutputReader(sessionId, channelId, channel);
             return channelId;
         } catch (JSchException e) {
-            // 之前用 String.valueOf(channels.size() + 1) 估算 channelId，并发场景或 JSch 内部分配偏移都会算错。
-            // 现在用本次实际拿到的 channelId 做精确清理；若 openChannel 还没拿到 id，则跳过 channel 级清理。
+            // 用本次实际拿到的 channelId 做精确清理；不用 channels.size()+1 估算，并发或 JSch 内部分配偏移会让它算错。
+            // 若 openChannel 还没拿到 id，则跳过 channel 级清理。
             if (channelId != null) {
                 disconnectAndCleanupChannel(sessionId, channelId);
             } else if (channel != null && channel.isConnected()) {
@@ -614,137 +616,6 @@ public class SshService {
                         FileOperationEnum.DOWNLOAD));
             }
         });
-    }
-
-    /**
-     * 创建并配置 JSch Session 对象
-     *
-     * @param host 连接详情
-     * @return 配置好的 Session 对象
-     * @throws JSchException 如果会话创建或配置失败
-     */
-    private Session createSession(HostRecordDto host) throws JSchException {
-        log.debug("创建 JSch 实例并配置认证, 用户: {}", host.getUsername());
-        JSch jsch = new JSch();
-        // 设置认证方式
-        setupAuth(jsch, host);
-
-        log.debug("获取 JSch 会话实例, 服务器: {}@{} -p {}", host.getUsername(), host.getAddress(), host.getPort());
-        Session session = jsch.getSession(host.getUsername(), host.getAddress(), host.getPort());
-
-        // 如果是密码认证, 设置密码（用 byte[] 重载，避免 JSch 内部把 String 留在 String pool）
-        if (host.getAuthType() == SshAuthTypeEnum.PASSWORD && host.getPassword() != null) {
-            session.setPassword(host.getPassword().getBytes(StandardCharsets.UTF_8));
-            log.debug("已设置会话密码 (密码本身不记录日志)");
-        }
-
-        // 应用其他会话配置
-        applySessionConfig(session, host);
-
-        session.setServerAliveCountMax(SshConstants.DEFAULT_SERVER_ALIVE_COUNT_MAX);
-        session.setServerAliveInterval(SshConstants.DEFAULT_SERVER_ALIVE_INTERVAL);
-        return session;
-    }
-
-    /**
-     * 设置认证方式
-     *
-     * @param jsch JSch 对象
-     * @param host 主机连接信息
-     * @throws JSchException 认证设置失败时抛出
-     */
-    private void setupAuth(JSch jsch, HostRecordDto host) throws JSchException {
-        SshAuthTypeEnum authType = host.getAuthType();
-        log.debug("配置认证类型: {}", authType);
-
-        if (authType == SshAuthTypeEnum.KEY || authType == SshAuthTypeEnum.KEY_WITH_PASS) {
-            String privateKeyPath = host.getPrivateKeyPath();
-            if (!StringUtils.hasText(privateKeyPath)) {
-                throw new BusinessException("私钥认证需要提供私钥文件路径");
-            }
-            File privateKeyFile = new File(privateKeyPath);
-            if (!privateKeyFile.exists() || !privateKeyFile.isFile()) {
-                throw new BusinessException("指定的私钥文件不存在或不是一个有效文件: " + privateKeyPath);
-            }
-
-            String passphrase = (authType == SshAuthTypeEnum.KEY_WITH_PASS) ? host.getPrivateKeyPassword() : null;
-            try {
-                // 用 byte[] 重载，避免 passphrase 以 String 形式被 JSch 内部缓存
-                byte[] passphraseBytes = passphrase == null ? null : passphrase.getBytes(StandardCharsets.UTF_8);
-                jsch.addIdentity(privateKeyPath, null, passphraseBytes);
-                log.info("已添加私钥身份: {}", privateKeyPath);
-            } catch (JSchException e) {
-                log.error("添加私钥身份失败 '{}': {}", privateKeyPath, e.getMessage());
-                if (e.getMessage().toLowerCase().contains("passphrase")) {
-                    throw new JSchException("私钥密码错误或需要密码但未提供: " + privateKeyPath, e);
-                }
-                throw e;
-            }
-        } else if (authType == null || authType == SshAuthTypeEnum.PASSWORD) {
-            // 密码认证由 session.setPassword() 处理
-            log.debug("使用密码认证方式");
-        } else {
-            throw new BusinessException("不支持的认证类型: " + authType);
-        }
-    }
-
-    /**
-     * 应用 Session 配置
-     *
-     * @param session Session 对象
-     * @param host    主机连接信息
-     */
-    private void applySessionConfig(Session session, HostRecordDto host) throws JSchException {
-        log.debug("开始应用会话配置");
-        // 设置加密算法等配置
-        setIfNotNull(session, "kex", host.getKexAlgorithms());
-        setIfNotNull(session, "cipher.s2c", host.getCipherAlgorithms());
-        setIfNotNull(session, "cipher.c2s", host.getCipherAlgorithms());
-        setIfNotNull(session, "mac.s2c", host.getMacAlgorithms());
-        setIfNotNull(session, "mac.c2s", host.getMacAlgorithms());
-        setIfNotNull(session, "server_host_key", host.getServerHostKeyAlgorithms());
-
-        // 设置连接超时
-        if (host.getConnectionTimeout() != null) {
-            session.setTimeout(host.getConnectionTimeout());
-        }
-
-        // 设置布尔型配置项
-        setBooleanConfig(session, "compression", host.getCompressionEnabled(), "zlib", "none");
-        setBooleanConfig(session, "StrictHostKeyChecking", host.getStrictHostKeyChecking(), "yes", "no");
-        setBooleanConfig(session, "X11Forwarding", host.getX11ForwardingEnabled(), "yes", "no");
-        setBooleanConfig(session, "AllowTcpForwarding", host.getPortForwardingEnabled(), "yes", "no");
-        log.debug("会话配置应用完毕");
-    }
-
-    /**
-     * 设置 Session 配置项(非空时设置)
-     *
-     * @param session Session 对象
-     * @param key     配置键
-     * @param value   配置值
-     */
-    private void setIfNotNull(Session session, String key, String value) {
-        if (StringUtils.hasText(value)) {
-            session.setConfig(key, value);
-            log.debug("设置 Session 配置项: {} = {}", key, value);
-        }
-    }
-
-    /**
-     * 设置布尔型 Session 配置项
-     *
-     * @param session    Session 对象
-     * @param key        配置键
-     * @param value      布尔值
-     * @param trueValue  为 true 时的配置值
-     * @param falseValue 为 false 时的配置值
-     */
-    private void setBooleanConfig(Session session, String key, Boolean value, String trueValue, String falseValue) {
-        if (value != null) {
-            session.setConfig(key, value ? trueValue : falseValue);
-            log.debug("设置布尔型 Session 配置项: {} = {}", key, value ? trueValue : falseValue);
-        }
     }
 
     /**

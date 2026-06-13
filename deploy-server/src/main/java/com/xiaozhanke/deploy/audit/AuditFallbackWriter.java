@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 审计兜底文件读写器(对应 MQ 方案稿场景 4、ADR-0005)。
+ * 审计兜底文件读写器。
  *
  * <p>Kafka 不可用时,{@code AuditLogProducer} 把审计消息以 JSON 行追加到本地兜底文件,保证审计
  * "最终可观测"而<b>不</b>回滚业务;Kafka 恢复后由 {@code AuditFallbackReplayJob} 抽干文件批量回放。

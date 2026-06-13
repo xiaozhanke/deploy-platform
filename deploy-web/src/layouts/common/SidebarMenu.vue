@@ -2,7 +2,7 @@
 import type { Component } from 'vue'
 
 defineProps<{
-  /** 分组后的菜单数据（ADR-0012 三组 + 仪表盘置顶） */
+  /** 分组后的菜单数据（三组 + 仪表盘置顶） */
   groups: MenuGroup[]
   /** 折叠为图标条（窄态）：纯 CSS 收窄容器 + 裁切文字，不切换 el-menu 自身的 collapse 机制 */
   collapse: boolean
@@ -17,9 +17,9 @@ defineOptions({
 interface MenuItem {
   /** 路由路径，作 el-menu 的 index 与高亮键 */
   index: string
-  /** 菜单标题（源自 route.meta.title，由父级解析后传入，§15 R1 单一真源） */
+  /** 菜单标题（源自 route.meta.title，由父级解析后传入，单一真源） */
   title: string
-  /** 图标组件引用（markRaw 包装的 EP 图标，§20 废弃字符串式 :is） */
+  /** 图标组件引用（markRaw 包装的 EP 图标，废弃字符串式 :is） */
   icon: Component
   children?: MenuItem[]
 }

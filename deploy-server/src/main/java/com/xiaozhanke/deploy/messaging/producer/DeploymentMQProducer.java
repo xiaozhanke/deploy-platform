@@ -18,11 +18,10 @@ import java.time.LocalDateTime;
 /**
  * 部署作业 MQ 生产者
  *
- * <p>Phase 1 只发**事务消息**——RocketMQ Spring Starter 2.x 的 {@code sendMessageInTransaction}
- * 不支持自定义 {@link org.apache.rocketmq.client.producer.MessageQueueSelector},因此事务消息走
- * 默认队列选择。场景 2 的顺序消息(按 deploymentRecordId 分队列)由后续 {@code syncSendOrderly}
- * 单独路径承载(Phase 1 提供 {@link com.xiaozhanke.deploy.messaging.selector.DeploymentRecordQueueSelector}
- * 备用)。
+ * <p>发**事务消息**——RocketMQ Spring Starter 2.x 的 {@code sendMessageInTransaction} 不支持自定义
+ * {@link org.apache.rocketmq.client.producer.MessageQueueSelector},事务消息只能走默认队列选择。
+ * 「同一部署记录串行」并不依赖 producer 端的队列选择,而是下沉到消费端的一条 DB CAS UPDATE 兜底,
+ * 与事务消息互不冲突。
  *
  * @author xiaozhanke
  */

@@ -11,7 +11,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.messaging.Message;
 
 /**
- * RocketMQ 事务消息本地事务回调与回查(对应 MQ 方案稿场景 1、CONTEXT.md「本地事务」)。
+ * RocketMQ 事务消息本地事务回调与回查。
  *
  * <p>本地事务**仅**做一行 {@code INSERT INTO deployment_job},SSH 远程命令由 consumer
  * 在拿到消息后执行,**不**在本地事务内——本地事务必须秒级可判定 commit/rollback,否则破坏回查机制。

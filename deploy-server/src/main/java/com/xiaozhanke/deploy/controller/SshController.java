@@ -156,8 +156,7 @@ public class SshController {
     /**
      * 通过 SFTP 把文本内容覆盖写入远程文件
      *
-     * <p>专供 code-editor 等"编辑后保存"场景使用，替代以前在前端拼 {@code cat <<EOF > path} 走 Exec 通道的写法，
-     * 杜绝路径与内容被 shell 解释带来的命令注入面。
+     * <p>专供 code-editor 等"编辑后保存"场景使用，经 SFTP 覆盖写入，杜绝路径与内容被 shell 解释带来的命令注入面。
      *
      * @param sessionId 会话 Id
      * @param message   含远程文件路径与文本内容

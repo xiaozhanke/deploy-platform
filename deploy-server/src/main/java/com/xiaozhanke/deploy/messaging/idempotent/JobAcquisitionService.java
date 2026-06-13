@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 /**
- * 消费者首行幂等 + 记录串行占据服务(详见 ADR-0002 幂等、ADR-0006 串行)。
+ * 消费者首行幂等 + 记录串行占据服务。
  *
  * <p>用业务键 {@code jobId} 做 CAS UPDATE 占据作业,不使用 {@code messageId} 去重——事务消息
  * 半提交/重试/重投都会让 messageId 漂移,按 messageId 去重会漏过同一业务的重复消息。同一条 CAS

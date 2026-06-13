@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
- * 配置变更广播消费者(对应 MQ 方案稿场景 6)。
+ * 配置变更广播消费者。
  *
  * <p><b>BROADCASTING 模式</b>:每条配置变更消息送达所有订阅实例——位移记录在消费者本地,
  * 而非 Broker。与部署作业 Topic 的 CLUSTERING(集群消费,实例间分摊)形成鲜明对比。

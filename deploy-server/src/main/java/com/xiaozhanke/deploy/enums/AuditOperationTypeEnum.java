@@ -4,11 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * 审计操作类型枚举(对应 MQ 方案稿场景 4)。
+ * 审计操作类型枚举。
  *
  * <p>由 {@code @Auditable} 注解在切点上声明,经 Kafka 异步采集后落 {@code audit_log} 表。
  * 安全审计要求"全量记录尝试",因此每种类型都可能携带 {@link AuditOutcomeEnum#SUCCESS} 或
- * {@link AuditOutcomeEnum#FAILURE} 两种结果(详见 ADR-0005 的双切面语义)。
+ * {@link AuditOutcomeEnum#FAILURE} 两种结果。
  *
  * @author xiaozhanke
  */

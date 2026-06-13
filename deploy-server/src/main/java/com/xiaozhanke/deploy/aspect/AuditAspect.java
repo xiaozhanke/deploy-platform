@@ -25,7 +25,7 @@ import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 
 /**
- * 操作审计切面(对应 MQ 方案稿场景 4、ADR-0005)。
+ * 操作审计切面。
  *
  * <p><b>双切面</b>:{@code @AfterReturning} 记 {@link AuditOutcomeEnum#SUCCESS},{@code @AfterThrowing}
  * 记 {@link AuditOutcomeEnum#FAILURE}——失败/未授权的尝试也是安全事件,单 {@code @AfterReturning} 会漏。

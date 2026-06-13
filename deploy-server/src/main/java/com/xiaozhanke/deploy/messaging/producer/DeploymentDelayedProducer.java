@@ -16,11 +16,11 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 
 /**
- * 延迟部署作业生产者(对应 MQ 方案稿场景 3、ADR-0004)。
+ * 延迟部署作业生产者。
  *
  * <p>负责把延迟作业消息发到专门 Topic,选 RocketMQ 内置 delayLevel。对于超过 RocketMQ
  * 内置最大延迟(2h)的长延迟,本类只发首段链节;后续接力由 {@code DeploymentDelayedConsumer}
- * 在消费端自发完成(详见 ADR-0004 的"短延迟+重发接力链")。
+ * 在消费端自发完成("短延迟 + 重发接力链")。
  *
  * <p>RocketMQ 18 级延迟(1s/5s/10s/30s/1m/2m/3m/4m/5m/6m/7m/8m/9m/10m/20m/30m/1h/2h),
  * 对应 delayLevel 1~18。

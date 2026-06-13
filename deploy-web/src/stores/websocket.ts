@@ -322,7 +322,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
   }
 
   // 仅开发期：把传输态模拟器挂到 window，便于手动验证顶栏指示 / 离线横幅
-  // （健康时指示器静默是设计如此 §18，平时无从触发断连场景）。生产构建会 tree-shake 掉本分支。
+  // （健康时指示器静默是设计如此，平时无从触发断连场景）。生产构建会 tree-shake 掉本分支。
   // 控制台用法：__ws.reconnecting() 看琥珀脉冲点；__ws.offline() 看红点 + 离线横幅；__ws.connected() 复位。
   if (import.meta.env.DEV && typeof window !== 'undefined') {
     ;(window as unknown as Record<string, unknown>).__ws = {

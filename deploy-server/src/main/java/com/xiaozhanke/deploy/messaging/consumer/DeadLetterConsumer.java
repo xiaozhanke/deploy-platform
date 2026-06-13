@@ -12,7 +12,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 /**
- * 死信队列消费者(对应 MQ 方案稿场景 5、ADR-0003)。
+ * 死信队列消费者。
  *
  * <p>消费自定义死信 Topic {@code deploy-job-dlq}(由 {@code DeploymentConsumer} 在作业进入死信时
  * 显式投递),把死信落到 {@code dead_letter_message} 表供前端查看与人工重试。死信不需要顺序,故用

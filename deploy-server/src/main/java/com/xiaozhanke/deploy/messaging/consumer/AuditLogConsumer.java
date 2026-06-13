@@ -9,7 +9,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 /**
- * 审计日志 Kafka 消费者(对应 MQ 方案稿场景 4)。
+ * 审计日志 Kafka 消费者。
  *
  * <p>Consumer Group 并发消费(并发度 = 分区数,见 {@code KafkaConfig}),把审计消息落 {@code audit_log} 表。
  * 容器用 {@code AckMode.RECORD} 在每条处理成功后提交位移——At-Least-Once:崩溃/重平衡可能重放,审计可容忍

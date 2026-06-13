@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 操作审计日志查询服务(对应 MQ 方案稿场景 4)。
+ * 操作审计日志查询服务。
  *
  * <p>审计落库由 {@code AuditLogConsumer} 异步完成,本服务只负责<b>读</b>——按操作人 / 类型 / 结果
  * 动态过滤分页查询,供 {@code AuditLogController} + 前端审计页使用。

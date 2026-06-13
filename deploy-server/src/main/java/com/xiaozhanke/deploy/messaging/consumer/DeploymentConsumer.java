@@ -17,12 +17,11 @@ import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Component;
 
 /**
- * 部署作业消费者(对应 MQ 方案稿场景 1/2/5)。
+ * 部署作业消费者。
  *
  * <p>消费流程:
  * <ol>
- *   <li>{@link JobAcquisitionService#acquire} 一条 CAS 同时做消费幂等(ADR-0002)与记录串行
- *       (ADR-0006)</li>
+ *   <li>{@link JobAcquisitionService#acquire} 一条 CAS 同时做消费幂等与记录串行</li>
  *   <li>占据成功后委托 {@link JobExecutionDelegate} 执行 SSH 分发 + 混合重试 + 死信投递</li>
  * </ol>
  *
