@@ -64,14 +64,19 @@ public class SshOperationExecutor {
     }
 
     /**
-     * 在远程主机停止应用进程(kill -15)。
+     * 在远程主机停止应用进程(SIGTERM)。
+     *
+     * <p>幂等:先用 {@code kill -0} 探测进程是否存在——已不存在(前次重试已杀掉 / 外部已停)即视为停止成功。
+     * UPDATE/RESTART 是"先 stop 再 start",start 阶段遇瞬时故障重试时会重复执行 stop;若直接 {@code kill -15}
+     * 已死 PID 会返回非零,把本可短重试的瞬时失败误判成业务失败、直接进死信。进程仍在才发 SIGTERM,
+     * 真正的 kill 失败(如权限不足)仍如实抛出,不被吞掉。
      */
     public void executeStop(DeploymentRecord deployment) {
         HostRecordDto host = hostService.getHostDto(deployment.getHostRecord().getId());
 
         // processId 必须是纯数字,否则 shell 会按 jobspec 解析或被注入额外语义
-        String command = String.format("kill -15 %s",
-                ShellArgEscaper.requireNumericProcessId(deployment.getProcessId()));
+        String processId = ShellArgEscaper.requireNumericProcessId(deployment.getProcessId());
+        String command = String.format("if kill -0 %s 2>/dev/null; then kill -15 %s; fi", processId, processId);
         runJobCommand(host, command);
     }
 
