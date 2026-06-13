@@ -1,5 +1,6 @@
 import type { PageParams, PageResult } from '@/types/api'
 import type { PasswordForm, UserProfile } from '@/types/auth'
+import type { Activity, ConsoleKpi } from '@/types/console'
 import type {
   AuditLog,
   AuditLogQueryParams,
@@ -442,4 +443,25 @@ export const auditLogQueryPage = (
   pageParams?: PageParams,
 ): Promise<PageResult<AuditLog>> => {
   return request.get('/audit-logs', { params: { ...queryParams, ...pageParams } })
+}
+
+/**
+ * 查询控制台顶部 KPI 聚合（在线主机/总数、运行中实例/总数、在途作业、未处理死信）
+ */
+export const consoleKpiQuery = (): Promise<ConsoleKpi> => {
+  return request.get('/console/kpi')
+}
+
+/**
+ * 查询全平台最近 10 条部署动态，供控制台「最新发版动态」时间轴初次加载
+ */
+export const consoleRecentActivitiesQuery = (): Promise<Array<Activity>> => {
+  return request.get('/console/activities')
+}
+
+/**
+ * 查询当前所有在途作业（PENDING / IN_PROGRESS），供在途抽屉只读列表展示
+ */
+export const consoleInFlightJobsQuery = (): Promise<Array<Activity>> => {
+  return request.get('/console/in-flight-jobs')
 }

@@ -1,49 +1,72 @@
 <script setup lang="ts">
-import { deploymentRecordQueryList } from '@/api/api'
-import type { DeploymentRecord } from '@/types/deployment'
-
-import DeploymentCard from './components/DeploymentCard.vue'
+import ActivityTimeline from './components/ActivityTimeline.vue'
+import HostMonitorPanel from './components/HostMonitorPanel.vue'
+import KpiRow from './components/KpiRow.vue'
+import QuickActions from './components/QuickActions.vue'
 
 defineOptions({
   name: 'DashboardIndex',
 })
-
-const deploymentRecordList = ref<DeploymentRecord[]>([])
-
-const fetchDeloymentList = async () => {
-  const data = await deploymentRecordQueryList({}, 'updateTime,desc')
-  deploymentRecordList.value = data
-}
-
-onMounted(async () => {
-  await fetchDeloymentList()
-})
-
-onActivated(async () => {
-  await fetchDeloymentList()
-})
 </script>
 
 <template>
-  <section class="dashboard-index-section">
-    <div class="deployment-container">
-      <div class="deployment-grid app-card-grid">
-        <deployment-card v-for="record in deploymentRecordList" :key="record.id" :record="record" />
-      </div>
+  <div class="console">
+    <kpi-row class="console__kpi" />
 
-      <el-empty
-        v-if="!deploymentRecordList || deploymentRecordList.length === 0"
-        description="暂无应用部署记录"
-      ></el-empty>
+    <div class="console__grid">
+      <main class="console__main">
+        <!-- 最新发版动态：HTTP 拉最近 10 条 + 订阅 /topic/activities 增量追加 -->
+        <activity-timeline />
+      </main>
+
+      <aside class="console__aside">
+        <!-- 主机资源监控看板：订阅 /topic/monitor/hosts 全量快照、前端排序取 top-5（异常优先） -->
+        <host-monitor-panel />
+
+        <section class="console__panel">
+          <quick-actions />
+        </section>
+      </aside>
     </div>
-  </section>
+  </div>
 </template>
 
 <style lang="scss" scoped>
-// 卡片网格容器套用全局 .app-card-grid 工具类（minmax(320px,1fr) + gap），不在本页重复声明 grid 规则。
-.dashboard-index-section {
+.console {
   display: flex;
   flex-direction: column;
   gap: var(--app-space-4);
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--app-space-4);
+
+    // 宽屏两栏分流：左主栏（动态时间轴）约 65% / 右副栏（监控 + 快捷行动）约 35%
+    @include respond-to('lg') {
+      grid-template-columns: 65fr 35fr;
+      align-items: start;
+    }
+  }
+
+  &__aside {
+    display: flex;
+    flex-direction: column;
+    gap: var(--app-space-4);
+  }
+
+  &__panel {
+    padding: var(--app-space-4);
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-card);
+  }
+
+  &__panel-title {
+    margin: 0 0 var(--app-space-3);
+    color: var(--el-text-color-primary);
+    font-size: 15px;
+    font-weight: 600;
+  }
 }
 </style>
