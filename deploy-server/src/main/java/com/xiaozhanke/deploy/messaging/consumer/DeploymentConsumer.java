@@ -2,6 +2,7 @@ package com.xiaozhanke.deploy.messaging.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xiaozhanke.deploy.exception.RecordBusyException;
+import com.xiaozhanke.deploy.messaging.ActivityPublisher;
 import com.xiaozhanke.deploy.messaging.dto.DeploymentJobMessage;
 import com.xiaozhanke.deploy.messaging.idempotent.AcquireResult;
 import com.xiaozhanke.deploy.messaging.idempotent.JobAcquisitionService;
@@ -42,6 +43,7 @@ public class DeploymentConsumer implements RocketMQListener<DeploymentJobMessage
     private final DeploymentRecordRepository deploymentRecordRepository;
     private final JobExecutionDelegate executionDelegate;
     private final ObjectMapper objectMapper;
+    private final ActivityPublisher activityPublisher;
 
     @Override
     public void onMessage(DeploymentJobMessage msg) {
@@ -57,6 +59,8 @@ public class DeploymentConsumer implements RocketMQListener<DeploymentJobMessage
                     "记录 [%s] 有在途作业,作业 [%s] 稍后重试", msg.deploymentRecordId(), msg.jobId()));
             case ACQUIRED -> { /* 占据成功,继续执行 */ }
         }
+        // 占据成功 = 作业转入 IN_PROGRESS，推一条动态驱动控制台时间轴更新
+        activityPublisher.publish(msg.jobId());
 
         DeploymentRecord record = deploymentRecordRepository.findById(msg.deploymentRecordId())
                 .orElseThrow(() -> new IllegalStateException("部署记录不存在: " + msg.deploymentRecordId()));

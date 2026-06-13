@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xiaozhanke.deploy.enums.JobTypeEnum;
 import com.xiaozhanke.deploy.exception.RecordBusyException;
+import com.xiaozhanke.deploy.messaging.ActivityPublisher;
 import com.xiaozhanke.deploy.messaging.consumer.DeploymentConsumer;
 import com.xiaozhanke.deploy.messaging.dto.DeploymentJobMessage;
 import com.xiaozhanke.deploy.messaging.idempotent.AcquireResult;
@@ -61,6 +62,9 @@ class DeploymentConsumerRetryTest {
     @Mock
     private ObjectMapper objectMapper;
 
+    @Mock
+    private ActivityPublisher activityPublisher;
+
     private DeploymentConsumer consumer;
 
     private DeploymentJobMessage startMessage;
@@ -70,7 +74,8 @@ class DeploymentConsumerRetryTest {
     @BeforeEach
     void setUp() {
         consumer = new DeploymentConsumer(
-                jobAcquisitionService, deploymentRecordRepository, executionDelegate, objectMapper);
+                jobAcquisitionService, deploymentRecordRepository, executionDelegate, objectMapper,
+                activityPublisher);
 
         startMessage = new DeploymentJobMessage(
                 JOB_ID, RECORD_ID, JobTypeEnum.START, CLIENT_REQUEST_ID, LocalDateTime.now());

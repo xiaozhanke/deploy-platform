@@ -6,6 +6,7 @@ import com.xiaozhanke.deploy.enums.JobTypeEnum;
 import com.xiaozhanke.deploy.exception.BusinessException;
 import com.xiaozhanke.deploy.exception.InvalidOperationException;
 import com.xiaozhanke.deploy.exception.ResourceNotFoundException;
+import com.xiaozhanke.deploy.messaging.ActivityPublisher;
 import com.xiaozhanke.deploy.messaging.producer.DeploymentDelayedProducer;
 import com.xiaozhanke.deploy.messaging.producer.DeploymentMQProducer;
 import com.xiaozhanke.deploy.model.entity.DeploymentJob;
@@ -28,6 +29,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -60,6 +63,7 @@ public class DeploymentJobService {
     private final DeploymentMQProducer deploymentMQProducer;
     private final DeploymentDelayedProducer deploymentDelayedProducer;
     private final FileStorageService fileStorageService;
+    private final ActivityPublisher activityPublisher;
 
     /**
      * 创建部署作业
@@ -111,6 +115,8 @@ public class DeploymentJobService {
                 .orElseThrow(() -> new IllegalStateException(
                         String.format("作业创建失败: recordId=[%s] jobType=[%s] clientRequestId=[%s]",
                                 record.getId(), request.getJobType(), request.getClientRequestId())));
+        // 新作业进入 PENDING，推一条动态让控制台时间轴即时出现该条目
+        publishActivityAfterCommit(persisted.getId());
         return deploymentJobPoVoMapper.poToVo(persisted);
     }
 
@@ -160,6 +166,8 @@ public class DeploymentJobService {
             log.error("延迟消息发送异常,作业 [{}] 将保持在 PENDING 状态", jobId, e);
         }
 
+        // 延迟作业已入库（PENDING），推一条动态
+        publishActivityAfterCommit(jobId);
         return deploymentJobPoVoMapper.poToVo(pending);
     }
 
@@ -192,7 +200,26 @@ public class DeploymentJobService {
         // CAS 成功后,直接修改内存中的 job 状态为 CANCELLED 返回即可,
         // 无需重新查询(cancelIfPending 的 clearAutomatically 不改变此 job 引用)
         job.setStatus(JobStatusEnum.CANCELLED).setEndTime(LocalDateTime.now());
+        // 撤销也是一条动态（PENDING → CANCELLED）；在事务提交后再推，避免回滚后推出幽灵动态
+        publishActivityAfterCommit(jobId);
         return deploymentJobPoVoMapper.poToVo(job);
+    }
+
+    /**
+     * 注册事务提交后回调推送动态：仅当确有活动事务时延后到 {@code afterCommit}，否则立即推送。
+     * 避免在 {@code @Transactional} 方法内事务尚未提交（甚至随后回滚）时就推出动态。
+     */
+    private void publishActivityAfterCommit(String jobId) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    activityPublisher.publish(jobId);
+                }
+            });
+        } else {
+            activityPublisher.publish(jobId);
+        }
     }
 
     /**

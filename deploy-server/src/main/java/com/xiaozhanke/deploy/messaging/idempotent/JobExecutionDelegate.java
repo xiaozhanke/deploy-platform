@@ -5,6 +5,7 @@ import com.xiaozhanke.deploy.enums.ApplicationTypeEnum;
 import com.xiaozhanke.deploy.enums.JobTypeEnum;
 import com.xiaozhanke.deploy.exception.JobFailureException;
 import com.xiaozhanke.deploy.exception.SshTransientException;
+import com.xiaozhanke.deploy.messaging.ActivityPublisher;
 import com.xiaozhanke.deploy.messaging.config.RocketMQProperties;
 import com.xiaozhanke.deploy.messaging.dto.DeadLetterMqMessage;
 import com.xiaozhanke.deploy.model.entity.DeploymentJob;
@@ -50,6 +51,7 @@ public class JobExecutionDelegate {
     private final RocketMQProperties properties;
     private final DeploymentRecordRepository deploymentRecordRepository;
     private final FileStorageService fileStorageService;
+    private final ActivityPublisher activityPublisher;
 
     /**
      * 按作业类型分发 SSH 命令(不与数据库交互——状态回写由 {@link DeploymentJobExecutionService} 负责)。
@@ -170,6 +172,8 @@ public class JobExecutionDelegate {
         } catch (Exception e) {
             log.warn("WebSocket 推送作业状态失败: jobId=[{}]", jobId, e);
         }
+        // 顺带推一条全平台动态，驱动控制台时间轴更新（自带异常兜底，不影响上面的作业状态推送）
+        activityPublisher.publish(jobId);
     }
 
     private void deadLetter(String jobId, String deploymentRecordId, JobTypeEnum jobType,
