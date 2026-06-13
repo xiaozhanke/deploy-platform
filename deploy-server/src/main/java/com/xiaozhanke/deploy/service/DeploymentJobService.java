@@ -1,5 +1,6 @@
 package com.xiaozhanke.deploy.service;
 
+import com.xiaozhanke.deploy.enums.ApplicationTypeEnum;
 import com.xiaozhanke.deploy.enums.JobStatusEnum;
 import com.xiaozhanke.deploy.enums.JobTypeEnum;
 import com.xiaozhanke.deploy.exception.BusinessException;
@@ -9,6 +10,7 @@ import com.xiaozhanke.deploy.messaging.producer.DeploymentDelayedProducer;
 import com.xiaozhanke.deploy.messaging.producer.DeploymentMQProducer;
 import com.xiaozhanke.deploy.model.entity.DeploymentJob;
 import com.xiaozhanke.deploy.model.entity.DeploymentRecord;
+import com.xiaozhanke.deploy.model.entity.FileRecord;
 import com.xiaozhanke.deploy.model.mapper.DeploymentJobPoVoMapper;
 import com.xiaozhanke.deploy.model.request.CreateJobRequest;
 import com.xiaozhanke.deploy.model.response.PageResult;
@@ -57,6 +59,7 @@ public class DeploymentJobService {
     private final DeploymentJobPoVoMapper deploymentJobPoVoMapper;
     private final DeploymentMQProducer deploymentMQProducer;
     private final DeploymentDelayedProducer deploymentDelayedProducer;
+    private final FileStorageService fileStorageService;
 
     /**
      * 创建部署作业
@@ -66,9 +69,10 @@ public class DeploymentJobService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         String.format("部署记录 [%s] 不存在", deploymentRecordId)));
 
-        // Phase 2 暂不支持 UPDATE(涉及文件传输与残留清理),提前拦截避免消费端反复失败
+        // UPDATE 作业:校验目标包存在且扩展名与应用类型匹配(后端 .jar / 前端 .zip),
+        // 在 HTTP 入口提前拦截非法请求,避免消费端反复失败进死信
         if (request.getJobType() == JobTypeEnum.UPDATE) {
-            throw new InvalidOperationException("作业类型 UPDATE 暂未启用");
+            validateUpdateTarget(record, request.getFileRecordId());
         }
 
         // 第二道防重:HTTP 入口按 (recordId, jobType, clientRequestId) 查已存在作业
@@ -160,7 +164,7 @@ public class DeploymentJobService {
     }
 
     /**
-     * 取消 PENDING 状态的作业(场景 3 取消语义,见 ADR-0004)。
+     * 取消 PENDING 状态的作业。
      *
      * <p>CAS UPDATE:仅当作业仍为 PENDING 时才能转入 CANCELLED。已开始执行(IN_PROGRESS)
      * 的作业不可撤销——CAS 是撤销 HTTP 请求与消费端占据的最终仲裁。
@@ -196,13 +200,36 @@ public class DeploymentJobService {
      * createDelayedJob 之间的 6 字段重复构造)。
      */
     private DeploymentJob buildPendingJob(String jobId, DeploymentRecord record, CreateJobRequest request) {
-        return new DeploymentJob()
+        DeploymentJob job = new DeploymentJob()
                 .setId(jobId)
                 .setDeploymentRecord(record)
                 .setJobType(request.getJobType())
                 .setStatus(JobStatusEnum.PENDING)
                 .setClientRequestId(request.getClientRequestId())
                 .setRetryCount(0);
+        // UPDATE 作业携带目标包引用,执行时据此换 fileRecord 指针;其余类型该字段保持 null
+        if (request.getJobType() == JobTypeEnum.UPDATE) {
+            job.setTargetFileRecordId(request.getFileRecordId());
+        }
+        return job;
+    }
+
+    /**
+     * 校验 UPDATE 作业的目标包:必须指定、必须存在、扩展名与应用类型匹配
+     * (后端 .jar / 前端 .zip)。
+     */
+    private void validateUpdateTarget(DeploymentRecord record, String fileRecordId) {
+        if (fileRecordId == null || fileRecordId.isBlank()) {
+            throw new InvalidOperationException("UPDATE 作业必须指定目标文件记录 Id");
+        }
+        FileRecord targetFile = fileStorageService.getFileRecord(fileRecordId);
+        String fileName = targetFile.getFileName();
+        if (record.getApplicationType() == ApplicationTypeEnum.BACKEND && !fileName.endsWith(".jar")) {
+            throw new InvalidOperationException("更新失败: 后端应用只能更新 jar 包");
+        }
+        if (record.getApplicationType() == ApplicationTypeEnum.FRONTEND && !fileName.endsWith(".zip")) {
+            throw new InvalidOperationException("更新失败: 前端应用只能更新 zip 包");
+        }
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.xiaozhanke.deploy.messaging.idempotent;
 
 import com.xiaozhanke.deploy.core.ssh.SshOperationExecutor;
+import com.xiaozhanke.deploy.enums.ApplicationTypeEnum;
 import com.xiaozhanke.deploy.enums.JobTypeEnum;
 import com.xiaozhanke.deploy.exception.JobFailureException;
 import com.xiaozhanke.deploy.exception.SshTransientException;
@@ -8,10 +9,12 @@ import com.xiaozhanke.deploy.messaging.config.RocketMQProperties;
 import com.xiaozhanke.deploy.messaging.dto.DeadLetterMqMessage;
 import com.xiaozhanke.deploy.model.entity.DeploymentJob;
 import com.xiaozhanke.deploy.model.entity.DeploymentRecord;
+import com.xiaozhanke.deploy.model.entity.FileRecord;
 import com.xiaozhanke.deploy.model.mapper.DeploymentJobPoVoMapper;
 import com.xiaozhanke.deploy.repository.DeploymentJobRepository;
 import com.xiaozhanke.deploy.repository.DeploymentRecordRepository;
 import com.xiaozhanke.deploy.service.DeploymentJobExecutionService;
+import com.xiaozhanke.deploy.service.FileStorageService;
 import com.xiaozhanke.deploy.util.ErrorMessageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +49,7 @@ public class JobExecutionDelegate {
     private final RocketMQTemplate rocketMQTemplate;
     private final RocketMQProperties properties;
     private final DeploymentRecordRepository deploymentRecordRepository;
+    private final FileStorageService fileStorageService;
 
     /**
      * 按作业类型分发 SSH 命令(不与数据库交互——状态回写由 {@link DeploymentJobExecutionService} 负责)。
@@ -68,14 +72,47 @@ public class JobExecutionDelegate {
                 String processId = sshOperationExecutor.executeStart(record);
                 executionService.markStartSuccess(jobId, deploymentRecordId, processId);
             }
-            case UPDATE -> throw new JobFailureException("UPDATE 作业类型暂未支持");
+            case UPDATE -> dispatchUpdate(jobId, deploymentRecordId, record);
             default -> throw new JobFailureException("不支持的作业类型: " + jobType);
         }
         log.info("作业 [{}] 执行成功", jobId);
     }
 
     /**
-     * 混合重试策略(ADR-0003):瞬时故障短重试,业务失败/重试耗尽转死信。
+     * UPDATE 作业分发:把部署记录的应用包换成目标新包,再重启(后端)/解压(前端)。
+     *
+     * <p>新包已由前端在提交作业前经 SFTP 上传到主机,本步骤只换 fileRecord 指针 + 重启/解压。
+     * fileRecord 指针的持久化由 {@link DeploymentJobExecutionService} 在 SSH 成功后完成——若 SSH 失败,
+     * 走 {@link #executeWithRetryAndDeadLetter} 的瞬时重试/死信逻辑,指针保持旧值不被污染。
+     */
+    private void dispatchUpdate(String jobId, String deploymentRecordId, DeploymentRecord record) {
+        DeploymentJob job = deploymentJobRepository.findById(jobId)
+                .orElseThrow(() -> new JobFailureException("UPDATE 作业不存在: " + jobId));
+        String targetFileRecordId = job.getTargetFileRecordId();
+        if (targetFileRecordId == null || targetFileRecordId.isBlank()) {
+            throw new JobFailureException("UPDATE 作业缺少目标文件记录 Id: " + jobId);
+        }
+
+        // 换成目标新包(仅内存态,供 executeStart/executeUnzip 读取文件名;持久化推迟到 SSH 成功后)
+        FileRecord targetFile = fileStorageService.getFileRecord(targetFileRecordId);
+        record.setFileRecord(targetFile);
+
+        if (record.getApplicationType() == ApplicationTypeEnum.BACKEND) {
+            // 后端:停旧进程(若在运行)+ 用新包启动
+            if (Boolean.TRUE.equals(record.getRunning())) {
+                sshOperationExecutor.executeStop(record);
+            }
+            String processId = sshOperationExecutor.executeStart(record);
+            executionService.markUpdateBackendSuccess(jobId, deploymentRecordId, targetFileRecordId, processId);
+        } else {
+            // 前端:解压新包到部署目录
+            sshOperationExecutor.executeUnzip(record);
+            executionService.markUpdateFrontendSuccess(jobId, deploymentRecordId, targetFileRecordId);
+        }
+    }
+
+    /**
+     * 混合重试策略:瞬时故障短重试,业务失败/重试耗尽转死信。
      *
      * @param originalPayload 原始消息体 JSON(用于死信记录,调用方在入参已序列化为字符串)
      */

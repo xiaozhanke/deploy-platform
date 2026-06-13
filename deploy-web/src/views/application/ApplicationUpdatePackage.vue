@@ -2,8 +2,8 @@
 import { Document, Search } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
 
-import { deploymentRecordUpdatePackage, fileQueryPathById, sshConnect } from '@/api/api'
-import { ApplicationTypeEnum } from '@/enums/platform'
+import { deploymentJobCreate, fileQueryPathById, sshConnect } from '@/api/api'
+import { ApplicationTypeEnum, JobTypeEnum } from '@/enums/platform'
 import { useWebSocketStore } from '@/stores/websocket'
 import type { DeploymentRecord } from '@/types/deployment'
 import type { FileRecord } from '@/types/file'
@@ -90,7 +90,7 @@ const handleUploadStep = async () => {
   })
 }
 
-// 更新部署记录
+// 提交更新作业(经 MQ 异步执行:换应用包指针 + 重启/解压)
 const handleUpdateDeploymentRecord = async () => {
   try {
     // 初始化更新状态
@@ -99,11 +99,15 @@ const handleUpdateDeploymentRecord = async () => {
       updateStatusMap.value[record.id] = 'pending'
     })
 
-    // 并行更新所有部署记录
+    // 并行为每条部署记录提交一个 UPDATE 作业
     await Promise.all(
       props.recordSelection.map(async (record) => {
         try {
-          await deploymentRecordUpdatePackage(record.id, form.fileRecordId)
+          await deploymentJobCreate(record.id, {
+            jobType: JobTypeEnum.UPDATE.value,
+            clientRequestId: crypto.randomUUID(),
+            fileRecordId: form.fileRecordId,
+          })
           updateStatusMap.value[record.id] = 'success'
         } catch (error) {
           updateStatusMap.value[record.id] = 'error'
@@ -113,10 +117,10 @@ const handleUpdateDeploymentRecord = async () => {
     )
 
     steps.value[1].status = 'success'
-    ElMessage.success('部署记录更新成功')
+    ElMessage.success('更新作业已提交,稍后自动执行')
   } catch (error) {
     steps.value[1].status = 'error'
-    ElMessage.error('部署记录更新失败: ' + extractErrorMessage(error))
+    ElMessage.error('提交更新作业失败: ' + extractErrorMessage(error))
   }
 }
 
@@ -138,7 +142,7 @@ const steps = ref<
   { title: string; status: 'process' | 'wait' | 'error' | 'finish' | 'success'; method?: () => Promise<void> }[]
 >([
   { title: '上传应用包', status: 'process', method: handleUploadStep },
-  { title: '重启应用程序', status: 'wait', method: handleUpdateDeploymentRecord },
+  { title: '提交更新作业', status: 'wait', method: handleUpdateDeploymentRecord },
 ])
 
 const fileSelectVisible = ref(false)
@@ -257,9 +261,9 @@ const handleClose = () => {
               @click="handleViewLog(record)"
               >查看日志</el-button
             >
-            <soft-label v-if="updateStatusMap[record.id] === 'pending'" intent="info">处理中</soft-label>
-            <soft-label v-else-if="updateStatusMap[record.id] === 'success'" intent="success">更新成功</soft-label>
-            <soft-label v-else-if="updateStatusMap[record.id] === 'error'" intent="danger">更新失败</soft-label>
+            <soft-label v-if="updateStatusMap[record.id] === 'pending'" intent="info">提交中</soft-label>
+            <soft-label v-else-if="updateStatusMap[record.id] === 'success'" intent="success">已提交</soft-label>
+            <soft-label v-else-if="updateStatusMap[record.id] === 'error'" intent="danger">提交失败</soft-label>
           </div>
         </div>
       </div>

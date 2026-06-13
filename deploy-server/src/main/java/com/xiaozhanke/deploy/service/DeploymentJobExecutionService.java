@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 /**
- * 部署作业执行结果的状态写入服务(场景 5 重构,ADR-0003)。
+ * 部署作业执行结果的状态写入服务。
  *
  * <p>把"作业状态推进 + 部署记录运行态投影"的数据库写入从 {@code DeploymentConsumer} 抽到独立 bean,
  * 解决两个问题:
@@ -37,6 +37,7 @@ public class DeploymentJobExecutionService {
 
     private final DeploymentJobRepository deploymentJobRepository;
     private final DeploymentRecordRepository deploymentRecordRepository;
+    private final FileStorageService fileStorageService;
 
     /**
      * START / RESTART 成功:作业置 SUCCESS,并刷新部署记录运行态投影为"运行中"。
@@ -44,11 +45,7 @@ public class DeploymentJobExecutionService {
     @Transactional
     public void markStartSuccess(String jobId, String deploymentRecordId, String processId) {
         DeploymentRecord record = loadRecord(deploymentRecordId);
-        record.setStatus(DeploymentStatusEnum.SUCCESS)
-                .setRunning(true)
-                .setProcessId(processId)
-                .setLastStartTime(LocalDateTime.now())
-                .setErrorMessage(null);
+        applyRunningProjection(record, processId);
         deploymentRecordRepository.save(record);
         completeJob(jobId);
     }
@@ -67,6 +64,35 @@ public class DeploymentJobExecutionService {
     }
 
     /**
+     * UPDATE 成功(后端应用):换 fileRecord 指针 + 刷新运行态投影为"运行中"(新进程 PID)。
+     *
+     * <p>fileRecord 指针的持久化推迟到 SSH 重启**成功之后**(本方法):SSH 不在 DB 事务内,
+     * 失败时作业进死信、指针保持旧值不被污染。
+     */
+    @Transactional
+    public void markUpdateBackendSuccess(String jobId, String deploymentRecordId,
+                                         String fileRecordId, String processId) {
+        DeploymentRecord record = loadRecord(deploymentRecordId);
+        record.setFileRecord(fileStorageService.getFileRecordReference(fileRecordId));
+        applyRunningProjection(record, processId);
+        deploymentRecordRepository.save(record);
+        completeJob(jobId);
+    }
+
+    /**
+     * UPDATE 成功(前端应用):换 fileRecord 指针 + 置部署记录 SUCCESS(前端无进程,不动运行态)。
+     */
+    @Transactional
+    public void markUpdateFrontendSuccess(String jobId, String deploymentRecordId, String fileRecordId) {
+        DeploymentRecord record = loadRecord(deploymentRecordId);
+        record.setFileRecord(fileStorageService.getFileRecordReference(fileRecordId))
+                .setStatus(DeploymentStatusEnum.SUCCESS)
+                .setErrorMessage(null);
+        deploymentRecordRepository.save(record);
+        completeJob(jobId);
+    }
+
+    /**
      * 作业进入死信终态:置 DEAD + 错误信息 + 应用层重试次数 + 结束时间(不动部署记录投影)。
      */
     @Transactional
@@ -77,6 +103,17 @@ public class DeploymentJobExecutionService {
                 .setRetryCount(retryCount)
                 .setErrorMessage(ErrorMessageUtils.truncate(reason));
         deploymentJobRepository.save(job);
+    }
+
+    /**
+     * 刷新部署记录运行态投影为"运行中"(START 与 UPDATE-后端 共用的字段写入)。
+     */
+    private void applyRunningProjection(DeploymentRecord record, String processId) {
+        record.setStatus(DeploymentStatusEnum.SUCCESS)
+                .setRunning(true)
+                .setProcessId(processId)
+                .setLastStartTime(LocalDateTime.now())
+                .setErrorMessage(null);
     }
 
     private void completeJob(String jobId) {

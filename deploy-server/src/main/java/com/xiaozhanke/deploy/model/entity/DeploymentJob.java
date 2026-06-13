@@ -27,8 +27,7 @@ import java.time.LocalDateTime;
 /**
  * 部署作业 PO 类
  *
- * <p>对一份 {@link DeploymentRecord} 执行一次具体动作的可重试单元。详见 CONTEXT.md「部署作业」词条以及
- * ADR-0001(顺序键)、ADR-0002(幂等)、ADR-0003(重试与死信)、ADR-0004(取消语义)。
+ * <p>对一份 {@link DeploymentRecord} 执行一次具体动作的可重试单元。
  *
  * <p>{@link Persistable} 显式告知 Spring Data JPA「这是新建实体」——本类的 jobId 在 service 层预生成
  * 并塞进 RocketMQ 事务消息体,save() 默认会因 ID 非空走 merge 分支,在 listener INSERT 时触发
@@ -87,6 +86,14 @@ public class DeploymentJob extends BasePo implements Persistable<String> {
     @Comment("客户端请求 Id")
     @Column(name = "client_request_id", nullable = false, length = 36)
     private String clientRequestId;
+
+    /**
+     * 目标文件记录 Id(**仅 UPDATE 作业**使用):指向要更新到的新应用包。执行时据此把部署记录的
+     * fileRecord 指针换成新包,再重启(后端)/解压(前端)。其余作业类型该字段为 null。
+     */
+    @Comment("目标文件记录 Id(UPDATE 作业用)")
+    @Column(name = "target_file_record_id", length = 36)
+    private String targetFileRecordId;
 
     /**
      * 应用层重试次数(不包含 MQ 内部重投)

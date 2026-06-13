@@ -18,16 +18,15 @@ import java.io.IOException;
 /**
  * SSH 部署操作执行器
  *
- * <p>把"在远程主机执行 start/stop 命令"这件事从 {@code DeploymentService} 里抽出来,供
- * {@code DeploymentService}(旧同步接口)与 {@code DeploymentConsumer}(MQ 消费路径)共用。
+ * <p>封装"在远程主机执行 start/stop/unzip 命令"的命令构造与 SSH 调用,由 MQ 消费路径
+ * ({@code JobExecutionDelegate})调用。
  *
- * <p>本类**只**负责命令构造与 SSH 调用,**不**负责数据库状态更新——状态机推进由调用方决定
- * (老 service 在同一事务里 save,consumer 在作业完成后由 {@code DeploymentJobExecutionService} 写)。
+ * <p>本类**只**负责命令构造与 SSH 调用,**不**负责数据库状态更新——作业完成后的状态机推进
+ * 由 {@code DeploymentJobExecutionService} 写。
  *
- * <p>对 MQ 消费路径,本类把 {@link SshService} 抛出的 {@link BusinessException} 按 cause **分级**
- * (ADR-0003):连接/通道/IO 类(瞬时,可短重试)→ {@link SshTransientException};命令退出码非 0 等
- * (业务失败,重试无益)→ {@link JobFailureException}。旧同步路径仍按 {@code RuntimeException} 捕获,
- * 不受影响。
+ * <p>把 {@link SshService} 抛出的 {@link BusinessException} 按 cause **分级**:连接/通道/IO 类
+ * (瞬时,可短重试)→ {@link SshTransientException};其余(命令退出码非 0 等业务失败,重试无益)
+ * → {@link JobFailureException}。
  *
  * @author xiaozhanke
  */
@@ -77,7 +76,26 @@ public class SshOperationExecutor {
     }
 
     /**
-     * 执行 SSH 命令并把失败按 ADR-0003 分级:连接/通道/IO 类基础设施异常 → {@link SshTransientException}
+     * 在远程主机解压前端应用包到部署目录(UPDATE 作业,前端应用)。
+     *
+     * <p>包已由前端在提交作业前经 SFTP 上传到 {@code deploymentPath},本方法只负责 {@code unzip -o}
+     * 覆盖解压。文件名取自 {@code deployment.getFileRecord()}——调用方在调用前已把部署记录的
+     * fileRecord 换成目标新包(内存态)。
+     */
+    public void executeUnzip(DeploymentRecord deployment) {
+        HostRecordDto host = hostService.getHostDto(deployment.getHostRecord().getId());
+
+        // deploymentPath 与 fileName 取自用户输入,必须套单引号字面值,避免命令注入
+        String command = String.format(
+                "cd %s && unzip -o %s",
+                ShellArgEscaper.singleQuote(deployment.getDeploymentPath()),
+                ShellArgEscaper.singleQuote(deployment.getFileRecord().getFileName())
+        );
+        runJobCommand(host, command);
+    }
+
+    /**
+     * 执行 SSH 命令并把失败分级:连接/通道/IO 类基础设施异常 → {@link SshTransientException}
      * (可短重试);其余(命令退出码非 0 等业务失败)→ {@link JobFailureException}(重试无益)。
      */
     private String runJobCommand(HostRecordDto host, String command) {

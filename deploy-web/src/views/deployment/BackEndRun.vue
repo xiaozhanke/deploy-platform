@@ -2,9 +2,9 @@
 import { RefreshRight } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules, UploadInstance, UploadUserFile } from 'element-plus'
 
-import { deploymentRecordAdd, deploymentRecordStart, fileQueryList, fileQueryPathById, sshExecCommand } from '@/api/api'
+import { deploymentJobCreate, deploymentRecordAdd, fileQueryList, fileQueryPathById, sshExecCommand } from '@/api/api'
 import CodeEditor from '@/components/code-editor/index.vue'
-import { ApplicationTypeEnum, DeploymentStatusEnum, FileScopeEnum } from '@/enums/platform'
+import { ApplicationTypeEnum, DeploymentStatusEnum, FileScopeEnum, JobTypeEnum } from '@/enums/platform'
 import { useWebSocketStore } from '@/stores/websocket'
 import type { FileRecord } from '@/types/file'
 import type { HostRecord } from '@/types/host'
@@ -288,12 +288,12 @@ const handleRunStep = async () => {
           running: false,
         })
         const { id } = savedResponse
-        // 启动后端应用
-        await deploymentRecordStart(id)
+        // 提交启动作业:经 MQ 异步驱动执行,接口立即返回 PENDING 作业
+        await deploymentJobCreate(id, { jobType: JobTypeEnum.START.value, clientRequestId: crypto.randomUUID() })
         steps.value[2].status = 'success'
-        ElMessage.success('应用启动成功')
+        ElMessage.success('启动作业已提交,稍后自动执行')
       } catch (error) {
-        ElMessage.error('应用启动失败: ' + extractErrorMessage(error))
+        ElMessage.error('提交启动作业失败: ' + extractErrorMessage(error))
       }
     }
   })

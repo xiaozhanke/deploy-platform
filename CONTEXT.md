@@ -19,12 +19,12 @@ _Avoid_: 部署任务、部署消息、deploy task（统一叫"部署作业"）
 
 **作业类型（JobType）**：
 枚举值，目前为 `START | STOP | RESTART | UPDATE`。RESTART 在执行层等价于 STOP→START，但作为一个独立作业类型存在，以便外部（用户/调度器）表达意图、以及让幂等与重试以"一次重启"为单位。
-_UPDATE 的特殊性_：UPDATE 涉及大文件传输、非自然幂等（中途失败会在目标机器留下半传文件），但**在 MQ 层与其它三种作业走完全一致的流程**——同样的事务消息、同样的顺序消息、同样的 ADR-0003 重试/DLQ 策略。**"清理半传文件"的责任在 SSH 脚本层**，不在 MQ 设计层；MQ 只管作业的状态机推进与顺序保证，不感知"文件已经传到一半"这种中间态。手动 retry 同样是新建一份新 jobId 的 UPDATE 作业,SSH 脚本负责清理后重传。
+_UPDATE 的落地_（已实现）：UPDATE 作业额外携带 `targetFileRecordId`（目标新包的文件记录 Id），与其它三种作业在 MQ 层走**完全一致**的流程——同样的事务消息、同样的消费端 CAS 串行（见 [[顺序键]]）、同样的 ADR-0003 重试/DLQ 策略。**新包的 SFTP 上传由前端在提交作业前单独完成**（`ApplicationUpdatePackage` 向导第一步经 WebSocket SFTP 推到主机），MQ 作业本身**不传大文件**，只负责"把部署记录的 fileRecord 指针换成新包 + 重启（后端 `java -jar`）/ 解压（前端 `unzip`）"——因此 MQ 不感知"半传文件"中间态。fileRecord 指针的持久化**推迟到 SSH 成功之后**：失败则作业进死信、指针保持旧值不被污染。手动 retry 同样是新建一份新 jobId 的 UPDATE 作业。
 
 **顺序键（OrderingKey）**：
-为 [[部署作业]] 选择 MQ 队列时使用的哈希键，取值为 `deploymentRecordId`。同一份 [[部署记录]] 的多个作业（如连续触发"停止 → 更新 → 启动"）保证按发送顺序串行消费；不同记录之间并发。**不**以 `hostId` 为顺序键 —— 一台物理机上承载多个独立应用是常态，让它们彼此排队没有业务意义。
+[[部署作业]]串行的维度，取值为 `deploymentRecordId`。**原设计**以它哈希选 MQ 队列（顺序消息）；**实际落地**因事务消息与自定义 `MessageQueueSelector` 互斥，改为事务消息走默认队列、消费者 `ConsumeMode.ORDERLY` + 一条 CAS UPDATE 以 `deploymentRecordId` 为互斥维度兜底（详见 [ADR-0006](docs/adr/0006-serialization-via-db-not-transactional-ordering.md)）。同一份 [[部署记录]] 的多个作业（如连续触发"停止 → 更新 → 启动"）串行执行；不同记录之间并发。**不**以 `hostId` 为顺序键 —— 一台物理机上承载多个独立应用是常态，让它们彼此排队没有业务意义。
 _Why 不是 (hostId, port)_：端口属于配置，会被 UPDATE 改写；in-flight 作业的 hash 漂移会导致顺序丢失。
-_兜底_：消费者拿到消息后必须用 `deploymentRecordId` 做行锁 / 乐观版本号，顺序消息只保证"投递"顺序，重试和 rebalance 期间不保证"消费"顺序。
+_兜底_：串行最终靠消费端那条 CAS UPDATE（同一 `deploymentRecordId` 同时只允许一个作业处于 IN_PROGRESS），占不到执行权即 `RECORD_BUSY` 重投；MQ 队列顺序只是尽力而为，重试 / rebalance 期间不保证严格"消费"顺序。
 
 **本地事务（事务消息语境）**：
 RocketMQ 事务消息的 `executeLocalTransaction` 回调内**仅**执行 `INSERT INTO deployment_job(id, type, deployment_record_id, status=PENDING, ...)` 一行数据库操作，随后 commit 半消息。回查（`checkLocalTransaction`）逻辑为 `SELECT FROM deployment_job WHERE id = ?` 存在则 COMMIT、不存在则 ROLLBACK。**SSH 远程命令不属于本地事务**——它由消费者在拿到消息之后执行，本地事务必须在秒级可判定 commit/rollback，否则破坏回查机制。[[部署记录]] 上的运行态投影（`running` / `processId` / `lastStartTime`）由消费者在作业成功后顺手刷新，不在本地事务内。

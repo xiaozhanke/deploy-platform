@@ -73,10 +73,12 @@ export interface CreateJobRequest {
   clientRequestId: string
   /** 期望执行时间(ISO 格式);设置后创建延迟作业,留空则立即执行 */
   executeAt?: string
+  /** 目标文件记录 Id(仅 UPDATE 作业必填):要更新到的新应用包 */
+  fileRecordId?: string
 }
 
 /**
- * 操作审计日志(对应后端 AuditLogVo,场景 4)
+ * 操作审计日志(对应后端 AuditLogVo)
  */
 export interface AuditLog {
   id: string
