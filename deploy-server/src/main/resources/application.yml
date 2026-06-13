@@ -66,6 +66,22 @@ app:
       - .xml
       - .json
       - .txt
+  monitor:
+    # 免 Agent 资源监控。以下均有内置默认值，不配置也按默认运行。
+    # 资源采样周期（CPU/内存）。
+    sample-interval: 5s
+    # 主机/实例在线检测周期。
+    liveness-interval: 60s
+    # 采样 SSH 连接超时（毫秒，覆盖 per-host 配置，监控路径必须快速失败）。
+    connect-timeout-millis: 3000
+    # 采样 SSH 通道/命令超时（毫秒）。
+    command-timeout-millis: 5000
+    # 在线检测短连接超时（毫秒）。
+    liveness-timeout-millis: 1500
+    # 单周期并发采样/探测的最大主机数。
+    sampling-concurrency: 8
+    # 在线检测结果缓存兜底过期时长（探测停摆时陈旧条目自动过期为「未知」，约 3× liveness-interval）。
+    cache-ttl: 180s
 springdoc:
   swagger-ui:
     # 分组排序

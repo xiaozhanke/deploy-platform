@@ -18,4 +18,9 @@ public interface DeadLetterMessageRepository extends JpaRepository<DeadLetterMes
      * 死信落库幂等:同一作业的死信只记一次,避免 MQ 至少一次投递造成重复死信记录。
      */
     boolean existsByJobId(String jobId);
+
+    /**
+     * 统计未处理死信数（未人工重试且未软删），供控制台 KPI「死信异常」使用。
+     */
+    long countByRetriedIsFalseAndDeletedIsFalse();
 }

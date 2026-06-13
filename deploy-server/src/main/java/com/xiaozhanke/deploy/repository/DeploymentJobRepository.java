@@ -3,6 +3,8 @@ package com.xiaozhanke.deploy.repository;
 import com.xiaozhanke.deploy.enums.JobStatusEnum;
 import com.xiaozhanke.deploy.enums.JobTypeEnum;
 import com.xiaozhanke.deploy.model.entity.DeploymentJob;
+import com.xiaozhanke.deploy.model.vo.ActivityVo;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -77,4 +79,42 @@ public interface DeploymentJobRepository extends JpaRepository<DeploymentJob, St
             "AND j.createTime = (SELECT MAX(j2.createTime) FROM DeploymentJob j2 " +
             "WHERE j2.deploymentRecord.id = j.deploymentRecord.id AND j2.deleted = false)")
     List<DeploymentJob> findLatestByDeploymentRecordIdIn(@Param("recordIds") Collection<String> recordIds);
+
+    /**
+     * 统计在途作业数（status 命中给定集合且未软删），供控制台 KPI「在途作业」使用：
+     * 传 {@code [PENDING, IN_PROGRESS]} 即「尚未到达终态」的作业数。带 status 索引、亚毫秒级。
+     */
+    long countByStatusInAndDeletedIsFalse(Collection<JobStatusEnum> statuses);
+
+    /**
+     * 投影出单个作业的最新动态快照（{@link ActivityVo}），供作业状态变更时经 WebSocket 全平台推送。
+     *
+     * <p>JOIN 作业 → 部署记录 → 主机一次取齐，规避 MQ 消费线程（无事务、游离态）访问 {@code @ManyToOne}
+     * 懒加载关联。
+     */
+    @Query("SELECT new com.xiaozhanke.deploy.model.vo.ActivityVo(" +
+            "j.id, d.id, j.jobType, j.status, j.createUser, h.name, h.address, j.createTime) " +
+            "FROM DeploymentJob j JOIN j.deploymentRecord d JOIN d.hostRecord h " +
+            "WHERE j.id = :jobId")
+    Optional<ActivityVo> findActivityByJobId(@Param("jobId") String jobId);
+
+    /**
+     * 投影出全平台最近的部署动态（按作业创建时间倒序），供控制台时间轴初次 HTTP 加载。
+     * 取多少条由 {@link Pageable} 控制（如 {@code PageRequest.of(0, 10)}）。
+     */
+    @Query("SELECT new com.xiaozhanke.deploy.model.vo.ActivityVo(" +
+            "j.id, d.id, j.jobType, j.status, j.createUser, h.name, h.address, j.createTime) " +
+            "FROM DeploymentJob j JOIN j.deploymentRecord d JOIN d.hostRecord h " +
+            "WHERE j.deleted = false ORDER BY j.createTime DESC")
+    List<ActivityVo> findRecentActivities(Pageable pageable);
+
+    /**
+     * 投影出当前所有「在途」作业（status 命中给定集合，按创建时间倒序），供控制台在途抽屉展示。
+     * 传 {@code [PENDING, IN_PROGRESS]} 即所有尚未到达终态的作业。
+     */
+    @Query("SELECT new com.xiaozhanke.deploy.model.vo.ActivityVo(" +
+            "j.id, d.id, j.jobType, j.status, j.createUser, h.name, h.address, j.createTime) " +
+            "FROM DeploymentJob j JOIN j.deploymentRecord d JOIN d.hostRecord h " +
+            "WHERE j.deleted = false AND j.status IN :statuses ORDER BY j.createTime DESC")
+    List<ActivityVo> findInFlightActivities(@Param("statuses") Collection<JobStatusEnum> statuses);
 }

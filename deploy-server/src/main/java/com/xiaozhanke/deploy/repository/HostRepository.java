@@ -24,4 +24,9 @@ public interface HostRepository extends JpaRepository<HostRecord, String>, JpaSp
     boolean existsByIdAndDeletedIsFalse(String id);
 
     List<HostRecord> findAllByDeletedIsFalse();
+
+    /**
+     * 统计未删除主机总数，供控制台 KPI「总主机数」使用。
+     */
+    long countByDeletedIsFalse();
 }
