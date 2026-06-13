@@ -239,7 +239,7 @@ services:
 >
 > 引入 **RocketMQ + Kafka 双引擎**,演示业务消息与数据流场景的选型对比:
 > - **RocketMQ 事务消息**:解决"部署作业入库 + 远程命令执行"的最终一致性,本地事务只做一行 INSERT、SSH 在消费端执行;实现 `RocketMQLocalTransactionListener` 处理半消息回查
-> - **RocketMQ 顺序消息**:基于 `MessageQueueSelector` 按 `deploymentRecordId` 哈希分队列,保证同一份部署记录的连续作业串行、不同部署记录并发(即便同机);决策详见 ADR-0001
+> - **RocketMQ 顺序消息 + 消费端串行兜底**:事务消息与自定义 `MessageQueueSelector` 互斥(`sendMessageInTransaction` 不支持选择器),故保留事务消息走默认队列、消费者 `ConsumeMode.ORDERLY`,把"同一份部署记录的连续作业串行、不同部署记录并发(即便同机)"下沉到一条消费端 CAS UPDATE 实现——同一语句同时承载 `status='PENDING'` 幂等与 `NOT EXISTS 同记录 IN_PROGRESS` 串行;决策详见 ADR-0001(顺序键选型)与 ADR-0006(为何把顺序保证下沉到 DB 而非依赖 MQ 队列)
 > - **RocketMQ 延迟消息**:实现定时部署、定时健康检查,对比 DB 轮询性能提升数量级
 > - **死信队列 + 消费幂等**:消费失败自动重试(指数退避 3 次)后进 DLQ,前端可查看与重投;**双层防重**——HTTP 入口用 `(deploymentRecordId, jobType, clientRequestId)` 唯一索引挡前端重复点击,消费者用 `UPDATE ... WHERE status='PENDING'` CAS 占据作业,**不**依赖 messageId 去重(避开事务消息半提交/重试导致的 messageId 漂移)
 > - **广播消费**:配置变更实时同步到所有实例

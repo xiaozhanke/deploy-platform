@@ -69,25 +69,23 @@ rocketmq:
     retry-times-when-send-async-failed: 2
 deploy-platform:
   mq:
-    # 部署作业事务消息 Topic / Consumer Group(场景 1 + 场景 2)
+    # 部署作业事务消息 Topic / Consumer Group
     deploy-job-topic: deploy-job
     deploy-job-consumer-group: deploy-job-consumer
-    # 顺序键按 deploymentRecordId 分队列(详见 ADR-0001),队列数与 broker.conf 的 defaultTopicQueueNums 对齐
-    deploy-job-queue-count: 8
-    # 自定义死信 Topic / Consumer Group(场景 5,ADR-0003)
+    # 自定义死信 Topic / Consumer Group
     # 用业务名而非 RocketMQ 系统保留前缀 %DLQ%(后者默认只读,producer 手动投递会失败)
     dead-letter-topic: deploy-job-dlq
     dead-letter-consumer-group: deploy-job-dlq-consumer
-    # 延迟作业 Topic / Consumer Group(场景 3,ADR-0004)
+    # 延迟作业 Topic / Consumer Group
     # 延迟作业不走事务消息,作业直接 INSERT 入库后发延迟等级消息到此 Topic
     delayed-topic: deploy-job-delayed
     delayed-consumer-group: deploy-job-delayed-consumer
-    # 配置广播 Topic / Consumer Group(场景 6:BROADCASTING 模式)
+    # 配置广播 Topic / Consumer Group(BROADCASTING 模式)
     # 每条配置变更送达所有实例——位移在消费者本地,而非 Broker(与 CLUSTERING 对比演示)
     config-broadcast-topic: config-broadcast
     config-broadcast-consumer-group: config-broadcast-consumer
   audit:
-    # Kafka 审计日志配置(场景 4,ADR-0005)
+    # Kafka 审计日志配置
     # 注意：不配置 spring.kafka.* —— KafkaConfig 手动构建 Producer/Consumer Factory,
     # 若配置 spring.kafka 会触发 KafkaAutoConfiguration 产生重复 Bean
     bootstrap-servers: 127.0.0.1:9092

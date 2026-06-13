@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -135,48 +134,6 @@ public class DeploymentController {
     }
 
     /**
-     * 启动应用
-     *
-     * @param id 部署记录 Id
-     * @return 更新后的部署记录信息
-     * @deprecated 改用 {@code POST /deployments/{id}/jobs} 异步接口(jobType=START),Phase 2 移除
-     */
-    @Deprecated(forRemoval = true)
-    @Operation(summary = "启动应用 (deprecated)", description = "同步执行 SSH,建议改用 POST /deployments/{id}/jobs")
-    @PostMapping("/{id}/actions/start")
-    public DeploymentRecordVo startApplication(@Parameter(description = "部署记录 Id", required = true) @PathVariable String id) {
-        return deploymentService.startApplication(id);
-    }
-
-    /**
-     * 停止应用
-     *
-     * @param id 部署记录 Id
-     * @return 更新后的部署记录信息
-     * @deprecated 改用 {@code POST /deployments/{id}/jobs} 异步接口(jobType=STOP),Phase 2 移除
-     */
-    @Deprecated(forRemoval = true)
-    @Operation(summary = "停止应用 (deprecated)", description = "同步执行 SSH,建议改用 POST /deployments/{id}/jobs")
-    @PostMapping("/{id}/actions/stop")
-    public DeploymentRecordVo stopApplication(@Parameter(description = "部署记录 Id", required = true) @PathVariable String id) {
-        return deploymentService.stopApplication(id);
-    }
-
-    /**
-     * 重启应用
-     *
-     * @param id 部署记录 Id
-     * @return 更新后的部署记录信息
-     * @deprecated 改用 {@code POST /deployments/{id}/jobs} 异步接口(jobType=RESTART),Phase 2 移除
-     */
-    @Deprecated(forRemoval = true)
-    @Operation(summary = "重启应用 (deprecated)", description = "同步执行 SSH,建议改用 POST /deployments/{id}/jobs")
-    @PostMapping("/{id}/actions/restart")
-    public DeploymentRecordVo restartApplication(@Parameter(description = "部署记录 Id", required = true) @PathVariable String id) {
-        return deploymentService.restartApplication(id);
-    }
-
-    /**
      * 获取应用状态
      *
      * @param id 部署记录 Id
@@ -186,21 +143,5 @@ public class DeploymentController {
     @GetMapping("/{id}/status")
     public DeploymentRecordVo getApplicationStatus(@Parameter(description = "部署记录 Id", required = true) @PathVariable String id) {
         return deploymentService.getApplicationStatus(id);
-    }
-
-    /**
-     * 更新应用包
-     *
-     * @param id           部署记录 Id
-     * @param fileRecordId 文件记录 Id
-     * @return 更新后的部署记录信息
-     * @deprecated 改用 {@code POST /deployments/{id}/jobs} 异步接口(jobType=UPDATE),Phase 2 移除
-     */
-    @Deprecated(forRemoval = true)
-    @Operation(summary = "更新应用 (deprecated)", description = "同步执行 SSH,建议改用 POST /deployments/{id}/jobs")
-    @PutMapping("/{id}/package")
-    public DeploymentRecordVo updateApplication(@Parameter(description = "部署记录 Id", required = true) @PathVariable String id,
-                                                @Parameter(description = "文件记录 Id", required = true) @RequestParam String fileRecordId) {
-        return deploymentService.updateApplication(id, fileRecordId);
     }
 }

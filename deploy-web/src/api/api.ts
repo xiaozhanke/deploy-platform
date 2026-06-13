@@ -134,8 +134,7 @@ export const sshExecCommand = (sessionId: string, command: string): Promise<Exec
 }
 
 /**
- * 通过 SFTP 把文本内容覆盖写入远程文件。
- * 替代旧的「拼 cat <<EOF 走 Exec」方案，避免 path 与内容被 shell 解释。
+ * 通过 SFTP 把文本内容覆盖写入远程文件，避免 path 与内容被 shell 解释。
  *
  * useSudo=true 时后端走「SFTP 写 /tmp 临时文件 → exec sudo -n mv 到目标」两步，
  * 用于 /etc/nginx/conf.d 这类 root 目录；要求远端登录用户配置 NOPASSWD sudo。
@@ -357,49 +356,12 @@ export const deploymentRecordDelete = (id: string): Promise<void> => {
 }
 
 /**
- * 启动后端应用
- * @param id 部署 Id
- * @returns
- */
-export const deploymentRecordStart = (id: string): Promise<void> => {
-  return request.post(`/deployments/${id}/actions/start`)
-}
-
-/**
- * 停止后端应用
- * @param id 部署 Id
- * @returns
- */
-export const deploymentRecordStop = (id: string): Promise<void> => {
-  return request.post(`/deployments/${id}/actions/stop`)
-}
-
-/**
- * 重启后端应用
- * @param id 部署 Id
- * @returns
- */
-export const deploymentRecordRestart = (id: string): Promise<void> => {
-  return request.post(`/deployments/${id}/actions/restart`)
-}
-
-/**
  * 获取后端应用运行状态
  * @param id 部署 Id
  * @returns
  */
 export const deploymentRecordStatus = (id: string): Promise<DeploymentRecord> => {
   return request.get(`/deployments/${id}/status`)
-}
-
-/**
- * 更新应用包
- * @param id 部署 Id
- * @param fileRecordId 文件记录 Id
- * @returns
- */
-export const deploymentRecordUpdatePackage = (id: string, fileRecordId: string): Promise<DeploymentRecord> => {
-  return request.put(`/deployments/${id}/package`, null, { params: { fileRecordId } })
 }
 
 /**
@@ -439,7 +401,7 @@ export const deploymentJobQueryById = (jobId: string): Promise<DeploymentJob> =>
 }
 
 /**
- * 取消 PENDING 状态的部署作业(场景 3 延迟作业取消)
+ * 取消 PENDING 状态的部署作业(延迟作业取消)
  * @param jobId 作业 Id
  * @returns 更新后的部署作业
  */
@@ -470,7 +432,7 @@ export const deadLetterRetry = (id: string): Promise<DeploymentJob> => {
 }
 
 /**
- * 分页查询操作审计日志(场景 4 Kafka 审计)
+ * 分页查询操作审计日志(Kafka 审计)
  * @param queryParams 查询参数（操作人、操作类型、操作结果）
  * @param pageParams 分页参数
  * @returns 审计日志分页列表

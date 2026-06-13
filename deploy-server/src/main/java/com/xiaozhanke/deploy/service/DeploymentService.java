@@ -1,10 +1,7 @@
 package com.xiaozhanke.deploy.service;
 
-import com.xiaozhanke.deploy.core.ssh.SshOperationExecutor;
 import com.xiaozhanke.deploy.enums.ApplicationTypeEnum;
-import com.xiaozhanke.deploy.enums.DeploymentStatusEnum;
 import com.xiaozhanke.deploy.exception.BusinessException;
-import com.xiaozhanke.deploy.exception.InvalidOperationException;
 import com.xiaozhanke.deploy.exception.ResourceNotFoundException;
 import com.xiaozhanke.deploy.model.dto.HostRecordDto;
 import com.xiaozhanke.deploy.model.entity.DeploymentRecord;
@@ -51,7 +48,6 @@ public class DeploymentService {
     private final SshService sshService;
     private final HostService hostService;
     private final FileStorageService fileStorageService;
-    private final SshOperationExecutor sshOperationExecutor;
 
     public DeploymentService(DeploymentRecordRepository deploymentRecordRepository,
                              DeploymentRecordPoVoMapper deploymentRecordPoVoMapper,
@@ -59,8 +55,7 @@ public class DeploymentService {
                              DeploymentJobPoVoMapper deploymentJobPoVoMapper,
                              SshService sshService,
                              HostService hostService,
-                             FileStorageService fileStorageService,
-                             SshOperationExecutor sshOperationExecutor) {
+                             FileStorageService fileStorageService) {
         this.deploymentRecordRepository = deploymentRecordRepository;
         this.deploymentRecordPoVoMapper = deploymentRecordPoVoMapper;
         this.deploymentJobRepository = deploymentJobRepository;
@@ -68,7 +63,6 @@ public class DeploymentService {
         this.sshService = sshService;
         this.hostService = hostService;
         this.fileStorageService = fileStorageService;
-        this.sshOperationExecutor = sshOperationExecutor;
     }
 
     /**
@@ -134,8 +128,8 @@ public class DeploymentService {
     /**
      * 为当前页每条部署记录回填「最近一次作业」。
      *
-     * <p>前端列表「最近作业」列原本只有「提交时乐观写入 + WebSocket 实时推送」两个来源,刷新或重进页面后
-     * 该列会全部回落成空。此处一次性批量查出整页记录各自最新的作业,作为权威初值下发,使该列在刷新后也能持久展示。
+     * <p>前端列表「最近作业」列若仅靠「提交时乐观写入 + WebSocket 实时推送」,刷新或重进页面后会全部回落成空。
+     * 此处一次性批量查出整页记录各自最新的作业,作为权威初值下发,使该列在刷新后也能持久展示。
      */
     private void populateLatestJobs(List<DeploymentRecordVo> deploymentList) {
         if (deploymentList.isEmpty()) {
@@ -263,123 +257,6 @@ public class DeploymentService {
     }
 
     /**
-     * 启动应用
-     *
-     * @param id 部署记录 Id
-     * @return 更新后的部署记录信息
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public DeploymentRecordVo startApplication(String id) {
-        DeploymentRecord deployment = getDeployment(id);
-
-        // 检查应用类型
-        if (deployment.getApplicationType() != ApplicationTypeEnum.BACKEND) {
-            throw new InvalidOperationException("操作失败: 只有后端应用才能启动");
-        }
-
-        // 检查应用状态
-        if (Boolean.TRUE.equals(deployment.getRunning())) {
-            throw new InvalidOperationException("操作失败: 应用已经在运行中");
-        }
-
-        doStart(deployment);
-        return deploymentRecordPoVoMapper.poToVo(deployment);
-    }
-
-    /**
-     * 停止应用
-     *
-     * @param id 部署记录 Id
-     * @return 更新后的部署记录信息
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public DeploymentRecordVo stopApplication(String id) {
-        DeploymentRecord deployment = getDeployment(id);
-
-        // 检查应用类型
-        if (deployment.getApplicationType() != ApplicationTypeEnum.BACKEND) {
-            throw new InvalidOperationException("操作失败：只有后端应用才能停止");
-        }
-
-        // 先获取应用状态
-        DeploymentRecordVo status = getApplicationStatus(id);
-        if (!Boolean.TRUE.equals(status.getRunning())) {
-            // 如果应用未运行，更新记录状态
-            deployment.setRunning(false)
-                    .setLastStopTime(LocalDateTime.now())
-                    .setProcessId(null);
-            DeploymentRecord updated = deploymentRecordRepository.save(deployment);
-            return deploymentRecordPoVoMapper.poToVo(updated);
-        }
-
-        doStop(deployment);
-        return deploymentRecordPoVoMapper.poToVo(deployment);
-    }
-
-    /**
-     * 重启应用
-     *
-     * <p>所有改动都包在同一个事务里：若 doStart 中途失败，doStop 已对实体做的状态变更会随事务一起回滚，
-     * 不再出现"已停止状态被提交、启动失败后无法回退"的不一致状态。
-     *
-     * @param id 部署记录 Id
-     * @return 更新后的部署记录信息
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public DeploymentRecordVo restartApplication(String id) {
-        DeploymentRecord deployment = getDeployment(id);
-
-        if (deployment.getApplicationType() != ApplicationTypeEnum.BACKEND) {
-            throw new InvalidOperationException("操作失败: 只有后端应用才能重启");
-        }
-
-        if (Boolean.TRUE.equals(deployment.getRunning())) {
-            doStop(deployment);
-        }
-        doStart(deployment);
-        return deploymentRecordPoVoMapper.poToVo(deployment);
-    }
-
-    /**
-     * /**
-     * 在调用方事务内执行启动逻辑（不再做应用类型与运行状态校验，由调用方保证前置条件）。
-     */
-    private void doStart(DeploymentRecord deployment) {
-        try {
-            String processId = sshOperationExecutor.executeStart(deployment);
-
-            deployment.setStatus(DeploymentStatusEnum.SUCCESS)
-                    .setRunning(true)
-                    .setProcessId(processId)
-                    .setLastStartTime(LocalDateTime.now())
-                    .setErrorMessage(null);
-            deploymentRecordRepository.save(deployment);
-        } catch (BusinessException | InvalidOperationException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new BusinessException(String.format("启动应用失败: %s", e.getMessage()), e);
-        }
-    }
-
-    /**
-     * 在调用方事务内执行停止逻辑（不再做应用类型与运行状态校验，由调用方保证前置条件）。
-     */
-    private void doStop(DeploymentRecord deployment) {
-        try {
-            sshOperationExecutor.executeStop(deployment);
-
-            deployment.setRunning(false)
-                    .setLastStopTime(LocalDateTime.now())
-                    .setProcessId(null);
-            deploymentRecordRepository.save(deployment);
-        } catch (BusinessException | InvalidOperationException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new BusinessException(String.format("停止应用失败: %s", e.getMessage()), e);
-        }
-    }
-
-    /**
      * 获取应用状态
      *
      * @param id 部署记录 Id
@@ -420,67 +297,6 @@ public class DeploymentService {
             return deploymentRecordPoVoMapper.poToVo(deployment);
         } catch (Exception e) {
             throw new BusinessException(String.format("获取应用状态失败: %s", e.getMessage()), e);
-        }
-    }
-
-    /**
-     * 更新应用
-     *
-     * @param id           部署记录 Id
-     * @param fileRecordId 新的文件记录 Id
-     * @return 更新后的部署记录信息
-     */
-    @Transactional
-    public DeploymentRecordVo updateApplication(String id, String fileRecordId) {
-        DeploymentRecord deployment = getDeployment(id);
-        // 这里需要拿到 fileName 用作类型判定，因此走 getFileRecord 实加载
-        FileRecord newFileRecord = fileStorageService.getFileRecord(fileRecordId);
-
-        // 检查文件类型是否匹配
-        if (deployment.getApplicationType() == ApplicationTypeEnum.BACKEND && !newFileRecord.getFileName().endsWith(
-                ".jar")) {
-            throw new InvalidOperationException("更新失败: 后端应用只能更新 jar 包");
-        }
-        if (deployment.getApplicationType() == ApplicationTypeEnum.FRONTEND && !newFileRecord.getFileName().endsWith(
-                ".zip")) {
-            throw new InvalidOperationException("更新失败: 前端应用只能更新 zip 包");
-        }
-
-        try {
-            if (deployment.getApplicationType() == ApplicationTypeEnum.BACKEND) {
-                // 如果是后端应用，重启应用
-                // 更新部署记录的文件记录
-                deployment.setFileRecord(newFileRecord);
-                deploymentRecordRepository.save(deployment);
-                return restartApplication(id);
-            } else {
-                // 如果是前端应用，解压压缩包
-                // 获取主机信息
-                HostRecordDto host = hostService.getHostDto(deployment.getHostRecord().getId());
-                // 建立 SSH 连接
-                String sessionId = sshService.connect(host);
-                try {
-                    // 解压文件；deploymentPath 与 fileName 来自用户输入，必须套单引号字面值
-                    String unzipCommand = String.format(
-                            "cd %s && unzip -o %s",
-                            ShellArgEscaper.singleQuote(deployment.getDeploymentPath()),
-                            ShellArgEscaper.singleQuote(newFileRecord.getFileName())
-                    );
-                    sshService.executeCommand(host, unzipCommand);
-
-                    // 更新部署记录
-                    deployment.setFileRecord(newFileRecord)
-                            .setStatus(DeploymentStatusEnum.SUCCESS)
-                            .setErrorMessage(null);
-                    DeploymentRecord updated = deploymentRecordRepository.save(deployment);
-                    return deploymentRecordPoVoMapper.poToVo(updated);
-                } finally {
-                    // 确保断开连接
-                    sshService.disconnect(sessionId);
-                }
-            }
-        } catch (Exception e) {
-            throw new BusinessException(String.format("更新应用失败: %s", e.getMessage()), e);
         }
     }
 
