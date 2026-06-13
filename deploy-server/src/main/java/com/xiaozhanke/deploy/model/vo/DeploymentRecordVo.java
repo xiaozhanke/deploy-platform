@@ -2,6 +2,7 @@ package com.xiaozhanke.deploy.model.vo;
 
 import com.xiaozhanke.deploy.enums.ApplicationTypeEnum;
 import com.xiaozhanke.deploy.enums.DeploymentStatusEnum;
+import com.xiaozhanke.deploy.enums.InstanceLivenessStateEnum;
 import com.xiaozhanke.deploy.model.base.BaseVo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -122,4 +123,12 @@ public class DeploymentRecordVo extends BaseVo {
      */
     @Schema(description = "最近一次作业")
     private DeploymentJobVo latestJob;
+
+    /**
+     * 应用实例存活三态（运行中 / 已停止 / 状态未知），在读取时由 {@code (running, processId, 存活探测缓存)}
+     * 派生、不落库。由 service 回填，使列表「是否运行中」列反映真实进程探测结果而非仅运行意图
+     * （如进程崩溃后意图仍为 running，此处会派生为「已停止」）。探测缓存缺失时为「状态未知」。
+     */
+    @Schema(description = "应用实例存活三态")
+    private InstanceLivenessStateEnum livenessState;
 }

@@ -11,6 +11,7 @@ import com.xiaozhanke.deploy.model.request.HostParams;
 import com.xiaozhanke.deploy.model.request.HostQueryParams;
 import com.xiaozhanke.deploy.model.response.PageResult;
 import com.xiaozhanke.deploy.model.vo.HostRecordVo;
+import com.xiaozhanke.deploy.monitor.LivenessCache;
 import com.xiaozhanke.deploy.repository.HostRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.extern.slf4j.Slf4j;
@@ -38,13 +39,15 @@ public class HostService {
     private final SshService sshService;
     private final HostPoVoMapper hostPoVoMapper;
     private final HostPoDtoMapper hostPoDtoMapper;
+    private final LivenessCache livenessCache;
 
     public HostService(HostRepository hostRepository, SshService sshService, HostPoVoMapper hostPoVoMapper,
-                       HostPoDtoMapper hostPoDtoMapper) {
+                       HostPoDtoMapper hostPoDtoMapper, LivenessCache livenessCache) {
         this.hostRepository = hostRepository;
         this.sshService = sshService;
         this.hostPoVoMapper = hostPoVoMapper;
         this.hostPoDtoMapper = hostPoDtoMapper;
+        this.livenessCache = livenessCache;
     }
 
     /**
@@ -155,7 +158,9 @@ public class HostService {
      */
     public HostRecordVo queryHost(String id) {
         HostRecord hostRecord = getHost(id);
-        return hostPoVoMapper.poToVo(hostRecord);
+        HostRecordVo vo = hostPoVoMapper.poToVo(hostRecord);
+        vo.setOnline(livenessCache.isHostOnline(vo.getId()));
+        return vo;
     }
 
     /**
@@ -165,7 +170,9 @@ public class HostService {
      */
     public List<HostRecordVo> queryList() {
         List<HostRecord> hostRecordList = hostRepository.findAllByDeletedIsFalse();
-        return hostPoVoMapper.poListToVoList(hostRecordList);
+        List<HostRecordVo> voList = hostPoVoMapper.poListToVoList(hostRecordList);
+        populateOnline(voList);
+        return voList;
     }
 
     /**
@@ -179,7 +186,15 @@ public class HostService {
         Specification<HostRecord> specification = buildSpecification(params);
         Page<HostRecord> page = hostRepository.findAll(specification, pageable);
         List<HostRecordVo> hostRecordList = hostPoVoMapper.poListToVoList(page.getContent());
+        populateOnline(hostRecordList);
         return new PageResult<>(hostRecordList, pageable, page.getTotalElements());
+    }
+
+    /**
+     * 为主机 VO 列表回填在线性：读在线检测内存缓存（{@link LivenessCache}），缓存缺失/过期视为不在线。不落库。
+     */
+    private void populateOnline(List<HostRecordVo> hostRecordList) {
+        hostRecordList.forEach(host -> host.setOnline(livenessCache.isHostOnline(host.getId())));
     }
 
     /**

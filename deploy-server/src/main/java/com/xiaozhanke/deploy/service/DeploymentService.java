@@ -13,6 +13,7 @@ import com.xiaozhanke.deploy.model.request.DeploymentParams;
 import com.xiaozhanke.deploy.model.response.PageResult;
 import com.xiaozhanke.deploy.model.vo.DeploymentJobVo;
 import com.xiaozhanke.deploy.model.vo.DeploymentRecordVo;
+import com.xiaozhanke.deploy.monitor.LivenessCache;
 import com.xiaozhanke.deploy.repository.DeploymentJobRepository;
 import com.xiaozhanke.deploy.repository.DeploymentRecordRepository;
 import com.xiaozhanke.deploy.util.ShellArgEscaper;
@@ -48,6 +49,7 @@ public class DeploymentService {
     private final SshService sshService;
     private final HostService hostService;
     private final FileStorageService fileStorageService;
+    private final LivenessCache livenessCache;
 
     public DeploymentService(DeploymentRecordRepository deploymentRecordRepository,
                              DeploymentRecordPoVoMapper deploymentRecordPoVoMapper,
@@ -55,7 +57,8 @@ public class DeploymentService {
                              DeploymentJobPoVoMapper deploymentJobPoVoMapper,
                              SshService sshService,
                              HostService hostService,
-                             FileStorageService fileStorageService) {
+                             FileStorageService fileStorageService,
+                             LivenessCache livenessCache) {
         this.deploymentRecordRepository = deploymentRecordRepository;
         this.deploymentRecordPoVoMapper = deploymentRecordPoVoMapper;
         this.deploymentJobRepository = deploymentJobRepository;
@@ -63,6 +66,7 @@ public class DeploymentService {
         this.sshService = sshService;
         this.hostService = hostService;
         this.fileStorageService = fileStorageService;
+        this.livenessCache = livenessCache;
     }
 
     /**
@@ -107,7 +111,10 @@ public class DeploymentService {
      */
     public List<DeploymentRecordVo> queryList(DeploymentParams params, Sort sort) {
         Specification<DeploymentRecord> specification = buildSpecification(params);
-        return deploymentRecordPoVoMapper.poListToVoList(deploymentRecordRepository.findAll(specification, sort));
+        List<DeploymentRecordVo> deploymentList =
+                deploymentRecordPoVoMapper.poListToVoList(deploymentRecordRepository.findAll(specification, sort));
+        populateLivenessState(deploymentList);
+        return deploymentList;
     }
 
     /**
@@ -122,7 +129,18 @@ public class DeploymentService {
         Page<DeploymentRecord> page = deploymentRecordRepository.findAll(specification, pageable);
         List<DeploymentRecordVo> deploymentList = deploymentRecordPoVoMapper.poListToVoList(page.getContent());
         populateLatestJobs(deploymentList);
+        populateLivenessState(deploymentList);
         return new PageResult<>(deploymentList, pageable, page.getTotalElements());
+    }
+
+    /**
+     * 为部署记录 VO 列表回填存活三态：读取时由 {@code (running, processId, 存活探测缓存)} 派生，不落库。
+     * 使列表「是否运行中」列反映真实进程探测结果而非仅运行意图——意图为 running 但进程已崩溃时派生为「已停止」，
+     * 缺少 PID 或尚无探测结果时派生为「状态未知」。
+     */
+    private void populateLivenessState(List<DeploymentRecordVo> deploymentList) {
+        deploymentList.forEach(record -> record.setLivenessState(
+                livenessCache.resolveInstanceState(record.getRunning(), record.getProcessId(), record.getId())));
     }
 
     /**
@@ -152,7 +170,10 @@ public class DeploymentService {
      */
     public DeploymentRecordVo queryDeployment(String id) {
         DeploymentRecord deployment = getDeployment(id);
-        return deploymentRecordPoVoMapper.poToVo(deployment);
+        DeploymentRecordVo vo = deploymentRecordPoVoMapper.poToVo(deployment);
+        vo.setLivenessState(livenessCache.resolveInstanceState(
+                vo.getRunning(), vo.getProcessId(), vo.getId()));
+        return vo;
     }
 
     /**

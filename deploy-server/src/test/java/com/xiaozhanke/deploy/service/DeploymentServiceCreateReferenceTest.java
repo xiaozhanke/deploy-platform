@@ -59,11 +59,11 @@ class DeploymentServiceCreateReferenceTest {
 
     @BeforeEach
     void setUp() {
-        hostService = new HostService(hostRepository, sshService, mock(), mock());
+        hostService = new HostService(hostRepository, sshService, mock(), mock(), mock());
         fileStorageService = new FileStorageService(fileRecordRepository, mock(),
                 new com.xiaozhanke.deploy.config.FileStorageProperties(java.util.List.of()));
         deploymentService = new DeploymentService(deploymentRecordRepository, deploymentRecordPoVoMapper,
-                mock(), mock(), sshService, hostService, fileStorageService);
+                mock(), mock(), sshService, hostService, fileStorageService, mock());
     }
 
     @Test

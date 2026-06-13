@@ -127,4 +127,11 @@ public class HostRecordVo extends BaseVo {
      */
     @Schema(description = "是否启用端口转发")
     private Boolean portForwardingEnabled;
+
+    /**
+     * 主机当前是否在线：由在线检测（每 {@code app.monitor.liveness-interval}）写入内存缓存、读取时回填，
+     * <strong>不落库</strong>。缓存缺失 / 过期（探测停摆）视为不在线（{@code false}）。
+     */
+    @Schema(description = "主机当前是否在线（监控内存缓存，不落库）")
+    private Boolean online;
 }
