@@ -24,6 +24,8 @@ export interface HostRecord {
   strictHostKeyChecking: boolean
   x11ForwardingEnabled: boolean
   portForwardingEnabled: boolean
+  /** 主机当前是否在线（监控内存缓存，列表/详情查询时回填；缓存缺失或过期为 false） */
+  online?: boolean
 }
 
 /**

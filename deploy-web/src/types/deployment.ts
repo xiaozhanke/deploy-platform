@@ -23,6 +23,11 @@ export interface DeploymentRecord {
   lastStopTime: string
   processId: string
   running: boolean
+  /**
+   * 应用实例存活三态（对应后端 InstanceLivenessStateEnum，读取时由 running + processId + 探测缓存派生）：
+   * RUNNING 运行中 / STOPPED 已停止（含崩溃）/ UNKNOWN 状态未知（缺 PID / 首轮 / 主机离线 / 缓存过期）。
+   */
+  livenessState?: 'RUNNING' | 'STOPPED' | 'UNKNOWN'
   /** 最近一次作业(按 createTime 取最新);该记录从未执行过作业时为空 */
   latestJob?: DeploymentJob
 }

@@ -6,8 +6,15 @@ defineOptions({
 import { Loading, Search, Switch, SwitchButton } from '@element-plus/icons-vue'
 import type { StompSubscription } from '@stomp/stompjs'
 
-import { deploymentJobCancel, deploymentJobCreate, deploymentRecordDelete, deploymentRecordQueryPage } from '@/api/api'
+import {
+  deploymentJobCancel,
+  deploymentJobCreate,
+  deploymentRecordDelete,
+  deploymentRecordQueryById,
+  deploymentRecordQueryPage,
+} from '@/api/api'
 import TablePagination from '@/components/table-pagination/index.vue'
+import { useConsumableQueryParam } from '@/composables/useConsumableQueryParam'
 import { ApplicationTypeEnum, DeploymentStatusEnum, JobStatusEnum, JobTypeEnum } from '@/enums/platform'
 import { useWebSocketStore } from '@/stores/websocket'
 import type { PageParams } from '@/types/api'
@@ -202,6 +209,19 @@ const detailVisible = ref(false)
 const updateVisible = ref(false)
 const jobHistoryVisible = ref(false)
 
+// 在途抽屉等处的深链：带 ?recordId=xxx 进入时，定位该部署记录并打开其详情（query 已被一次性消费清除）
+const consumeQueryParam = useConsumableQueryParam()
+const openRecordFromDeepLink = async () => {
+  const id = consumeQueryParam('recordId')
+  if (!id) return
+  try {
+    currentRecord.value = await deploymentRecordQueryById(id)
+    detailVisible.value = true
+  } catch (error) {
+    ElMessage.warning('未找到对应的部署记录：' + extractErrorMessage(error))
+  }
+}
+
 // 查看部署记录详情
 const handleView = (row: DeploymentRecord) => {
   currentRecord.value = row
@@ -318,6 +338,8 @@ const handleFileSelectClear = () => {
 
 onActivated(async () => {
   await handleQuery()
+  // 查询完成后再处理深链，确保详情弹出时列表已就绪
+  await openRecordFromDeepLink()
 })
 
 onDeactivated(() => {
@@ -422,9 +444,10 @@ onUnmounted(() => {
       <el-table-column prop="running" label="是否运行中" width="100px">
         <template #default="{ row }">
           <template v-if="row.applicationType === ApplicationTypeEnum.BACKEND.value">
-            <status-dot v-if="row.running === null" intent="info">状态未知</status-dot>
-            <status-dot v-else-if="row.running" intent="success" pulse>运行中</status-dot>
-            <status-dot v-else intent="danger">已停止</status-dot>
+            <!-- 存活三态由后端读取时派生（运行意图 + ps 探测）：进程崩溃则即便意图为 running 也显示「已停止」 -->
+            <status-dot v-if="row.livenessState === 'RUNNING'" intent="success" pulse>运行中</status-dot>
+            <status-dot v-else-if="row.livenessState === 'STOPPED'" intent="danger">已停止</status-dot>
+            <status-dot v-else intent="info">状态未知</status-dot>
           </template>
         </template>
       </el-table-column>

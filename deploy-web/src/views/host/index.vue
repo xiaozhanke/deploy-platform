@@ -3,6 +3,7 @@ import { Plus } from '@element-plus/icons-vue'
 
 import { hostAdd, hostDelete, hostQueryPage, hostTestConnection, hostTestConnectionById, hostUpdate } from '@/api/api'
 import TablePagination from '@/components/table-pagination/index.vue'
+import { useConsumableQueryParam } from '@/composables/useConsumableQueryParam'
 import { SshAuthTypeEnum } from '@/enums/platform'
 import type { PageParams } from '@/types/api'
 import type { HostParams, HostQueryParams, HostRecord } from '@/types/host'
@@ -20,6 +21,9 @@ const currentHost = ref<HostRecord>({} as HostRecord)
 
 // table-pagination 实例引用
 const tablePaginationRef = ref()
+
+// 控制台「快捷行动 - 新建主机」带 ?action=create 进入时一次性消费该参数（消费后即从地址栏清除）
+const consumeQueryParam = useConsumableQueryParam()
 
 // 搜索条件表单
 const form = reactive<HostQueryParams>({
@@ -137,6 +141,10 @@ const handleSubmit = async (host: HostParams) => {
 onActivated(() => {
   // 每次进入页面重新查询，保证数据新鲜
   handleQuery()
+  // 控制台「快捷行动 - 新建主机」深链：消费 ?action=create 后直接弹出新建抽屉
+  if (consumeQueryParam('action') === 'create') {
+    handleAdd()
+  }
 })
 </script>
 
@@ -172,6 +180,13 @@ onActivated(() => {
       </el-table-column>
       <el-table-column prop="homeDir" label="主目录" min-width="130px" />
       <el-table-column prop="description" label="主机描述" min-width="130px" />
+      <el-table-column label="状态" width="84px">
+        <template #default="{ row }">
+          <!-- 在线性来自每分钟在线检测的内存缓存（不落库）；缓存缺失/过期显示离线 -->
+          <status-dot v-if="row.online" intent="success" pulse>在线</status-dot>
+          <status-dot v-else intent="info">离线</status-dot>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="236px" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link @click="handleView(row)">详情</el-button>
