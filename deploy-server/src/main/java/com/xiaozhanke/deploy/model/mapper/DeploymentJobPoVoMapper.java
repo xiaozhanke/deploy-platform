@@ -19,7 +19,13 @@ public interface DeploymentJobPoVoMapper extends BasePoVoMapper<DeploymentJob, D
     @Mapping(source = "deploymentRecord.id", target = "deploymentRecordId")
     DeploymentJobVo poToVo(DeploymentJob po);
 
+    /**
+     * deploymentRecord 关联实体、deleted 软删除标记、targetFileRecordId 目标产物 Id
+     * 在 VO 中均无对应来源,反向映射无源可取,忽略以免 unmapped 告警。
+     */
     @Override
     @Mapping(target = "deploymentRecord", ignore = true)
+    @Mapping(target = "deleted", ignore = true)
+    @Mapping(target = "targetFileRecordId", ignore = true)
     DeploymentJob voToPo(DeploymentJobVo vo);
 }
