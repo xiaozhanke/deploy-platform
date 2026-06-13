@@ -48,34 +48,38 @@
   --app-font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, 'Liberation Mono', monospace;
 
   /**
-   * 终端（xterm）专用配色。终端只读控制台输出、恒暗——长时间看日志/SSH
-   * 翻白底刺眼，故这组令牌只放 :root、html.dark 下不重映射（两主题同值）。
-   * xterm 主题是构造时传入的 JS 对象、不吃 CSS 变量，组件侧用
-   * getComputedStyle 读这组令牌填 theme，避免在组件里写死颜色。
-   * 调色板：近黑面层 + 中性浅灰前景；选区/光标用主色染（干掉旧 Vue 绿）。
+   * 终端（xterm）专用配色，跟随全局明暗主题：:root 放浅色、html.dark 放深色。
+   * xterm 主题是构造时传入的 JS 对象、不吃 CSS 变量，组件侧用 getComputedStyle
+   * 读这组令牌填 theme；切主题时 watch 重读令牌、热换 terminal.options.theme，
+   * 故组件里不写死颜色。深色取 GitHub Dark、浅色取 GitHub Light 镜像。
+   * 浅色底用柔白 #f6f8fa（与白抽屉拉开、读作独立终端面）；选区用半透明主色
+   * 混色保选中文字可读、光标用实色主色（这两项两主题同值，只在此声明、不重映射）。
    */
-  --term-bg: #0d1117;
-  --term-fg: #c9d1d9;
+  --term-bg: #f6f8fa;
+  --term-fg: #1f2328;
   --term-cursor: var(--el-color-primary);
-  --term-selection: var(--el-color-primary);
+  /* 选区半透明主色：需带 alpha 混色，而 EP 未暴露 --el-color-primary 的 RGB 分量、
+     组件又经 getComputedStyle 把本值喂给 xterm 的简易颜色解析器（仅认 #hex / rgb / rgba），
+     故此处直接写主色 #1f75cb 的 RGB、不走 var()。改主色时需一并改这里。 */
+  --term-selection: rgba(31, 117, 203, 0.3);
 
-  /* ANSI 16 色（标准 8 色 + 亮色 8 色），与近黑面层搭配的中性偏冷一档 */
-  --term-ansi-black: #484f58;
-  --term-ansi-red: #ff7b72;
-  --term-ansi-green: #3fb950;
-  --term-ansi-yellow: #d29922;
-  --term-ansi-blue: #58a6ff;
-  --term-ansi-magenta: #bc8cff;
-  --term-ansi-cyan: #39c5cf;
-  --term-ansi-white: #b1bac4;
-  --term-ansi-bright-black: #6e7681;
-  --term-ansi-bright-red: #ffa198;
-  --term-ansi-bright-green: #56d364;
-  --term-ansi-bright-yellow: #e3b341;
-  --term-ansi-bright-blue: #79c0ff;
-  --term-ansi-bright-magenta: #d2a8ff;
-  --term-ansi-bright-cyan: #56d4dd;
-  --term-ansi-bright-white: #f0f6fc;
+  /* ANSI 16 色（标准 8 色 + 亮色 8 色），GitHub Light Default 那套 */
+  --term-ansi-black: #24292f;
+  --term-ansi-red: #cf222e;
+  --term-ansi-green: #116329;
+  --term-ansi-yellow: #4d2d00;
+  --term-ansi-blue: #0969da;
+  --term-ansi-magenta: #8250df;
+  --term-ansi-cyan: #1b7c83;
+  --term-ansi-white: #6e7781;
+  --term-ansi-bright-black: #57606a;
+  --term-ansi-bright-red: #a40e26;
+  --term-ansi-bright-green: #1a7f37;
+  --term-ansi-bright-yellow: #633c01;
+  --term-ansi-bright-blue: #218bff;
+  --term-ansi-bright-magenta: #a475f9;
+  --term-ansi-bright-cyan: #3192aa;
+  --term-ansi-bright-white: #8c959f;
 }
 
 /**
@@ -94,6 +98,27 @@ html.dark {
 
   --app-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.4);
   --app-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.4);
+
+  /* 终端深色配色：GitHub Dark 那套（近黑面层 + 中性浅灰前景）。
+     --term-cursor / --term-selection 两主题同值，不在此重映射。 */
+  --term-bg: #0d1117;
+  --term-fg: #c9d1d9;
+  --term-ansi-black: #484f58;
+  --term-ansi-red: #ff7b72;
+  --term-ansi-green: #3fb950;
+  --term-ansi-yellow: #d29922;
+  --term-ansi-blue: #58a6ff;
+  --term-ansi-magenta: #bc8cff;
+  --term-ansi-cyan: #39c5cf;
+  --term-ansi-white: #b1bac4;
+  --term-ansi-bright-black: #6e7681;
+  --term-ansi-bright-red: #ffa198;
+  --term-ansi-bright-green: #56d364;
+  --term-ansi-bright-yellow: #e3b341;
+  --term-ansi-bright-blue: #79c0ff;
+  --term-ansi-bright-magenta: #d2a8ff;
+  --term-ansi-bright-cyan: #56d4dd;
+  --term-ansi-bright-white: #f0f6fc;
 }
 
 /**
