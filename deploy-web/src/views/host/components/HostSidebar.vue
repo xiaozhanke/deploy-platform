@@ -176,7 +176,11 @@ const handleAddClick = () => {
 const handleFormTest = async (host: HostParams) => {
   try {
     const reachable = await hostTestConnection(host)
-    reachable ? ElMessage.success('连接测试成功') : ElMessage.error('连接测试失败')
+    if (reachable) {
+      ElMessage.success('连接测试成功')
+    } else {
+      ElMessage.error('连接测试失败')
+    }
   } catch (error) {
     ElMessage.error(`连接测试失败: ${extractErrorMessage(error)}`)
   }
@@ -257,7 +261,7 @@ onMounted(async () => {
   observer = new IntersectionObserver(
     (entries) => {
       if (entries[0]?.isIntersecting && hasMore.value && !listLoading.value) {
-        loadHosts(false)
+        void loadHosts(false)
       }
     },
     { root: listRef.value, rootMargin: '120px', threshold: 0 },

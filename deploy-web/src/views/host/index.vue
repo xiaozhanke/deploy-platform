@@ -111,9 +111,9 @@ const handleTestConnectionById = async (id: string) => {
 // 抽屉内"测试连接"：新增态凭据由表单现填，走参数式；编辑态凭据不在表单里，按 Id 用后端存储凭据测
 const handleDialogTest = (host: HostParams) => {
   if (dialogType.value === 'edit') {
-    handleTestConnectionById(currentHost.value.id)
+    void handleTestConnectionById(currentHost.value.id)
   } else {
-    handleTestConnection(host)
+    void handleTestConnection(host)
   }
 }
 
